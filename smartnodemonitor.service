@@ -1,0 +1,13 @@
+[Unit]
+Description=SmartNodeMonitorBot service
+After=network-online.target
+
+[Service]
+User= :user
+Type=simple
+ExecStart= :path/SmartNodeMonitorBot
+Restart=always
+RestartSec=15s
+
+[Install]
+WantedBy=multi-user.target

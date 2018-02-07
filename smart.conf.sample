@@ -1,0 +1,32 @@
+[bot]
+
+############
+# Select the messenger the bot should run for
+#  Options:
+#    telegram
+#    discord
+############
+app =
+
+## Api Key for the bot
+token = <bot_token>
+
+[general]
+
+###############
+# Log Levels  #
+# 1 - debug   #
+# 2 - info    #
+# 3 - warning #
+# 4 - error   #
+###############
+loglevel = 2
+
+# Admins userid for the selected messenger
+admin =
+# Admin password to run admin commands
+password =
+
+# Github credentials
+githubuser =
+githubpassword =
