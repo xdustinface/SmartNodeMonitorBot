@@ -269,21 +269,25 @@ class NodeDatabase(object):
                         last_seen,\
                         protocol,\
                         ip,\
-                        rank ) \
-                        values( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )"
+                        rank,\
+                        position,\
+                        timeout ) \
+                        values( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )"
 
-                db.cursor.execute(query, (\
-                                  tx.hash,\
-                                  tx.index,\
-                                  node.payee,\
-                                  node.status,\
-                                  node.activeSeconds,\
-                                  node.lastPaidBlock,\
-                                  node.lastPaidTime,\
-                                  node.lastSeen,\
-                                  node.protocol,\
+                db.cursor.execute(query, (
+                                  tx.hash,
+                                  tx.index,
+                                  node.payee,
+                                  node.status,
+                                  node.activeSeconds,
+                                  node.lastPaidBlock,
+                                  node.lastPaidTime,
+                                  node.lastSeen,
+                                  node.protocol,
                                   node.ip,
-                                  node.rank))
+                                  node.rank,
+                                  node.position,
+                                  node.timeout))
 
                 return db.cursor.lastrowid
 
@@ -379,7 +383,9 @@ class NodeDatabase(object):
                                 last_seen=?,\
                                 protocol=?,\
                                 ip=?,\
-                                rank=?\
+                                rank=?,\
+                                position=?,\
+                                timeout=?\
                                 WHERE txhash=? AND txindex=?"
 
                 db.cursor.execute(query, (\
@@ -392,6 +398,8 @@ class NodeDatabase(object):
                                   node.protocol,\
                                   node.ip,
                                   node.rank,
+                                  node.position,
+                                  node.timeout,
                                   tx.hash,tx.index))
 
     def deleteNode(self, tx):
@@ -416,7 +424,9 @@ class NodeDatabase(object):
         	`last_seen`	INTEGER,\
         	`protocol`	INTEGER,\
         	`ip` TEXT,\
-        	`rank`	INTEGER\
+        	`rank`	INTEGER,\
+            `position`	INTEGER,\
+            `timeout`	INTEGER\
         );\
         CREATE INDEX `payee` ON `nodes` (`payee`);\
         COMMIT;'

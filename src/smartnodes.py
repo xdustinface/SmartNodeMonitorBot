@@ -50,7 +50,7 @@ class SmartNode(object):
 
     def __init__(self, id, tx, payee, status,\
                 activeSeconds, lastPaidBlock,\
-                lastPaidTime,lastSeen, protocol, ip, rank):
+                lastPaidTime,lastSeen, protocol, ip, rank, position, timeout):
 
         self.id = id
         self.tx = tx
@@ -63,50 +63,55 @@ class SmartNode(object):
         self.protocol = protocol
         self.rank = rank
         self.ip = ip
-        self.panic = None
+        self.position = position
+        self.timeout = timeout
 
     @classmethod
-    def fromRaw(cls,tx, raw, rank):
+    def fromRaw(cls,tx, raw, position):
 
         data = raw.split()
 
-        return cls(None, tx,\
-                   data[PAYEE_INDEX],\
-                   data[STATUS_INDEX].replace('_','-'),\
-                   data[ACTIVE_INDEX],\
-                   data[PAIDBLOCK_INDEX],\
-                   data[PAIDTIME_INDEX],\
-                   data[SEEN_INDEX],\
-                   data[PROTOCOL_INDEX],\
-                   data[IPINDEX_INDEX],\
-                   rank )
+        return cls(None, tx,
+                   data[PAYEE_INDEX],
+                   data[STATUS_INDEX].replace('_','-'), # Avoid markdown problems
+                   data[ACTIVE_INDEX],
+                   data[PAIDBLOCK_INDEX],
+                   data[PAIDTIME_INDEX],
+                   data[SEEN_INDEX],
+                   data[PROTOCOL_INDEX],
+                   data[IPINDEX_INDEX],
+                   -1,
+                   position,
+                   None )
 
     @classmethod
     def fromDb(cls, row):
 
         tx = Transaction(row['txhash'], row['txindex'])
 
-        return cls(row['id'],\
-                   tx,\
-                   row['payee'],\
-                   row['status'],\
-                   row['activeseconds'],\
-                   row['last_paid_block'],\
-                   row['last_paid_time'],\
-                   row['last_seen'],\
-                   row['protocol'],\
-                   row['ip'],\
-                   row['rank'] )
+        return cls(row['id'],
+                   tx,
+                   row['payee'],
+                   row['status'],
+                   row['activeseconds'],
+                   row['last_paid_block'],
+                   row['last_paid_time'],
+                   row['last_seen'],
+                   row['protocol'],
+                   row['ip'],
+                   row['rank'],
+                   row['position'],
+                   row['timeout'] )
 
-    def update(self, raw):
+    def update(self, raw, position):
 
-        update = {'status' : False,\
-                  'payee':False,\
-                  'timeout' : False,\
-                  'recover' : False,\
-                  'lastPaid' : False,\
-                  'protocol' : False,\
-                  'ip' : False }
+        update = {'status' : False,
+                  'payee':False,
+                  'timeout' : False,
+                  'lastPaid' : False,
+                  'protocol' : False,
+                  'ip' : False,
+                  'position' : False }
 
         data = raw.split()
 
@@ -128,15 +133,15 @@ class SmartNode(object):
 
         if ( int(time.time()) - self.lastSeen ) > 1800:
 
-            if ( self.panic == None or self.panic and\
+            if ( self.timeout == None or self.panic and\
               ( int(time.time()) - self.panic ) > 300 ) and\
               self.status == 'ENABLED':
-                self.panic = int(time.time())
+                self.timeout = int(time.time())
                 update['timeout'] = True
 
-        elif self.panic:
-            self.panic = None
-            update['recover'] = True
+        elif self.timeout:
+            self.timeout = None
+            update['timeout'] = True
 
         self.activeSeconds = int(data[ACTIVE_INDEX])
 
@@ -151,6 +156,10 @@ class SmartNode(object):
         if self.ip != data[IPINDEX_INDEX]:
             update['ip'] = True
             self.ip = data[IPINDEX_INDEX]
+
+        if self.position != position:
+            update['position'] = True
+            self.position = position
 
         return update
 
@@ -326,8 +335,11 @@ class SmartNodeList(object):
                 self.lastBlock = info["blocks"]
 
             currentList = []
+            position = 0
 
             for key, data in nodes.items():
+
+                position += 1
 
                 tx = Transaction.fromString(key)
 
@@ -336,7 +348,7 @@ class SmartNodeList(object):
                 if tx not in self.nodelist:
 
                     logger.info("Add node {}".format(key))
-                    insert = SmartNode.fromRaw(tx, data, -1 )
+                    insert = SmartNode.fromRaw(tx, data, position )
 
                     id = self.db.addNode(tx,insert)
 
@@ -354,7 +366,7 @@ class SmartNodeList(object):
                     sync = False
 
                     node = self.nodelist[tx]
-                    update = node.update(data)
+                    update = node.update(data, position)
 
                     if update['status'] :
                         logger.info("[{}] Status updated {}".format(node.payee, node.status))
@@ -373,6 +385,13 @@ class SmartNodeList(object):
 
                     if update['ip'] :
                         logger.info("[{}] IP updated {}".format(node.payee, node.ip))
+
+                    if update['position'] :
+                        logger.debug("[{}] Position updated {}".format(node.payee, node.position))
+
+                    if update['timeout'] :
+                        logger.debug("[{}] Timeout updated {}".format(node.payee, node.timeout))
+                        sync = True
 
                     if sync:
                         self.db.updateNode(tx,node)

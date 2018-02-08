@@ -259,6 +259,7 @@ def detail(bot, update):
 
             response += messages.markdown(("<b>" + node['name'] + " - " + smartnode.ip + "<b>")  ,bot.messenger)
             response += "\n  `Status` " + smartnode.status
+            response += "\n  `Position` " + smartnode.position
             response += "\n  `Payee` " + smartnode.payee
             response += "\n  `Active since` " + util.secondsToText(smartnode.activeSeconds)
             response += "\n  `Last seen` " + util.secondsToText( int(time.time()) - smartnode.lastSeen)
@@ -307,6 +308,7 @@ def nodes(bot, update):
             response += messages.markdown("<b>" + node['name'] + "<b> - `" + smartnode.status + "`\n",bot.messenger)
             response += "Last seen {}\n".format(util.secondsToText( int(time.time()) - smartnode.lastSeen))
             response += "Last payout {}\n".format(payoutTimeToString(smartnode.lastPaidTime))
+            response += "Position {}\n".format(smartnode.position)
             response += messages.link(bot.messenger, 'https://explorer3.smartcash.cc/address/{}'.format(smartnode.payee),'Open the explorer!')
             response += "\n\n"
 
@@ -359,16 +361,13 @@ def nodeUpdated(bot, update, user, userNode, node):
 
     if update['timeout'] and user['timeout_n']:
 
-        response = messages.markdown("<u><b>Panic!<b><u>\n\n",bot.messenger)
-        response += "Your node {} has been last seen before\n".format(userNode['name'])
-        response += util.secondsToText( int(time.time()) - node.lastSeen)
-
-        responses.append(response)
-
-    if update['recover'] and user['timeout_n']:
-
-        response = messages.markdown("<u><b>Relax!<b><u>\n\n",bot.messenger)
-        response += "Your node {} is back!\n".format(userNode['name'])
+        if node.timeout:
+            response = messages.markdown("<u><b>Panic!<b><u>\n\n",bot.messenger)
+            response += "Your node {} has been last seen before\n".format(userNode['name'])
+            response += util.secondsToText( int(time.time()) - node.lastSeen)
+        else:
+            response = messages.markdown("<u><b>Relax!<b><u>\n\n",bot.messenger)
+            response += "Your node {} is back!\n".format(userNode['name'])
 
         responses.append(response)
 
