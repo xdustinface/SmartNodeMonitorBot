@@ -77,10 +77,13 @@ class SmartNodeBotDiscord(object):
             logger.info("sendMessage - OK!")
 
     async def on_ready(self):
-        print('Logged in as')
-        print(self.client.user.name)
-        print(self.client.user.id)
-        print('------')
+        logger.info('Logged in as')
+        logger.info(self.client.user.name)
+        logger.info(self.client.user.id)
+        logger.info('------')
+
+        # Advise the admin about the start.
+        self.adminCB("**Bot started**")
 
     ######
     # Discord api coroutine which gets called when a new message has been
@@ -384,6 +387,6 @@ class SmartNodeBotDiscord(object):
         admin = self.findMember(self.admin)
 
         if admin:
-            self.sendMessage(admin, message)
+            asyncio.run_coroutine_threadsafe(self.sendMessage(admin, message), loop=self.client.loop)
         else:
             logger.warning("adminCB - Could not find admin.")
