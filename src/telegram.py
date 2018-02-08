@@ -206,7 +206,7 @@ class MessagingMachine(object):
 
     ######
     # Timer Callback. Main part of this class. Goes through all the queues, checks
-    # if any rate limit got hit and sends messages if its allowed to. 
+    # if any rate limit got hit and sends messages if its allowed to.
     ######
     def run(self):
 
@@ -331,7 +331,7 @@ class SmartNodeBotTelegram(object):
         #### Setup admin handler, Not public ####
         dp.add_handler(CommandHandler('broadcast', self.broadcast, pass_args=True))
         dp.add_handler(CommandHandler('stats', self.stats, pass_args=True))
-        dp.add_handler(CommandHandler('logs', self.logs, pass_args=True))
+        dp.add_handler(CommandHandler('loglevel', self.loglevel, pass_args=True))
         dp.add_handler(CommandHandler('settings', self.settings, pass_args=True))
 
         dp.add_error_handler(self.error)
@@ -342,7 +342,7 @@ class SmartNodeBotTelegram(object):
     # Starts the bot and block until the programm will be stopped.
     ######
     def start(self):
-
+        logger.info("Start!")
         self.updater.start_polling()
         self.updater.idle()
 
@@ -519,21 +519,21 @@ class SmartNodeBotTelegram(object):
 
             self.sendMessage(self.admin, response)
         else:
-            response = common.unknown(self, update)
+            response = common.unknown(self)
             self.sendMessage(update.message.chat_id, response)
 
-    def logs(self, bot, update, args):
+    def loglevel(self, bot, update, args):
 
         if len(args) >= 2 and\
            self.adminCheck(update.message.chat_id, args[0]):
 
-            logger.warning("logs - access granted")
+            logger.warning("loglevel - access granted")
 
-            response = "*Logs*"
+            response = "*Loglevel*"
 
             self.sendMessage(self.admin, response)
         else:
-            response = common.unknown(self, update)
+            response = common.unknown(self)
             self.sendMessage(update.message.chat_id, response)
 
     def settings(self, bot, update, args):
@@ -547,12 +547,12 @@ class SmartNodeBotTelegram(object):
 
             self.sendMessage(self.admin, response)
         else:
-            response = common.unknown(self, update)
+            response = common.unknown(self)
             self.sendMessage(update.message.chat_id, response)
 
     def unknown(self, bot, update):
 
-        response = common.unknown(self, update)
+        response = common.unknown(self)
         self.sendMessage(update.message.chat_id, response)
 
     def error(self, bot, update, error):
@@ -584,18 +584,18 @@ class SmartNodeBotTelegram(object):
     # Called by: SmartNodeList
     #
     ######
-    def nodeUpdateCB(self, update, node):
+    def nodeUpdateCB(self, update, n):
 
         for user in self.database.getUsers():
 
-            userNode = self.database.getNode(node.id, user['id'])
+            userNode = self.database.getNode(n.id, user['id'])
 
             if userNode == None:
                 continue
 
-            logger.info("nodeUpdateCB {}".format(node.payee))
+            logger.info("nodeUpdateCB {}".format(n.payee))
 
-            for response in common.nodeUpdate(self, update, user, userNode, node):
+            for response in node.nodeUpdated(self, update, user, userNode, n):
                 self.sendMessage(user['id'], response)
 
     ######
@@ -632,14 +632,14 @@ class SmartNodeBotTelegram(object):
 
         self.balanceSem.release()
 
-        response = node.balances(results)
+        response = node.balances(self, userId, results)
 
         self.sendMessage(userId, response)
 
     ######
     # Push the message to the admin
     #
-    # Called by: SmartExplorer
+    # Called by: SmartNodeList
     #
     ######
     def adminCB(self, message):

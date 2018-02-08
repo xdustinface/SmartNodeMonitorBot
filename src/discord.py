@@ -34,6 +34,7 @@ class SmartNodeBotDiscord(object):
         self.nodeList = nodeList
         self.nodeList.networkCB = self.networkCB
         self.nodeList.nodeChangeCB = self.nodeUpdateCB
+        self.nodeList.adminCB = self.adminCB
         # Create the WebExplorer
         self.explorer = WebExplorer(self.balancesCB)
         self.balanceChecks = {}
@@ -48,6 +49,7 @@ class SmartNodeBotDiscord(object):
     # Starts the bot and block until the programm gets stopped.
     ######
     def start(self):
+        logger.info("Start!")
         self.client.run(self.token)
 
     ######
@@ -370,3 +372,18 @@ class SmartNodeBotDiscord(object):
 
         if member:
             asyncio.run_coroutine_threadsafe(self.sendMessage(member, response), loop=self.client.loop)
+
+    ######
+    # Push the message to the admin
+    #
+    # Called by: SmartNodeList
+    #
+    ######
+    def adminCB(self, message):
+
+        admin = self.findMember(self.admin)
+
+        if admin:
+            self.sendMessage(admin, message)
+        else:
+            logger.warning("adminCB - Could not find admin.")
