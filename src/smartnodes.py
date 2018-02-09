@@ -166,6 +166,7 @@ class SmartNode(object):
 
         if self.position != position:
             self.position = position
+            logger.debug("[{}] Position updated {}".format(self.payee, self.position))
             return True
 
         return False
@@ -389,9 +390,6 @@ class SmartNodeList(object):
                     if update['ip'] :
                         logger.info("[{}] IP updated {}".format(node.payee, node.ip))
 
-                    if update['position'] :
-                        logger.debug("[{}] Position updated {}".format(node.payee, node.position))
-
                     if update['timeout'] :
                         logger.debug("[{}] Timeout updated {}".format(node.payee, node.timeout))
                         sync = True
@@ -408,7 +406,7 @@ class SmartNodeList(object):
                 #####
                 ## Update the the position indicator of the node
                 #####
-                
+
                 node = self.nodelist[tx]
 
                 # Use the active seconds per default
