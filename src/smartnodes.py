@@ -82,7 +82,7 @@ class SmartNode(object):
                    data[IPINDEX_INDEX],
                    -1,
                    -1,
-                   None )
+                   -1 )
 
     @classmethod
     def fromDb(cls, row):
@@ -133,14 +133,14 @@ class SmartNode(object):
 
         if ( int(time.time()) - self.lastSeen ) > 1800:
 
-            if ( self.timeout == None or self.timeout and\
+            if ( self.timeout == -1 or self.timeout and\
               ( int(time.time()) - self.timeout ) > 300 ) and\
               self.status == 'ENABLED':
                 self.timeout = int(time.time())
                 update['timeout'] = True
 
         elif self.timeout:
-            self.timeout = None
+            self.timeout = -1
             update['timeout'] = True
 
         self.activeSeconds = int(data[ACTIVE_INDEX])
