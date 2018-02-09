@@ -408,6 +408,8 @@ class SmartNodeList(object):
                 #####
                 ## Update the the position indicator of the node
                 #####
+                
+                node = self.nodelist[tx]
 
                 # Use the active seconds per default
                 posititionTime = node.activeSeconds
