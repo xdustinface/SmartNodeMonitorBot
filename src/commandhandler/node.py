@@ -259,7 +259,7 @@ def detail(bot, update):
 
             response += messages.markdown(("<b>" + node['name'] + " - " + smartnode.ip + "<b>")  ,bot.messenger)
             response += "\n  `Status` " + smartnode.status
-            response += "\n  `Position` " + smartnode.position
+            response += "\n  `Position` {}".format(smartnode.position)
             response += "\n  `Payee` " + smartnode.payee
             response += "\n  `Active since` " + util.secondsToText(smartnode.activeSeconds)
             response += "\n  `Last seen` " + util.secondsToText( int(time.time()) - smartnode.lastSeen)

@@ -54,17 +54,17 @@ class SmartNode(object):
 
         self.id = id
         self.tx = tx
-        self.payee = payee
-        self.status = status
-        self.activeSeconds = activeSeconds
-        self.lastPaidBlock = lastPaidBlock
-        self.lastPaidTime = lastPaidTime
-        self.lastSeen = lastSeen
-        self.protocol = protocol
-        self.rank = rank
-        self.ip = ip
-        self.position = position
-        self.timeout = timeout
+        self.payee = str(payee)
+        self.status = str(status)
+        self.activeSeconds = int(activeSeconds)
+        self.lastPaidBlock = int(lastPaidBlock)
+        self.lastPaidTime = int(lastPaidTime)
+        self.lastSeen = int(lastSeen)
+        self.protocol = int(protocol)
+        self.rank = int(rank)
+        self.ip = str(ip)
+        self.position = int(position)
+        self.timeout = int(timeout)
 
     @classmethod
     def fromRaw(cls,tx, raw, position):
@@ -81,7 +81,7 @@ class SmartNode(object):
                    data[PROTOCOL_INDEX],
                    data[IPINDEX_INDEX],
                    -1,
-                   position,
+                   -1,
                    None )
 
     @classmethod
@@ -110,8 +110,8 @@ class SmartNode(object):
                   'timeout' : False,
                   'lastPaid' : False,
                   'protocol' : False,
-                  'ip' : False,
-                  'position' : False }
+                  'ip' : False
+                 }
 
         data = raw.split()
 
@@ -133,8 +133,8 @@ class SmartNode(object):
 
         if ( int(time.time()) - self.lastSeen ) > 1800:
 
-            if ( self.timeout == None or self.panic and\
-              ( int(time.time()) - self.panic ) > 300 ) and\
+            if ( self.timeout == None or self.timeout and\
+              ( int(time.time()) - self.timeout ) > 300 ) and\
               self.status == 'ENABLED':
                 self.timeout = int(time.time())
                 update['timeout'] = True
@@ -157,14 +157,18 @@ class SmartNode(object):
             update['ip'] = True
             self.ip = data[IPINDEX_INDEX]
 
-        if self.position != position:
-            update['position'] = True
-            self.position = position
-
         return update
 
     def updateRank(self, rank):
         self.rank = int(rank)
+
+    def updatePosition(self, position):
+
+        if self.position != position:
+            self.position = position
+            return True
+
+        return False
 
 class SmartNodeList(object):
 
@@ -335,11 +339,10 @@ class SmartNodeList(object):
                 self.lastBlock = info["blocks"]
 
             currentList = []
-            position = 0
+            positionIndicators = {}
+
 
             for key, data in nodes.items():
-
-                position += 1
 
                 tx = Transaction.fromString(key)
 
@@ -402,12 +405,35 @@ class SmartNodeList(object):
                         if self.nodeChangeCB != None:
                             self.nodeChangeCB(update, node)
 
+                #####
+                ## Update the the position indicator of the node
+                #####
+
+                # Use the active seconds per default
+                posititionTime = node.activeSeconds
+                diff = int(time.time()) - node.lastPaidTime
+
+                # If the node got paid we need to decide further
+                if node.lastPaidTime and diff < node.activeSeconds:
+                    posititionTime = diff
+
+                positionIndicators[tx] = posititionTime
+
+            #####
+            ## Invoke the callback if we have new nodes
+            #####
+
             if len(newNodes) and self.networkCB:
 
                 self.networkCB(newNodes, True)
 
                 logger.info("Created: {}".format(len(nodes.values())))
                 logger.info("Enabled: {}\n".format(sum(map(lambda x: x.split()[STATUS_INDEX]  == "ENABLED", list(nodes.values())))))
+
+
+            #####
+            ## Remove nodes from the DB that are not longer in the global list
+            #####
 
             dbCount = self.db.getNodeCount()
 
@@ -427,13 +453,22 @@ class SmartNodeList(object):
                         logger.info("Remove node {}".format(dbNode))
                         removedNodes.append(dbNode['id'])
                         self.db.deleteNode(tx)
-                        self.nodelist.pop(tx,None)
 
                 if len(removedNodes) != (dbCount - len(nodes)):
                     logger.warning("Remove nodes - something messed up.")
 
                 if self.networkCB:
                     self.networkCB(removedNodes, False)
+            #####
+            ## Update positions
+            #####
+
+            positions = sorted(positionIndicators, key=positionIndicators.__getitem__)
+            value = 0
+            for tx in positions:
+                value +=1
+                if self.nodelist[tx].updatePosition(value):
+                    self.db.updateNode(tx,self.nodelist[tx])
 
         self.updateRanks()
 

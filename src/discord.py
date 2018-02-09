@@ -318,7 +318,7 @@ class SmartNodeBotDiscord(object):
 
             logger.info("nodeChangeCB {}".format(n.payee))
 
-            member = self.findUser(user['id'])
+            member = self.findMember(user['id'])
 
             if member:
                 for response in node.nodeUpdated(self, update, user, userNode, n):
