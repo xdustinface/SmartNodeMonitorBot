@@ -67,7 +67,7 @@ class SmartNode(object):
         self.timeout = int(timeout)
 
     @classmethod
-    def fromRaw(cls,tx, raw, position):
+    def fromRaw(cls,tx, raw):
 
         data = raw.split()
 
@@ -103,7 +103,7 @@ class SmartNode(object):
                    row['position'],
                    row['timeout'] )
 
-    def update(self, raw, position):
+    def update(self, raw):
 
         update = {'status' : False,
                   'payee':False,
@@ -351,7 +351,7 @@ class SmartNodeList(object):
                 if tx not in self.nodelist:
 
                     logger.info("Add node {}".format(key))
-                    insert = SmartNode.fromRaw(tx, data, position )
+                    insert = SmartNode.fromRaw(tx, data)
 
                     id = self.db.addNode(tx,insert)
 
@@ -369,7 +369,7 @@ class SmartNodeList(object):
                     sync = False
 
                     node = self.nodelist[tx]
-                    update = node.update(data, position)
+                    update = node.update(data)
 
                     if update['status'] :
                         logger.info("[{}] Status updated {}".format(node.payee, node.status))
