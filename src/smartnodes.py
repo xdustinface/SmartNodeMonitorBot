@@ -133,13 +133,13 @@ class SmartNode(object):
 
         if ( int(time.time()) - self.lastSeen ) > 1800:
 
-            if ( self.timeout == -1 or self.timeout and\
+            if ( self.timeout == -1 or \
               ( int(time.time()) - self.timeout ) > 300 ) and\
               self.status == 'ENABLED':
                 self.timeout = int(time.time())
                 update['timeout'] = True
 
-        elif self.timeout:
+        elif self.timeout != -1:
             self.timeout = -1
             update['timeout'] = True
 
@@ -342,7 +342,6 @@ class SmartNodeList(object):
             currentList = []
             positionIndicators = {}
 
-
             for key, data in nodes.items():
 
                 tx = Transaction.fromString(key)
@@ -406,18 +405,20 @@ class SmartNodeList(object):
                 #####
                 ## Update the the position indicator of the node
                 #####
-
+                
                 node = self.nodelist[tx]
 
-                # Use the active seconds per default
-                posititionTime = node.activeSeconds
-                diff = int(time.time()) - node.lastPaidTime
+                if node.status == 'ENABLED':
+                    # Use the active seconds per default
+                    posititionTime = int(time.time()) - node.activeSeconds
 
-                # If the node got paid we need to decide further
-                if node.lastPaidTime and diff < node.activeSeconds:
-                    posititionTime = diff
+                    # If the node got paid we need to decide further
+                    if node.lastPaidTime:
+                        posititionTime = node.lastPaidTime
 
-                positionIndicators[tx] = posititionTime
+                    positionIndicators[tx] = posititionTime
+                else:
+                    node.position = -2
 
             #####
             ## Invoke the callback if we have new nodes
@@ -463,12 +464,11 @@ class SmartNodeList(object):
             ## Update positions
             #####
 
-            positions = sorted(positionIndicators, key=positionIndicators.__getitem__)
+            positions = sorted(positionIndicators, key=positionIndicators.__getitem__, reverse=True)
             value = 0
             for tx in positions:
                 value +=1
-                if self.nodelist[tx].updatePosition(value):
-                    self.db.updateNode(tx,self.nodelist[tx])
+                self.nodelist[tx].updatePosition(value)
 
         self.updateRanks()
 
@@ -483,6 +483,7 @@ class SmartNodeList(object):
 
         try:
 
+            rankResult = subprocess.check_output(['smartcash-cli', 'smartnodelist','rank'])
             rankResult = subprocess.check_output(['smartcash-cli', 'smartnodelist','rank'])
             ranks = json.loads(rankResult.decode('utf-8'))
 

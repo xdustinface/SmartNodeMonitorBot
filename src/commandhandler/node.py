@@ -16,6 +16,14 @@ def payoutTimeToString(t):
     else:
         return "No payout yet."
 
+def positionToString(position):
+    if position == -1:
+        return 'Calculating...'
+    elif position == -2:
+        return "Not qualified for payout"
+    else:
+        return "{}".format(position)
+
 ######
 # Telegram command handler for adding nodes for the user who fired the command.
 #
@@ -259,7 +267,7 @@ def detail(bot, update):
 
             response += messages.markdown(("<b>" + node['name'] + " - " + smartnode.ip + "<b>")  ,bot.messenger)
             response += "\n  `Status` " + smartnode.status
-            response += "\n  `Position` {}".format(smartnode.position)
+            response += "\n  `Position` " + positionToString(smartnode.position)
             response += "\n  `Payee` " + smartnode.payee
             response += "\n  `Active since` " + util.secondsToText(smartnode.activeSeconds)
             response += "\n  `Last seen` " + util.secondsToText( int(time.time()) - smartnode.lastSeen)
@@ -308,7 +316,7 @@ def nodes(bot, update):
             response += messages.markdown("<b>" + node['name'] + "<b> - `" + smartnode.status + "`\n",bot.messenger)
             response += "Last seen {}\n".format(util.secondsToText( int(time.time()) - smartnode.lastSeen))
             response += "Last payout {}\n".format(payoutTimeToString(smartnode.lastPaidTime))
-            response += "Position {}\n".format(smartnode.position)
+            response += "Position {}\n".format(positionToString(smartnode.position))
             response += messages.link(bot.messenger, 'https://explorer3.smartcash.cc/address/{}'.format(smartnode.payee),'Open the explorer!')
             response += "\n\n"
 
