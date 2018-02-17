@@ -61,7 +61,7 @@ class BotDatabase(object):
     def addNode(self, nodeId,name,userId,userName):
 
         user = self.addUser(userId, userName)
-        node = self.getNode(nodeId, user)
+        node = self.getNodes(nodeId, user)
 
         if node == None or node['user_id'] != user:
 
