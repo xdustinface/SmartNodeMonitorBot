@@ -338,7 +338,7 @@ class SmartNodeBotDiscord(object):
 
         for user in self.database.getUsers():
 
-            userNode = self.database.getNode(n.id, user['id'])
+            userNode = self.database.getNodes(n.id, user['id'])
 
             if userNode == None:
                 continue

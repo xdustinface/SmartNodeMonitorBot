@@ -159,7 +159,7 @@ def nodeUpdate(bot, update, args):
                 response += messages.nodeNotInListError(bot.messenger, ip)
             else:
 
-                userNode = bot.database.getNode(node['id'],userId)
+                userNode = bot.database.getNodes(node['id'],userId)
 
                 if userNode == None:
                     response += messages.nodeNotExistsError(bot.messenger, ip)
