@@ -220,11 +220,11 @@ class SmartNodeBotDiscord(object):
             failed = None
             nodes = []
 
-            user = self.database.getUser(message.author.id)
+            dbUser = self.database.getUser(message.author.id)
             userNodes = self.database.getNodes(message.author.id)
 
             # If there is no nodes added yet send an error and return
-            if user == None or userNodes == None or len(userNodes) == 0:
+            if dbUser == None or userNodes == None or len(userNodes) == 0:
                 response = messages.markdown("<u><b>Balances<b><u>\n\n",self.messenger)
                 response += messages.notActiveError(self.messenger)
                 await self.sendMessage(message.author, response)
