@@ -241,6 +241,9 @@ class NodeDatabase(object):
         if self.isEmpty():
             self.reset()
 
+        # Add the new rows in 1.1 if needed
+        self.patchVersion1_1()
+
     def isEmpty(self):
 
         tables = []
@@ -424,12 +427,25 @@ class NodeDatabase(object):
         	`last_seen`	INTEGER,\
         	`protocol`	INTEGER,\
         	`ip` TEXT,\
-        	`rank`	INTEGER,\
-            `position`	INTEGER,\
-            `timeout`	INTEGER\
+        	`rank`	INTEGER\
         );\
         CREATE INDEX `payee` ON `nodes` (`payee`);\
         COMMIT;'
 
         with self.connection as db:
             db.cursor.executescript(sql)
+
+    def patchVersion1_1:
+
+        with self.connection as db:
+
+            db.cursor.execute('PRAGMA table_info(nodes)')
+            columns = db.cursor.fetchall()
+
+            names = list(map(lambda x: x[1],columns ))
+
+            if 'position' not in names:
+                db.cursor.execute('ALTER TABLE nodes ADD COLUMN position INTEGER;')
+
+            if 'timeout' not in names:
+                db.cursor.execute('ALTER TABLE nodes ADD COLUMN timeout INTEGER;')
