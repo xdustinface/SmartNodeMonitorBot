@@ -341,6 +341,7 @@ class SmartNodeList(object):
 
             currentList = []
             positionIndicators = {}
+            currentTime = int(time.time())
 
             for key, data in nodes.items():
 
@@ -409,14 +410,30 @@ class SmartNodeList(object):
                 node = self.nodelist[tx]
 
                 if node.status == 'ENABLED':
-                    # Use the active seconds per default
-                    positionTime = int(time.time()) - node.activeSeconds
 
-                    # If the node got paid we need use the lastpaid time
+                    positionTime = None
+
+                    # If the node got paid we need need to decide further
                     if node.lastPaidTime:
-                        positionTime = node.lastPaidTime
+
+                        # Use the gab between the between now and the last paid
+                        gap = currentTime - node.lastPaidTime
+
+                        # Check if the gap is bigger then the active seconds
+                        if gap > node.activeSeconds:
+                            # If so, use the gap since this means the node is
+                            # already active longer then the last paid time
+                            positionTime = gap
+                        else:
+                            # If the gap is smaller this means the node got paid
+                            # already but has become restarted for any reason
+                            positionTime = node.activeSeconds
+                    else:
+                        # If not just use the active seconds.
+                        positionTime = node.activeSeconds
 
                     positionIndicators[tx] = positionTime
+
                 else:
                     node.position = -2
 
