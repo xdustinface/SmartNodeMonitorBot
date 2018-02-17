@@ -145,7 +145,7 @@ class SmartNodeBotDiscord(object):
         ####
         commands = {
                     # Common commands
-                    'info':0,
+                    'help':0, 'info':0,
                     # User commmands
                     'me':1,'status':1,'reward':1,'network':1, 'timeout':1,
                     # Node commands
