@@ -331,6 +331,7 @@ def balances(bot, userId, results):
         userNodes = bot.database.getNodes(userId)
 
         total = 0
+        error = False
 
         for result in results:
             for node in userNodes:
@@ -339,17 +340,23 @@ def balances(bot, userId, results):
                     if not util.isInt(result.data) and "error" in result.data:
                         response += "{} - Error: {}\n".format(node['name'], result.data["error"])
                         logger.warning("Balance response error: {}".format(result.data))
+                        error = True
                     else:
 
                         try:
                             total += int(result.data)
                             response += "{} - {} SMART\n".format(node['name'], result.data)
                         except:
+                            error = True
                             logger.warning("Balance response invalid: {}".format(result.data))
                             response += "{} - Error: Could not fetch this balance.\n".format(node['name'])
 
         response += messages.markdown("\nTotal: <b>{} SMART<b>".format(total),bot.messenger)
-        response += messages.markdown("\nProfit: <b>{} SMART<b>".format(total%10000),bot.messenger)
+
+        # Only show the profit if there was no error since it would make not much sense otherwise.
+        if not error:
+            response += messages.markdown("\nProfit: <b>{} SMART<b>".format(total%10000),bot.messenger)
+
     else:
         response += "Sorry, could not check your balances! Looks like all explorers are down. Try it again later.\n\n"
 
