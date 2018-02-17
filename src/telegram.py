@@ -502,8 +502,8 @@ class SmartNodeBotTelegram(object):
 
             response = " ".join(args[1:])
 
-            for user in self.database.getUsers():
-                self.sendMessage(user['id'], response)
+            for dbUser in self.database.getUsers():
+                self.sendMessage(dbUser['id'], response)
         else:
             response = common.unknown(self, update)
             self.sendMessage(update.message.chat_id, response)
@@ -573,8 +573,8 @@ class SmartNodeBotTelegram(object):
     ######
     def updateCheckCallback(self, tag):
 
-        for user in self.database.getUsers():
-            self.sendMessage(user['id'], ("*Node update available*\n\n"
+        for dbUser in self.database.getUsers():
+            self.sendMessage(dbUser['id'], ("*Node update available*\n\n"
                                          "https://github.com/SmartCash/smartcash/releases/tag/{}").format(tag))
 
     ######
@@ -586,7 +586,7 @@ class SmartNodeBotTelegram(object):
     ######
     def nodeUpdateCB(self, update, n):
 
-        for user in self.database.getUsers():
+        for dbUser in self.database.getUsers():
 
             userNode = self.database.getNode(n.id, user['id'])
 
@@ -595,8 +595,8 @@ class SmartNodeBotTelegram(object):
 
             logger.info("nodeUpdateCB {}".format(n.payee))
 
-            for response in node.nodeUpdated(self, update, user, userNode, n):
-                self.sendMessage(user['id'], response)
+            for response in node.nodeUpdated(self, update, dbUser, userNode, n):
+                self.sendMessage(dbUser['id'], response)
 
     ######
     # Callback for evaluating if someone has enabled network notifications

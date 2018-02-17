@@ -275,7 +275,16 @@ class SmartNodeBotDiscord(object):
             response = common.stats(self)
             await self.sendMessage(receiver, response)
         elif command == 'broadcast':
-            response = common.broadcast(self,message,args)
+
+            response = " ".join(args[1:])
+
+            for dbUser in self.database.getUsers():
+
+                member = self.findMember(dbUser['id'])
+
+                if member:
+                    await self.sendMessage(member, response)
+
             await self.sendMessage(receiver, response)
 
         # Help message
