@@ -435,7 +435,7 @@ class NodeDatabase(object):
         with self.connection as db:
             db.cursor.executescript(sql)
 
-    def patchVersion1_1:
+    def patchVersion1_1(self):
 
         with self.connection as db:
 
