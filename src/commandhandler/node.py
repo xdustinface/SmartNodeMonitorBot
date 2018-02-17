@@ -349,6 +349,7 @@ def balances(bot, userId, results):
                             response += "{} - Error: Could not fetch this balance.\n".format(node['name'])
 
         response += messages.markdown("\nTotal: <b>{} SMART<b>".format(total),bot.messenger)
+        response += messages.markdown("\nProfit: <b>{} SMART<b>".format(total%10000),bot.messenger)
     else:
         response += "Sorry, could not check your balances! Looks like all explorers are down. Try it again later.\n\n"
 
