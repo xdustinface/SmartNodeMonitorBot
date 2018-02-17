@@ -219,7 +219,17 @@ class SmartNodeBotDiscord(object):
             failed = None
             nodes = []
 
-            for n in self.database.getNodes(message.author.id):
+            user = self.database.getUser(message.author.id)
+            userNodes = self.database.getNodes(message.author.id)
+
+            # If there is no nodes added yet send an error and return
+            if user == None or userNodes == None or len(userNodes) == 0:
+                response = messages.markdown("<u><b>Balances<b><u>\n\n",bot.messenger)
+                response += messages.notActiveError(bot.messenger)
+                await self.sendMessage(message.author, response)
+                return
+
+            for n in userNodes:
                 nodes.append(self.nodeList.getNodeById(n['node_id']))
 
             check = self.explorer.balances(nodes)
