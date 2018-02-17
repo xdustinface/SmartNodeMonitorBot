@@ -20,7 +20,7 @@ def positionToString(position):
     if position == -1:
         return 'Calculating...'
     elif position == -2:
-        return "Not qualified for payout"
+        return "Not qualified for payouts"
     else:
         return "{}".format(position)
 
@@ -381,7 +381,10 @@ def nodeUpdated(bot, update, user, userNode, node):
 
     if update['lastPaid'] and user['reward_n']:
 
-        reward = 5000 * ( 143500 / bot.nodeList.lastBlock) * 0.1
+        # Prevent zero division if for any reason lastPaid is 0
+        calcBlock = node.lastPaidBlock if node.lastPaidBlock != 0 else bot.nodeList.lastBlock
+
+        reward = 5000 * ( 143500 / calcBlock ) * 0.1
 
         response = messages.markdown("<u><b>Reward!<b><u>\n\n",bot.messenger)
         response += "Your node {} received a ".format(userNode['name'])

@@ -7,6 +7,8 @@ import discord
 import asyncio
 import uuid
 
+from fuzzywuzzy import process as fuzzy
+
 from src import util
 from src import messages
 from src.commandhandler import node
@@ -151,6 +153,13 @@ class SmartNodeBotDiscord(object):
                     # Admin commands
                     'stats':2, 'broadcast':2
         }
+
+        choices = fuzzy.extract(command,commands.keys(),limit=2)
+
+        if choices[0][1] == choices[1][1] or choices[0][1] < 60:
+            command = 'help'
+        else:
+            command = choices[0][0]
 
         # If the command is DM only
         if command in commands and commands[command] == 1:

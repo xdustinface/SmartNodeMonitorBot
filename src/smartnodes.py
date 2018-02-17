@@ -405,18 +405,18 @@ class SmartNodeList(object):
                 #####
                 ## Update the the position indicator of the node
                 #####
-                
+
                 node = self.nodelist[tx]
 
                 if node.status == 'ENABLED':
                     # Use the active seconds per default
-                    posititionTime = int(time.time()) - node.activeSeconds
+                    positionTime = int(time.time()) - node.activeSeconds
 
-                    # If the node got paid we need to decide further
+                    # If the node got paid we need use the lastpaid time
                     if node.lastPaidTime:
-                        posititionTime = node.lastPaidTime
+                        positionTime = node.lastPaidTime
 
-                    positionIndicators[tx] = posititionTime
+                    positionIndicators[tx] = positionTime
                 else:
                     node.position = -2
 
@@ -464,7 +464,7 @@ class SmartNodeList(object):
             ## Update positions
             #####
 
-            positions = sorted(positionIndicators, key=positionIndicators.__getitem__, reverse=True)
+            positions = sorted(positionIndicators, key=positionIndicators.__getitem__)
             value = 0
             for tx in positions:
                 value +=1
