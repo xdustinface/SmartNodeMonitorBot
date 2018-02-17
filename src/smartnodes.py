@@ -419,8 +419,8 @@ class SmartNodeList(object):
                         # Use the gab between the between now and the last paid
                         gap = currentTime - node.lastPaidTime
 
-                        # Check if the gap is bigger then the active seconds
-                        if gap > node.activeSeconds:
+                        # Check if the gap is smaller then the active seconds
+                        if gap < node.activeSeconds:
                             # If so, use the gap since this means the node is
                             # already active longer then the last paid time
                             positionTime = gap
@@ -481,7 +481,7 @@ class SmartNodeList(object):
             ## Update positions
             #####
 
-            positions = sorted(positionIndicators, key=positionIndicators.__getitem__)
+            positions = sorted(positionIndicators, key=positionIndicators.__getitem__, reverse=True)
             value = 0
             for tx in positions:
                 value +=1
