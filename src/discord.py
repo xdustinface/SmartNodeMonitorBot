@@ -285,8 +285,6 @@ class SmartNodeBotDiscord(object):
                 if member:
                     await self.sendMessage(member, response)
 
-            await self.sendMessage(receiver, response)
-
         # Help message
         elif command == 'help':
             await self.sendMessage(receiver, messages.help(self.messenger))
