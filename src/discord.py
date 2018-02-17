@@ -157,6 +157,7 @@ class SmartNodeBotDiscord(object):
         choices = fuzzy.extract(command,commands.keys(),limit=2)
 
         if choices[0][1] == choices[1][1] or choices[0][1] < 60:
+            logger.debug('Invalid fuzzy result {}'.format(choices))
             command = 'unknown'
         else:
             command = choices[0][0]
