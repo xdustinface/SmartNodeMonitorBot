@@ -136,7 +136,7 @@ class BotDatabase(object):
                 db.cursor.execute("SELECT * FROM nodes WHERE node_id=?",[nodeId])
                 nodes = db.cursor.fetchall()
 
-        return node
+        return nodes
 
     def updateUsername(self, name, userId):
 
