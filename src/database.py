@@ -111,7 +111,7 @@ class BotDatabase(object):
 
         return users
 
-    def getNodes(self, userId):
+    def getAllNodes(self, userId):
 
         nodes = []
 
@@ -123,15 +123,18 @@ class BotDatabase(object):
 
         return nodes
 
-    def getNode(self, nodeId, userId):
+    def getNodes(self, nodeId, userId = None):
 
-        node = None
+        nodes = None
 
         with self.connection as db:
 
-            db.cursor.execute("SELECT * FROM nodes WHERE node_id=? and user_id=?",(nodeId,userId))
-
-            node = db.cursor.fetchone()
+            if userId:
+                db.cursor.execute("SELECT * FROM nodes WHERE node_id=? and user_id=?",(nodeId,userId))
+                nodes = db.cursor.fetchone()
+            else:
+                db.cursor.execute("SELECT * FROM nodes WHERE node_id=?",[nodeId])
+                nodes = db.cursor.fetchall()
 
         return node
 

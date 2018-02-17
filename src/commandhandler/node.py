@@ -253,7 +253,7 @@ def detail(bot, update):
     nodesFound = False
 
     user = bot.database.getUser(userId)
-    nodes = bot.database.getNodes(userId)
+    nodes = bot.database.getAllNodes(userId)
 
     if user == None or nodes == None or len(nodes) == 0:
 
@@ -300,7 +300,7 @@ def nodes(bot, update):
     nodesFound = False
 
     user = bot.database.getUser(userId)
-    nodes = bot.database.getNodes(userId)
+    nodes = bot.database.getAllNodes(userId)
 
     if user == None or nodes == None or len(nodes) == 0:
 
@@ -328,7 +328,7 @@ def balances(bot, userId, results):
 
     if results != None:
 
-        userNodes = bot.database.getNodes(userId)
+        userNodes = bot.database.getAllNodes(userId)
 
         total = 0
         error = False

@@ -50,10 +50,6 @@ def networkUpdate(bot, ids, added):
     else:
         response += "{} node{} left us!\n\n".format(abs(count),"s" if count < 1 else "")
 
-        # Remove the nodes also from the user database
-        for id in ids:
-            bot.database.deleteNodesWithId(id)
-
     response += messages.markdown("We have <b>{}<b> created nodes now!\n\n".format(bot.nodeList.count()),bot.messenger)
     response += messages.markdown("<b>{}<b> of them are enabled.".format(bot.nodeList.enabled()), bot.messenger)
 

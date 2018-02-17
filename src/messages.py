@@ -146,10 +146,16 @@ def rankNotification(messenger):
     return markdown(("<b>Rank update<b>\n\n"
                     "Your node {} changed its "
                     "rank to {}"),messenger)
+
 def rewardNotification(messenger):
     return markdown(("<b>Reward!<b>\n\n"
                       "Your node {} received a "
                       "reward {}"),messenger)
+
+def nodeRemoved(messenger, nodeName):
+    return markdown(("<b>Warning!<b>\n\n"
+                      "Your node {} has been removed "
+                      "from the global nodelist.").format(nodeName),messenger)
 
 ############################################################
 #                     Error messages                       #

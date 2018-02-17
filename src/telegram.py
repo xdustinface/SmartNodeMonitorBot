@@ -408,7 +408,7 @@ class SmartNodeBotTelegram(object):
             failed = None
             nodes = []
 
-            dbNodes = self.database.getNodes(update.message.chat_id)
+            dbNodes = self.database.getAllNodes(update.message.chat_id)
             user = self.database.getUser(update.message.chat_id)
 
             if user == None or dbNodes == None or len(dbNodes) == 0:
