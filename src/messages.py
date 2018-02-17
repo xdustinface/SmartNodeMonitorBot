@@ -41,7 +41,7 @@ def splitMessage(text, split, maximum):
 
     else:
         return [text]
-        
+
 def removeMarkdown(text):
     clean = text.replace('_','')
     clean = clean.replace('*','')
@@ -157,7 +157,7 @@ def rewardNotification(messenger):
 
 def notActiveError(messenger):
     return markdown(("<b>ERROR<b>: You have currently no added nodes. "
-                         "Add a node first with /add."),messenger)
+                         "Add a node first with <cb>add<ca>."),messenger)
 
 def rateLimitError(messenger, seconds):
     return markdown("<b>Sorry, you hit the rate limit. Take a deep breath...\n\n{} to go!<b>".format(seconds),messenger)
