@@ -130,8 +130,9 @@ class SmartNode(object):
             self.payee = data[PAYEE_INDEX]
 
         self.lastSeen = int(data[SEEN_INDEX])
-
-        if ( int(time.time()) - self.lastSeen ) > 1800:
+        lastSeenDiff = ( int(time.time()) - self.lastSeen )
+        if lastSeenDiff > 1800 and\
+            lastSeenDiff < 3900: # > 30min < 65min
 
             if ( self.timeout == -1 or \
               ( int(time.time()) - self.timeout ) > 300 ) and\
@@ -139,7 +140,7 @@ class SmartNode(object):
                 self.timeout = int(time.time())
                 update['timeout'] = True
 
-        elif self.timeout != -1:
+        elif self.timeout != -1 and self.status == 'ENABLED':
             self.timeout = -1
             update['timeout'] = True
 

@@ -137,24 +137,35 @@ def notificationResponse(messenger, description, state):
     else:
         return markdown("Succesfully <b>disabled<b> {} notifications.".format(description),messenger)
 
-def statusNotification(messenger):
-    return markdown(("<b>Status update<b>\n\n"
-                          "Your node {} changed its "
-                          "status to {}"),messenger)
+def statusNotification(messenger, nodeName, status):
+    return markdown(("<u><b>Status update<b><u>\n\n"
+                          "Your node <b>{}<b> changed its "
+                          "status to <b>{}<b>").format(nodeName,status),messenger)
 
-def rankNotification(messenger):
-    return markdown(("<b>Rank update<b>\n\n"
-                    "Your node {} changed its "
-                    "rank to {}"),messenger)
+def panicNotification(messenger, nodeName, timeString):
+    response = ("<u><b>Panic!<b><u>\n\n"
+                "Your node <b>{}<b> has been last seen before\n").format(nodeName)
+    response += timeString
 
-def rewardNotification(messenger):
-    return markdown(("<b>Reward!<b>\n\n"
-                      "Your node {} received a "
-                      "reward {}"),messenger)
+    return markdown(response, messenger)
 
-def nodeRemoved(messenger, nodeName):
-    return markdown(("<b>Warning!<b>\n\n"
-                      "Your node {} has been removed "
+def relaxNotification(messenger, nodeName):
+    response = ("<u><b>Relax!<b><u>\n\n"
+                "Your node <b>{}<b> is back!\n").format(nodeName)
+    return markdown(response,messenger)
+
+def rewardNotification(messenger, nodeName, block, reward ):
+
+    response = ("<u><b>Reward!<b><u>\n\n"
+                "Your node <b>{}<b> received a "
+                "reward at block {}\n\n"
+                "Payout <b>~{} SMART<b>").format(nodeName, block, int(reward))
+
+    return markdown(response, messenger)
+
+def nodeRemovedNotification(messenger, nodeName):
+    return markdown(("<u><b>Warning!<b><u>\n\n"
+                      "Your node <b>{}<b> has been removed "
                       "from the global nodelist.").format(nodeName),messenger)
 
 ############################################################

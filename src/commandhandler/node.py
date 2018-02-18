@@ -222,7 +222,7 @@ def nodeRemove(bot, update, args):
                 response += messages.nodeNotInListError(bot.messenger, ip)
             else:
 
-                userNode = bot.database.getNode(node['id'],userId)
+                userNode = bot.database.getNodes(node['id'],userId)
 
                 if userNode == None:
                     response += messages.nodeNotExistsError(bot.messenger, ip)
@@ -367,23 +367,20 @@ def nodeUpdated(bot, update, user, userNode, node):
 
     responses = []
 
+    nodeName = userNode['name']
+
     if update['status'] and user['status_n']:
 
-        response = messages.markdown("<u><b>Status update<b><u>\n\n",bot.messenger)
-        response += "Your node {} changed its ".format(userNode['name'])
-        response += "status to {}".format(node.status)
-
+        response = messages.statusNotification(bot.messenger,nodeName, node.status)
         responses.append(response)
 
     if update['timeout'] and user['timeout_n']:
 
-        if node.timeout:
-            response = messages.markdown("<u><b>Panic!<b><u>\n\n",bot.messenger)
-            response += "Your node {} has been last seen before\n".format(userNode['name'])
-            response += util.secondsToText( int(time.time()) - node.lastSeen)
+        if node.timeout != -1:
+            timeString = util.secondsToText( int(time.time()) - node.lastSeen)
+            response = messages.panicNotification(bot.messenger, nodeName, timeString)
         else:
-            response = messages.markdown("<u><b>Relax!<b><u>\n\n",bot.messenger)
-            response += "Your node {} is back!\n".format(userNode['name'])
+            response = messages.relaxNotification(bot.messenger, nodeName)
 
         responses.append(response)
 
@@ -391,14 +388,9 @@ def nodeUpdated(bot, update, user, userNode, node):
 
         # Prevent zero division if for any reason lastPaid is 0
         calcBlock = node.lastPaidBlock if node.lastPaidBlock != 0 else bot.nodeList.lastBlock
-
         reward = 5000 * ( 143500 / calcBlock ) * 0.1
 
-        response = messages.markdown("<u><b>Reward!<b><u>\n\n",bot.messenger)
-        response += "Your node {} received a ".format(userNode['name'])
-        response += "reward at block {}\n\n".format(node.lastPaidBlock)
-        response += messages.markdown("Payout <b>~{} SMART<b>".format(int(reward)),bot.messenger)
-
+        response = messages.rewardNotification(bot.messenger, nodeName, calcBlock, reward)
         responses.append(response)
 
     return responses

@@ -386,11 +386,12 @@ class SmartNodeBotDiscord(object):
                 member = self.findMember(userNode['user_id'])
 
                 if member:
-                    response = messages.nodeRemoved(self.messenger, userNode['name'])
+                    response = messages.nodeRemovedNotification(self.messenger, userNode['name'])
                     asyncio.run_coroutine_threadsafe(self.sendMessage(member, response), loop=self.client.loop)
 
-
-            bot.database.deleteNodesWithId(id)
+            # Remove all entries containing this node in the db
+            self.database.deleteNodesWithId(id)
+            
     ######
     # Callback which gets called from the SmartNodeList when a balance request triggered by any user
     # is done. It sends the result to the related user.
