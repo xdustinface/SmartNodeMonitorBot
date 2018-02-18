@@ -218,7 +218,7 @@ def nodeRemove(bot, update, args):
     else:
 
         # Check if the user wants to remove all nodes.
-        if len(args) == 1 and ip == 'all':
+        if len(args) == 1 and args[0] == 'all':
 
             bot.database.deleteNodesForUser(userId)
             response += "Node successfully all your nodes!\n"
