@@ -212,7 +212,7 @@ def nodeRemove(bot, update, args):
 
         response += messages.markdown(("<b>ERROR<b>: Argument(s) required: <b>:ip0 :ipN<b>\n\n"
                      "Example remove one: <cb>remove<ca> 21.23.34.44\n"
-                     "Example remove more: <cb>remove<ca> 21.23.34.44 21.23.34.43\n
+                     "Example remove more: <cb>remove<ca> 21.23.34.44 21.23.34.43\n"
                      "Example remove all: <cb>remove<ca> all\n"),bot.messenger)
 
     else:
