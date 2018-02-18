@@ -125,49 +125,59 @@ def nodeUpdate(bot, update, args):
 
         response += messages.notActiveError(bot.messenger)
 
-    elif len(args) != 2:
+    elif not len(args):
 
-        response += messages.markdown(("<b>ERROR<b>: Exactly 2 arguments required: <b>:ip :newname<b>\n\n"
-                     "Where <b>:ip<b> is the IP-Address of the node to update and <b>:newname<b> the"
+        response += messages.markdown(("<b>ERROR<b>: Argument(s) required: <b>ip0;newname0 ipN;newnameN<b>\n\n"
+                     "Where <b>ip<b> is the IP-Address of the node to update and <b>newname<b> the"
                      " new name of the node.\n\n"
-                     "Example: <cb>update<ca> 23.132.143.34 MyNewNodeName\n"),bot.messenger)
+                     "Example: <cb>update<ca> 23.132.143.34;MyNewNodeName\n"),bot.messenger)
 
     else:
 
-        valid = True
+        for arg in args:
 
-        ip = args[0]
-        name = args[1]
+            nodeEdit = arg.split(";")
 
-        if not util.validateIp( ip ):
+            valid = True
 
-            response += messages.invalidIpError(bot.messenger,ip)
-            valid = False
+            if len(nodeEdit) != 2:
 
-        elif not util.validateName( name ):
-
-            response += messages.invalidNameError(bot.messenger, name)
-            valid = False
-
-        if valid:
-
-            logger.info("update - {} {}".format(ip, user['id']))
-
-            node = bot.nodeList.getNodeByIp(ip)
-
-            if node == None:
-                response += messages.nodeNotInListError(bot.messenger, ip)
+                response += messages.invalidParameterError(bot.messenger,arg)
+                valid = False
             else:
 
-                userNode = bot.database.getNodes(node['id'],userId)
+                ip = nodeEdit[0]
+                name = nodeEdit[1]
 
-                if userNode == None:
-                    response += messages.nodeNotExistsError(bot.messenger, ip)
+                if not util.validateIp( ip ):
+
+                    response += messages.invalidIpError(bot.messenger, ip)
+                    valid = False
+
+                if not util.validateName( name ):
+
+                    response += messages.invalidNameError(bot.messenger, name)
+                    valid = False
+
+            if valid:
+
+                logger.info("update - {} {}".format(ip, user['id']))
+
+                node = bot.nodeList.getNodeByIp(ip)
+
+                if node == None:
+                    response += messages.nodeNotInListError(bot.messenger, ip)
                 else:
 
-                    bot.database.updateNode(node['id'],user['id'], name)
+                    userNode = bot.database.getNodes(node['id'],userId)
 
-                    response += "Node successfully updated. {}\n".format(ip)
+                    if userNode == None:
+                        response += messages.nodeNotExistsError(bot.messenger, ip)
+                    else:
+
+                        bot.database.updateNode(node['id'],user['id'], name)
+
+                        response += "Node successfully updated. {}\n".format(ip)
 
     return response
 
@@ -198,37 +208,49 @@ def nodeRemove(bot, update, args):
 
         response += messages.notActiveError(bot.messenger)
 
-    elif len(args) != 1:
+    elif len(args) < 1:
 
-        response += messages.markdown(("<b>ERROR<b>: Argument required: <b>:ip<b>\n\n"
-                     "Example: <cb>remove<ca> 21.23.34.44\n"),bot.messenger)
+        response += messages.markdown(("<b>ERROR<b>: Argument(s) required: <b>:ip0 :ipN<b>\n\n"
+                     "Example remove one: <cb>remove<ca> 21.23.34.44\n"
+                     "Example remove more: <cb>remove<ca> 21.23.34.44 21.23.34.43\n
+                     "Example remove all: <cb>remove<ca> all\n"),bot.messenger)
 
     else:
 
-        ip = args[0]
+        # Check if the user wants to remove all nodes.
+        if len(args) == 1 and ip == 'all':
 
-        if not util.validateIp(ip):
-
-            response += messages.invalidIpError(bot.messenger, ip)
-            valid = False
+            bot.database.deleteNodesForUser(userId)
+            response += "Node successfully all your nodes!\n"
 
         else:
+            # Else go through the parameters
+            for arg in args:
 
-            logger.info("remove - valid {}".format(ip))
+                ip = arg
 
-            node = bot.nodeList.getNodeByIp(ip)
+                if not util.validateIp(ip):
 
-            if node == None:
-                response += messages.nodeNotInListError(bot.messenger, ip)
-            else:
+                    response += messages.invalidIpError(bot.messenger, ip)
+                    valid = False
 
-                userNode = bot.database.getNodes(node['id'],userId)
-
-                if userNode == None:
-                    response += messages.nodeNotExistsError(bot.messenger, ip)
                 else:
-                    bot.database.deleteNode(node['id'],user['id'])
-                    response += "Node successfully removed. {}\n".format(ip)
+
+                    logger.info("remove - valid {}".format(ip))
+
+                    node = bot.nodeList.getNodeByIp(ip)
+
+                    if node == None:
+                        response += messages.nodeNotInListError(bot.messenger, ip)
+                    else:
+
+                        userNode = bot.database.getNodes(node['id'],userId)
+
+                        if userNode == None:
+                            response += messages.nodeNotExistsError(bot.messenger, ip)
+                        else:
+                            bot.database.deleteNode(node['id'],user['id'])
+                            response += "Node successfully removed. {}\n".format(ip)
 
     return response
 
