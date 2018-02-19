@@ -326,7 +326,6 @@ class SmartNodeBotTelegram(object):
         dp.add_handler(CommandHandler('start', self.started))
         dp.add_handler(CommandHandler('help', self.help))
         dp.add_handler(CommandHandler('info', self.info))
-        dp.add_handler(MessageHandler(Filters.command, self.unknown))
 
         #### Setup admin handler, Not public ####
         dp.add_handler(CommandHandler('broadcast', self.broadcast, pass_args=True))
@@ -334,6 +333,7 @@ class SmartNodeBotTelegram(object):
         dp.add_handler(CommandHandler('loglevel', self.loglevel, pass_args=True))
         dp.add_handler(CommandHandler('settings', self.settings, pass_args=True))
 
+        dp.add_handler(MessageHandler(Filters.command, self.unknown))
         dp.add_error_handler(self.error)
 
         self.sendMessage(self.admin, "*Bot Started*")
