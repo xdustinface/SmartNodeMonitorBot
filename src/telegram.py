@@ -413,10 +413,11 @@ class SmartNodeBotTelegram(object):
 
             if user == None or dbNodes == None or len(dbNodes) == 0:
 
-               response +=  messages.nodesRequired(self.messenger)
+                response = messages.markdown("<u><b>Balances<b><u>\n\n",self.messenger)
+                response +=  messages.nodesRequired(self.messenger)
 
-               self.sendMessage(update.message.chat_id, response)
-               return
+                self.sendMessage(update.message.chat_id, response)
+                return
 
             for node in dbNodes:
                 nodes.append(self.nodeList.getNodeById(node['node_id']))
