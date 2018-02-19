@@ -102,25 +102,16 @@ class BotDatabase(object):
 
         return user
 
-    def getAllNodes(self):
-
-        users = []
-
-        with self.connection as db:
-
-            db.cursor.execute("SELECT * FROM nodes")
-
-            users = db.cursor.fetchall()
-
-        return users
-
-    def getAllNodes(self, userId):
+    def getAllNodes(self, userId = None):
 
         nodes = []
 
         with self.connection as db:
 
-            db.cursor.execute("SELECT * FROM nodes WHERE user_id=? ORDER BY name",[userId])
+            if userId:
+                db.cursor.execute("SELECT * FROM nodes WHERE user_id=? ORDER BY name",[userId])
+            else:
+                db.cursor.execute("SELECT * FROM nodes")
 
             nodes = db.cursor.fetchall()
 
