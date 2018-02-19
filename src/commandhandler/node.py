@@ -221,7 +221,7 @@ def nodeRemove(bot, update, args):
         if len(args) == 1 and args[0] == 'all':
 
             bot.database.deleteNodesForUser(userId)
-            response += "Node successfully all your nodes!\n"
+            response += messages.markdown("Successfully removed <b>all<b> your nodes!\n",bot.messenger)
 
         else:
             # Else go through the parameters
@@ -250,7 +250,7 @@ def nodeRemove(bot, update, args):
                             response += messages.nodeNotExistsError(bot.messenger, ip)
                         else:
                             bot.database.deleteNode(node['id'],user['id'])
-                            response += "Node successfully removed. {}\n".format(ip)
+                            response += messages.markdown("Node successfully removed. <b>{}<b>\n".format(ip),bot.messenger)
 
     return response
 

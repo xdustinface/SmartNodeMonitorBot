@@ -252,8 +252,8 @@ class MessagingMachine(object):
                 logger.warning("Exception: RetryAfter {}".format(e))
 
                 queue.lock(e.retry_after)
-
-                self.bot.sendMessage(chat_id=chatId, text = messages.rateLimitError.format(util.secondsToText(int(e.retry_after))),parse_mode=telegram.ParseMode.MARKDOWN )
+                warnMessage = messages.rateLimitError(self.messenger, util.secondsToText(int(e.retry_after)))
+                self.bot.sendMessage(chat_id=chatId, text = warnMessage ,parse_mode=telegram.ParseMode.MARKDOWN )
 
             except TelegramError as e:
                 logger.warning("Exception: TelegramError {}".format(e))
@@ -350,7 +350,7 @@ class SmartNodeBotTelegram(object):
 
         if update.message.chat_id != update.message.from_user.id:
             logger.warning("not allowed group action")
-            response = messages.notAvailableInGroups
+            response = messages.notAvailableInGroups(self.messenger)
             self.sendMessage(update.message.chat_id, response )
             return True
 
@@ -413,7 +413,7 @@ class SmartNodeBotTelegram(object):
 
             if user == None or dbNodes == None or len(dbNodes) == 0:
 
-               response +=  messages.nodesRequired
+               response +=  messages.nodesRequired(self.messenger)
 
                self.sendMessage(update.message.chat_id, response)
                return
@@ -482,7 +482,7 @@ class SmartNodeBotTelegram(object):
 
     def started(self, bot, update):
 
-        self.sendMessage(update.message.chat_id, '**Welcome**\n\n' + messages.helpMsgTelegram)
+        self.sendMessage(update.message.chat_id, '**Welcome**\n\n' + messages.help(self.messenger))
 
     def help(self, bot, update):
 
@@ -588,9 +588,9 @@ class SmartNodeBotTelegram(object):
 
         for dbUser in self.database.getUsers():
 
-            userNode = self.database.getNodes(n.id, user['id'])
+            userNode = self.database.getNodes(n.id, dbUser['id'])
 
-            if userNode == None:
+            if not userNode:
                 continue
 
             logger.info("nodeUpdateCB {}".format(n.payee))
