@@ -606,10 +606,24 @@ class SmartNodeBotTelegram(object):
 
         response = common.networkUpdate(self, ids, added)
 
-        for user in self.database.getUsers():
+        for dbUser in self.database.getUsers('where network_n=1'):
+            self.sendMessage(dbUser['id'], response)
 
-            if user['network_n']:
-                self.sendMessage(user['id'], response)
+        if added:
+            # If the callback is related to new nodes no need for
+            # the continue here.
+            return
+
+        # Remove the nodes also from the user database
+        for id in ids:
+
+            # Before chec if a node from anyone got removed and let him know about it.
+            for userNode in self.database.getNodes(id):
+                response = messages.nodeRemovedNotification(self.messenger, userNode['name'])
+                self.sendMessage(userNode['user_id'], response)
+
+            # Remove all entries containing this node in the db
+            self.database.deleteNodesWithId(id)
 
 
     ######

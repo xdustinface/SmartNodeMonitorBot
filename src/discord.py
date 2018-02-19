@@ -363,14 +363,12 @@ class SmartNodeBotDiscord(object):
         response = common.networkUpdate(self, ids, added)
 
         # Handle the network update notifications.
-        for user in self.database.getUsers():
+        for dbUser in self.database.getUsers('where network_n=1'):
 
-            if user['network_n']:
+            member = self.findMember(dbUser['id'])
 
-                member = self.findMember(user['id'])
-
-                if member:
-                    asyncio.run_coroutine_threadsafe(self.sendMessage(member, response), loop=self.client.loop)
+            if member:
+                asyncio.run_coroutine_threadsafe(self.sendMessage(member, response), loop=self.client.loop)
 
         if added:
             # If the callback is related to new nodes no need for
@@ -391,7 +389,7 @@ class SmartNodeBotDiscord(object):
 
             # Remove all entries containing this node in the db
             self.database.deleteNodesWithId(id)
-            
+
     ######
     # Callback which gets called from the SmartNodeList when a balance request triggered by any user
     # is done. It sends the result to the related user.

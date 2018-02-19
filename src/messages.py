@@ -163,10 +163,10 @@ def rewardNotification(messenger, nodeName, block, reward ):
 
     return markdown(response, messenger)
 
-def nodeRemovedNotification(messenger, nodeName):
-    return markdown(("<u><b>Warning!<b><u>\n\n"
+def nodeRemovedNotification(nodeName):
+    return (("<u><b>Warning!<b><u>\n\n"
                       "Your node <b>{}<b> has been removed "
-                      "from the global nodelist.").format(nodeName),messenger)
+                      "from the global nodelist.").format(nodeName))
 
 ############################################################
 #                     Error messages                       #

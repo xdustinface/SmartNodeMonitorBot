@@ -75,14 +75,17 @@ class BotDatabase(object):
 
         return False
 
-    def getUsers(self):
+    def getUsers(self, condition = None ):
 
         users = []
 
         with self.connection as db:
+            query = "SELECT * FROM users"
 
-            db.cursor.execute("SELECT * FROM users")
+            if condition:
+                query += (' ' + condition)
 
+            db.cursor.execute(query)
             users = db.cursor.fetchall()
 
         return users
