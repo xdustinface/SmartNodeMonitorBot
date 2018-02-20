@@ -283,14 +283,11 @@ def detail(bot, update):
 
     else:
 
-        collaterals = list(map(lambda x: x['collateral'],userNodes))
-        nodes = bot.nodeList.getNodes(collaterals)
+        for userNode in userNodes:
 
-        for node in nodes:
+            smartnode = bot.nodeList.getNodes([userNode['collateral']])[0]
 
-            userNode
-
-            response += messages.markdown(("<b>" + node['name'] + " - " + smartnode.ip + "<b>")  ,bot.messenger)
+            response += messages.markdown(("<b>" + userNode['name'] + " - " + smartnode.ip + "<b>")  ,bot.messenger)
             response += "\n  `Status` " + smartnode.status
             response += "\n  `Position` " + positionToString(smartnode.position)
             response += "\n  `Payee` " + smartnode.payee
