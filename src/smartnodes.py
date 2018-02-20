@@ -180,7 +180,7 @@ class SmartNodeList(object):
     def __init__(self, db):
 
         self.lastBlock = 0
-        self.nodelist = {}
+        self.nodeList = {}
 
         self.chainSynced = False
         self.nodeListSynced = False
@@ -211,7 +211,7 @@ class SmartNodeList(object):
 
         for entry in dbList:
                 node = SmartNode.fromDb(entry)
-                self.nodelist[node.tx] = node
+                self.nodeList[node.tx] = node
 
     def validateAddress(self, address):
 
@@ -333,7 +333,7 @@ class SmartNodeList(object):
         else:
 
             if not self.isValidDeamonResponse(nodes):
-                self.pushAdmin("No valid nodelist")
+                self.pushAdmin("No valid nodeList")
                 return
 
             if not self.isValidDeamonResponse(info):
@@ -361,7 +361,7 @@ class SmartNodeList(object):
                     id = self.db.addNode(tx,insert)
 
                     if id:
-                        self.nodelist[tx] = insert
+                        self.nodeList[tx] = insert
                         newNodes.append(tx)
 
                         logger.debug(" => added with collateral {}".format(insert.collateral))
@@ -372,7 +372,7 @@ class SmartNodeList(object):
 
                     sync = False
 
-                    node = self.nodelist[tx]
+                    node = self.nodeList[tx]
                     update = node.update(data)
 
                     if update['status'] :
@@ -410,7 +410,7 @@ class SmartNodeList(object):
                 ## Update the the position indicator of the node
                 #####
 
-                node = self.nodelist[tx]
+                node = self.nodeList[tx]
 
                 if node.status == 'ENABLED':
 
@@ -489,7 +489,7 @@ class SmartNodeList(object):
             value = 0
             for tx in positions:
                 value +=1
-                self.nodelist[tx].updatePosition(value)
+                self.nodeList[tx].updatePosition(value)
 
         #####
         # Disabled rank updates due to confusion of the users
@@ -526,16 +526,16 @@ class SmartNodeList(object):
 
                 tx = Transaction.fromRaw(key)
 
-                if tx not in self.nodelist:
+                if tx not in self.nodeList:
                     logger.error("Could not assign rank, node not available {}".format(key))
                 else:
-                    self.nodelist[tx].updateRank(data)
+                    self.nodeList[tx].updateRank(data)
 
     def count(self):
-        return len(self.nodelist)
+        return len(self.nodeList)
 
     def enabled(self):
-        return sum(list(map(lambda x: x.status == "ENABLED", self.nodelist.values())))
+        return sum(list(map(lambda x: x.status == "ENABLED", self.nodeList.values())))
 
     def getNodeByIp(self, ip):
         return self.db.getNodeByIp(ip)
