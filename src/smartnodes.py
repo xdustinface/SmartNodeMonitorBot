@@ -540,12 +540,19 @@ class SmartNodeList(object):
     def getNodeByIp(self, ip):
         return self.db.getNodeByIp(ip)
 
-    def getNodes(self, collateralstring):
+    def getNodes(self, collaterals):
 
         nodes = []
 
-        for collateral in collateralstring:
-            tx = Transaction.fromString(collateral)
+        for collateral in collateralstrings:
+
+            tx = None
+
+            if isinstance(collateral,Transaction):
+                tx = collateral
+            else:
+                tx = Transaction.fromString(collateral)
+                
             if tx in self.nodeList:
                 nodes.append(self.nodeList[tx])
 

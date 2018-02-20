@@ -230,9 +230,8 @@ class SmartNodeBotDiscord(object):
                 await self.sendMessage(message.author, response)
                 return
 
-            for n in userNodes:
-                nodes.append(self.nodeList.getNodesByIds([n['node_id']]).value())
-
+            collaterals = list(map(lambda x: x['collateral'],userNodes))
+            nodes = self.nodeList.getNodes(collaterals)
             check = self.explorer.balances(nodes)
 
             # Needed cause the balanceChecks dict also gets modified from other
@@ -338,7 +337,7 @@ class SmartNodeBotDiscord(object):
 
         for user in self.database.getUsers():
 
-            userNode = self.database.getNodes(n.id, user['id'])
+            userNode = self.database.getNodes(str(n.collateral), user['id'])
 
             if userNode == None:
                 continue
@@ -376,10 +375,10 @@ class SmartNodeBotDiscord(object):
             return
 
         # Remove the nodes also from the user database
-        for id in ids:
+        for collateral in collaterals:
 
             # Before chec if a node from anyone got removed and let him know about it.
-            for userNode in self.database.getNodes(id):
+            for userNode in self.database.getNodes(collateral):
 
                 member = self.findMember(userNode['user_id'])
 
@@ -388,7 +387,7 @@ class SmartNodeBotDiscord(object):
                     asyncio.run_coroutine_threadsafe(self.sendMessage(member, response), loop=self.client.loop)
 
             # Remove all entries containing this node in the db
-            self.database.deleteNodesWithId(id)
+            self.database.deleteNodesWithId(collateral)
 
     ######
     # Callback which gets called from the SmartNodeList when a balance request triggered by any user

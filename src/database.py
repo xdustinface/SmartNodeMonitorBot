@@ -183,10 +183,10 @@ class BotDatabase(object):
         with self.connection as db:
             db.cursor.execute("DELETE FROM nodes WHERE user_id=?",[userId])
 
-    def deleteNodesWithId(self, nodeId):
+    def deleteNodesWithId(self, collateral):
 
         with self.connection as db:
-            db.cursor.execute("DELETE FROM nodes WHERE node_id=?",[nodeId])
+            db.cursor.execute("DELETE FROM nodes WHERE collateral=?",[collateral])
 
     def reset(self):
 
