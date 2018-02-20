@@ -544,7 +544,7 @@ class SmartNodeList(object):
 
         nodes = []
 
-        for collateral in collateralstrings:
+        for collateral in collaterals:
 
             tx = None
 
@@ -552,7 +552,7 @@ class SmartNodeList(object):
                 tx = collateral
             else:
                 tx = Transaction.fromString(collateral)
-                
+
             if tx in self.nodeList:
                 nodes.append(self.nodeList[tx])
 
