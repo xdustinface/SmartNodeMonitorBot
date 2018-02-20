@@ -21,7 +21,8 @@ IPINDEX_INDEX = 7
 
 logger = logging.getLogger("smartnodes")
 
-transactionCheck = re.compile("COutPoint\([\d\a-f]{64},.[\d]{1,}\)")
+transactionRawCheck = re.compile("COutPoint\([\d\a-f]{64},.[\d]{1,}\)")
+transactionStringCheck = re.compile("[\d\a-f]{64}-[\d]{1,}")
 
 class Transaction(object):
 
@@ -30,7 +31,7 @@ class Transaction(object):
         self.index = txindex
 
     def __str__(self):
-        return '{0.hash} - {0.index}'.format(self)
+        return '{0.hash}-{0.index}'.format(self)
 
     def __eq__(self, other):
         return self.hash == other.hash and\
@@ -40,10 +41,17 @@ class Transaction(object):
         return hash((self.hash,self.index))
 
     @classmethod
+    def fromRaw(cls, s):
+
+        if transactionRawCheck.match(s):
+            parts = s[10:-1].split(', ')
+            return cls(parts[0], int(parts[1]))
+
+    @classmethod
     def fromString(cls, s):
 
-        if transactionCheck.match(s):
-            parts = s[10:-1].split(', ')
+        if transactionStringCheck.match(s):
+            parts = s.split('-')
             return cls(parts[0], int(parts[1]))
 
 class SmartNode(object):
@@ -85,7 +93,7 @@ class SmartNode(object):
     @classmethod
     def fromDb(cls, row):
 
-        tx = Transaction(row['txhash'], row['txindex'])
+        tx = Transaction.fromString(row['collateral'])
 
         return cls(id = row['id'],
                    tx = tx,
@@ -343,7 +351,7 @@ class SmartNodeList(object):
 
             for key, data in nodes.items():
 
-                tx = Transaction.fromString(key)
+                tx = Transaction.fromRaw(key)
 
                 currentList.append(tx)
 
@@ -518,7 +526,7 @@ class SmartNodeList(object):
 
                 rank = data
 
-                tx = Transaction.fromString(key)
+                tx = Transaction.fromRaw(key)
 
                 if tx not in self.nodelist:
                     logger.error("Could not assign rank, node not available {}".format(key))
@@ -531,19 +539,15 @@ class SmartNodeList(object):
     def enabled(self):
         return sum(list(map(lambda x: x.status == "ENABLED", self.nodelist.values())))
 
-    def getNodeByPayee(self, payee):
-        return self.db.getNodeByPayee(payee)
-
     def getNodeByIp(self, ip):
         return self.db.getNodeByIp(ip)
 
-    def getNodeById(self, id):
+    def getNodes(self, collaterals):
 
-        for node in self.nodelist.values():
-            if node.id == id:
-                return node
+        nodes = []
 
-        return None
+        for collateral in collaterals:
+            if collateral in self.nodeList:
+                nodes.append(self.nodeList[Transaction.fromString(collateral)])
 
-    def getNodeByTx(self, tx):
-        return self.nodelist[tx] if txid in self.nodelist else None
+        return nodes

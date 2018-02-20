@@ -88,7 +88,7 @@ def nodeAdd(bot, update, args):
                     response += messages.nodeNotInListError(bot.messenger,ip)
                 else:
 
-                    if bot.database.addNode( node['id'], name, userId,userName):
+                    if bot.database.addNode( node['collateral'], name, userId,userName):
 
                         response += "Added node {}!\n".format(ip)
 
@@ -169,13 +169,13 @@ def nodeUpdate(bot, update, args):
                     response += messages.nodeNotInListError(bot.messenger, ip)
                 else:
 
-                    userNode = bot.database.getNodes(node['id'],userId)
+                    userNode = bot.database.getNodes(node['collateral'],userId)
 
                     if userNode == None:
                         response += messages.nodeNotExistsError(bot.messenger, ip)
                     else:
 
-                        bot.database.updateNode(node['id'],user['id'], name)
+                        bot.database.updateNode(node['collateral'],user['id'], name)
 
                         response += "Node successfully updated. {}\n".format(ip)
 
@@ -244,12 +244,12 @@ def nodeRemove(bot, update, args):
                         response += messages.nodeNotInListError(bot.messenger, ip)
                     else:
 
-                        userNode = bot.database.getNodes(node['id'],userId)
+                        userNode = bot.database.getNodes(node['collateral'],userId)
 
                         if userNode == None:
                             response += messages.nodeNotExistsError(bot.messenger, ip)
                         else:
-                            bot.database.deleteNode(node['id'],user['id'])
+                            bot.database.deleteNode(node['collateral'],user['id'])
                             response += messages.markdown("Node successfully removed. <b>{}<b>\n".format(ip),bot.messenger)
 
     return response
@@ -275,17 +275,20 @@ def detail(bot, update):
     nodesFound = False
 
     user = bot.database.getUser(userId)
-    nodes = bot.database.getAllNodes(userId)
+    userNodes = bot.database.getAllNodes(userId)
 
-    if user == None or nodes == None or len(nodes) == 0:
+    if user == None or userNodes == None or len(userNodes) == 0:
 
        response +=  messages.nodesRequired(bot.messenger)
 
     else:
 
+        collaterals = list(map(lambda x: x['collateral'],userNodes))
+        nodes = bot.nodeList.getNodes(collaterals)
+
         for node in nodes:
 
-            smartnode = bot.nodeList.getNodeById(node['node_id'])
+            userNode
 
             response += messages.markdown(("<b>" + node['name'] + " - " + smartnode.ip + "<b>")  ,bot.messenger)
             response += "\n  `Status` " + smartnode.status
@@ -322,20 +325,23 @@ def nodes(bot, update):
     nodesFound = False
 
     user = bot.database.getUser(userId)
-    nodes = bot.database.getAllNodes(userId)
+    userNodes = bot.database.getAllNodes(userId)
 
-    if user == None or nodes == None or len(nodes) == 0:
+    if user == None or userNodes == None or len(userNodes) == 0:
 
        response +=  messages.nodesRequired(bot.messenger)
 
     else:
 
-        for node in nodes.sort(key=lambda x: x.position):
+        collaterals = list(map(lambda x: x['collateral'],userNodes))
+        nodes = bot.nodeList.getNodes(collaterals)
 
-            smartnode = bot.nodeList.getNodeById(node['node_id'])
+        for smartnode in nodes.sort(key=lambda x: x.position):
+
+            userNode = bot.database.getNodes(smartnode.tx, user['id'])
 
             payoutText = util.secondsToText(smartnode.lastPaidTime)
-            response += messages.markdown("<b>" + node['name'] + "<b> - `" + smartnode.status + "`\n",bot.messenger)
+            response += messages.markdown("<b>" + userNode['name'] + "<b> - `" + smartnode.status + "`\n",bot.messenger)
             response += "Position {}\n".format(positionToString(smartnode.position))
             response += "Last seen {}\n".format(util.secondsToText( int(time.time()) - smartnode.lastSeen))
             response += "Last payout {}\n".format(payoutTimeToString(smartnode.lastPaidTime))
