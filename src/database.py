@@ -259,7 +259,7 @@ class NodeDatabase(object):
                         protocol,\
                         ip,\
                         timeout ) \
-                        values( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )"
+                        values( ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )"
 
                 db.cursor.execute(query, (
                                   str(tx),
@@ -347,7 +347,7 @@ class NodeDatabase(object):
                                   node.protocol,\
                                   node.ip,
                                   node.timeout,
-                                  tx))
+                                  str(tx)))
 
     def deleteNode(self, tx):
 
