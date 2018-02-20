@@ -60,7 +60,7 @@ def main(argv):
     githubUser = config.get('general','githubuser')
     githubPassword = config.get('general','githubpassword')
 
-    nodelist = SmartNodeList(nodedb)
+    nodeList = SmartNodeList(nodedb)
 
     nodeBot = None
 

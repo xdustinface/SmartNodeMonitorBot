@@ -47,7 +47,7 @@ def migrate():
     for node in nodesDB_v10_nodes:
 
         tx = Transaction(node['txhash'], node['txindex'])
-        nodesDB_v11.addNode(tx, node)
+        logger.info("Add {}".format(nodesDB_v11.addNode(tx, node)))
 
 
     for user in botDB_v10_users:
@@ -65,7 +65,7 @@ def migrate():
             userNode = db.cursor.fetchone()
             tx = Transaction(userNode['txhash'], userNode['txindex'])
 
-        botDB_v11.addNode(str(tx), node['name'], node['user_id'])
+        logger.info("Add {}".format(botDB_v11.addNode(str(tx), node['name'], node['user_id'])))
 
     logger.info("{} users in 1.1".format(len(botDB_v11.getUsers())))
     logger.info("{} user-nodes in 1.1".format(len(botDB_v11.getAllNodes())))

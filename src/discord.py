@@ -231,7 +231,7 @@ class SmartNodeBotDiscord(object):
                 return
 
             for n in userNodes:
-                nodes.append(self.nodeList.getNodeById(n['node_id']))
+                nodes.append(self.nodeList.getNodesByIds([n['node_id']]).value())
 
             check = self.explorer.balances(nodes)
 

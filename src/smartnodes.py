@@ -353,7 +353,7 @@ class SmartNodeList(object):
 
                 currentList.append(tx)
 
-                if tx not in self.nodelist:
+                if tx not in self.nodeList:
 
                     logger.info("Add node {}".format(key))
                     insert = SmartNode.fromRaw(tx, data)
