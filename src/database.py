@@ -270,9 +270,8 @@ class NodeDatabase(object):
                         protocol,\
                         ip,\
                         rank,\
-                        position,\
                         timeout ) \
-                        values( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )"
+                        values( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )"
 
                 db.cursor.execute(query, (
                                   tx.hash,
@@ -286,7 +285,6 @@ class NodeDatabase(object):
                                   node.protocol,
                                   node.ip,
                                   node.rank,
-                                  node.position,
                                   node.timeout))
 
                 return db.cursor.lastrowid
@@ -384,7 +382,6 @@ class NodeDatabase(object):
                                 protocol=?,\
                                 ip=?,\
                                 rank=?,\
-                                position=?,\
                                 timeout=?\
                                 WHERE txhash=? AND txindex=?"
 
@@ -398,7 +395,6 @@ class NodeDatabase(object):
                                   node.protocol,\
                                   node.ip,
                                   node.rank,
-                                  node.position,
                                   node.timeout,
                                   tx.hash,tx.index))
 
@@ -440,9 +436,6 @@ class NodeDatabase(object):
             columns = db.cursor.fetchall()
 
             names = list(map(lambda x: x[1],columns ))
-
-            if 'position' not in names:
-                db.cursor.execute('ALTER TABLE nodes ADD COLUMN position INTEGER;')
 
             if 'timeout' not in names:
                 db.cursor.execute('ALTER TABLE nodes ADD COLUMN timeout INTEGER;')
