@@ -330,7 +330,7 @@ def nodes(bot, update):
 
     else:
 
-        for node in nodes:
+        for node in nodes.sort(key=lambda x: x.position):
 
             smartnode = bot.nodeList.getNodeById(node['node_id'])
 
