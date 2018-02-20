@@ -377,7 +377,7 @@ def balances(bot, userId, results):
 
         # Only show the profit if there was no error since it would make not much sense otherwise.
         if not error:
-            response += messages.markdown("\nProfit: <b>{} SMART<b>".format(total%10000),bot.messenger)
+            response += messages.markdown("\nProfit: <b>{} SMART<b>".format(total - len(userNodes) * 10000),bot.messenger)
 
     else:
         response += "Sorry, could not check your balances! Looks like all explorers are down. Try it again later.\n\n"
