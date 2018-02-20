@@ -1,14 +1,14 @@
 help - Print help text
 info - Print the current status of the SmartNode network
+detail - List all details of your nodes
+nodes - List the status and last payments of your nodes
+balance - Print the SMART balances of your SmartNodes
 status - Enable/Disable node status update notifications
 reward - Enable/Disable node reward notifications
-timeout - Enable/Disable node rank update notifications
+timeout - Enable/Disable node timeout notifications
 network - Enable/Disable network notifications
 me - List your user info and notification states
 username - Change your username
 add - Add one or more of your nodes
 update - Change the name of a node
 remove - Remove one of your nodes
-detail - List all details of your nodes
-nodes - List the status and last payments of your nodes
-balance - Print the SMART balances of your SmartNodes

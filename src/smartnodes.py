@@ -48,41 +48,39 @@ class Transaction(object):
 
 class SmartNode(object):
 
-    def __init__(self, id, tx, payee, status,\
-                activeSeconds, lastPaidBlock,\
-                lastPaidTime,lastSeen, protocol, ip, rank, position, timeout):
+    def __init__(self, **kwargs):
 
-        self.id = id
-        self.tx = tx
-        self.payee = str(payee)
-        self.status = str(status)
-        self.activeSeconds = int(activeSeconds)
-        self.lastPaidBlock = int(lastPaidBlock)
-        self.lastPaidTime = int(lastPaidTime)
-        self.lastSeen = int(lastSeen)
-        self.protocol = int(protocol)
-        self.rank = int(rank)
-        self.ip = str(ip)
-        self.position = int(position)
-        self.timeout = int(timeout)
+        self.id = kwargs['id']
+        self.tx = kwargs['tx']
+        self.payee = str(kwargs['payee'])
+        self.status = str(kwargs['status'])
+        self.activeSeconds = int(kwargs['active_seconds'])
+        self.lastPaidBlock = int(kwargs['last_paid_block'])
+        self.lastPaidTime = int(kwargs['last_paid_time'])
+        self.lastSeen = int(kwargs['last_seen'])
+        self.protocol = int(kwargs['protocol'])
+        self.rank = int(kwargs['rank'])
+        self.ip = str(kwargs['ip'])
+        self.timeout = int(kwargs['timeout'])
+        self.position = -1
+
 
     @classmethod
     def fromRaw(cls,tx, raw):
 
         data = raw.split()
 
-        return cls(None, tx,
-                   data[PAYEE_INDEX],
-                   data[STATUS_INDEX].replace('_','-'), # Avoid markdown problems
-                   data[ACTIVE_INDEX],
-                   data[PAIDBLOCK_INDEX],
-                   data[PAIDTIME_INDEX],
-                   data[SEEN_INDEX],
-                   data[PROTOCOL_INDEX],
-                   data[IPINDEX_INDEX],
-                   -1,
-                   -1,
-                   -1 )
+        return cls(None, tx=tx,
+                   payee = data[PAYEE_INDEX],
+                   status = data[STATUS_INDEX].replace('_','-'), # Avoid markdown problems
+                   active_seconds = data[ACTIVE_INDEX],
+                   last_paid_block = data[PAIDBLOCK_INDEX],
+                   last_paid_time = data[PAIDTIME_INDEX],
+                   last_seen = data[SEEN_INDEX],
+                   protocol = data[PROTOCOL_INDEX],
+                   ip = data[IPINDEX_INDEX],
+                   rank = -1,
+                   timeout = -1)
 
     @classmethod
     def fromDb(cls, row):
@@ -90,18 +88,17 @@ class SmartNode(object):
         tx = Transaction(row['txhash'], row['txindex'])
 
         return cls(row['id'],
-                   tx,
-                   row['payee'],
-                   row['status'],
-                   row['activeseconds'],
-                   row['last_paid_block'],
-                   row['last_paid_time'],
-                   row['last_seen'],
-                   row['protocol'],
-                   row['ip'],
-                   row['rank'],
-                   row['position'],
-                   row['timeout'] )
+                   tx = tx,
+                   payee = row['payee'],
+                   status = row['status'],
+                   active_seconds = row['activeseconds'],
+                   last_paid_block = row['last_paid_block'],
+                   last_paid_time = row['last_paid_time'],
+                   last_seen = row['last_seen'],
+                   protocol = row['protocol'],
+                   ip = row['ip'],
+                   rank = -1,
+                   timeout = row['timeout'] )
 
     def update(self, raw):
 
@@ -488,8 +485,10 @@ class SmartNodeList(object):
                 value +=1
                 self.nodelist[tx].updatePosition(value)
 
-        self.updateRanks()
-
+        #####
+        # Disabled rank updates due to confusion of the users
+        #self.updateRanks()
+        #####
         self.startTimer()
 
     def updateRanks(self):

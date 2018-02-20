@@ -269,7 +269,6 @@ class NodeDatabase(object):
                         last_seen,\
                         protocol,\
                         ip,\
-                        rank,\
                         timeout ) \
                         values( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )"
 
@@ -284,7 +283,6 @@ class NodeDatabase(object):
                                   node.lastSeen,
                                   node.protocol,
                                   node.ip,
-                                  node.rank,
                                   node.timeout))
 
                 return db.cursor.lastrowid
@@ -381,7 +379,6 @@ class NodeDatabase(object):
                                 last_seen=?,\
                                 protocol=?,\
                                 ip=?,\
-                                rank=?,\
                                 timeout=?\
                                 WHERE txhash=? AND txindex=?"
 
@@ -394,7 +391,6 @@ class NodeDatabase(object):
                                   node.lastSeen,\
                                   node.protocol,\
                                   node.ip,
-                                  node.rank,
                                   node.timeout,
                                   tx.hash,tx.index))
 
@@ -419,8 +415,7 @@ class NodeDatabase(object):
         	`last_paid_time` INTEGER,\
         	`last_seen`	INTEGER,\
         	`protocol`	INTEGER,\
-        	`ip` TEXT,\
-        	`rank`	INTEGER\
+        	`ip` TEXT\
         );\
         CREATE INDEX `payee` ON `nodes` (`payee`);\
         COMMIT;'
