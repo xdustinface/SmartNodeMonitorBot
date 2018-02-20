@@ -58,7 +58,6 @@ class SmartNode(object):
 
     def __init__(self, **kwargs):
 
-        self.id = kwargs['id']
         self.tx = kwargs['tx']
         self.payee = str(kwargs['payee'])
         self.status = str(kwargs['status'])
@@ -465,16 +464,17 @@ class SmartNodeList(object):
 
                 logger.warning("Unequal node count - DB {}, CLI {}".format(dbCount,len(nodes)))
 
-                dbNodes = self.db.getNodes(('id','txhash','txindex'))
+                dbNodes = self.db.getNodes(('collateral'))
 
                 for dbNode in dbNodes:
 
-                    tx = Transaction(dbNode['txhash'],dbNode['txindex'])
+                    tx = Transaction.fromString(dbNode['collateral'])
 
                     if not tx in currentList:
                         logger.info("Remove node {}".format(dbNode))
-                        removedNodes.append(dbNode['id'])
+                        removedNodes.append(dbNode['collateral'])
                         self.db.deleteNode(tx)
+                        self.nodeList.pop(tx,None)
 
                 if len(removedNodes) != (dbCount - len(nodes)):
                     logger.warning("Remove nodes - something messed up.")
