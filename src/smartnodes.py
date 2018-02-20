@@ -87,7 +87,7 @@ class SmartNode(object):
 
         tx = Transaction(row['txhash'], row['txindex'])
 
-        return cls(row['id'],
+        return cls(id = row['id'],
                    tx = tx,
                    payee = row['payee'],
                    status = row['status'],
