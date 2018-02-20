@@ -78,7 +78,7 @@ class SmartNode(object):
 
         data = raw.split()
 
-        return cls(None, tx=tx,
+        return cls(tx = tx,
                    payee = data[PAYEE_INDEX],
                    status = data[STATUS_INDEX].replace('_','-'), # Avoid markdown problems
                    active_seconds = data[ACTIVE_INDEX],
@@ -95,8 +95,7 @@ class SmartNode(object):
 
         tx = Transaction.fromString(row['collateral'])
 
-        return cls(id = row['id'],
-                   tx = tx,
+        return cls(tx = tx,
                    payee = row['payee'],
                    status = row['status'],
                    active_seconds = row['activeseconds'],
@@ -363,11 +362,10 @@ class SmartNodeList(object):
                     id = self.db.addNode(tx,insert)
 
                     if id:
-                        insert.id = id
                         self.nodelist[tx] = insert
-                        newNodes.append(id)
+                        newNodes.append(tx)
 
-                        logger.info(" => added with id {}".format(insert.id))
+                        logger.debug(" => added with collateral {}".format(insert.collateral))
                     else:
                         logger.error("Could not add the node {}".format(key))
 
