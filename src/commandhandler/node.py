@@ -336,7 +336,7 @@ def nodes(bot, update):
 
             payoutText = util.secondsToText(smartnode.lastPaidTime)
             response += messages.markdown("<b>" + node['name'] + "<b> - `" + smartnode.status + "`\n",bot.messenger)
-                        response += "Position {}\n".format(positionToString(smartnode.position))
+            response += "Position {}\n".format(positionToString(smartnode.position))
             response += "Last seen {}\n".format(util.secondsToText( int(time.time()) - smartnode.lastSeen))
             response += "Last payout {}\n".format(payoutTimeToString(smartnode.lastPaidTime))
             response += messages.link(bot.messenger, 'https://explorer3.smartcash.cc/address/{}\n'.format(smartnode.payee),'Open the explorer!')
