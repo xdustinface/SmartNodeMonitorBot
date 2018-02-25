@@ -61,13 +61,13 @@ class BotDatabase(object):
     def addNode(self, collateral,name,userId,userName):
 
         user = self.addUser(userId, userName)
-        node = self.getNodes(nodeId, user)
+        node = self.getNodes(collateral, user)
 
         if node == None or node['user_id'] != user:
 
             with self.connection as db:
 
-                db.cursor.execute("INSERT INTO nodes( collateral, name, user_id  )  values( ?, ?, ? )", ( nodeId, name, user ) )
+                db.cursor.execute("INSERT INTO nodes( collateral, name, user_id  )  values( ?, ?, ? )", ( collateral, name, user ) )
 
                 return True
 
@@ -293,13 +293,16 @@ class NodeDatabase(object):
 
         return nodes
 
-    def getNodeCount(self):
+    def getNodeCount(self, where = None):
 
         count = 0
 
         with self.connection as db:
 
-            db.cursor.execute("SELECT COUNT(collateral) FROM nodes")
+            if where:
+                db.cursor.execute("SELECT COUNT(collateral) FROM nodes WHERE {}".format(where))
+            else:
+                db.cursor.execute("SELECT COUNT(collateral) FROM nodes")
 
             count = db.cursor.fetchone()[0]
 

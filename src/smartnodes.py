@@ -539,6 +539,9 @@ class SmartNodeList(object):
     def getNodeByIp(self, ip):
         return self.db.getNodeByIp(ip)
 
+    def getNodeCountForProtocol(self, protocol):
+        return self.db.getNodeCount('protocol={}'.format(protocol))
+
     def getNodes(self, collaterals):
 
         nodes = []
