@@ -71,8 +71,8 @@ def stats(bot):
     response += "User: {}\n".format(len(bot.database.getUsers()))
     response += "Nodes: {}\n".format(len(bot.database.getAllNodes()))
 
-    response += "90024: {}\n".format(len(bot.nodeList.getNodeCountForProtocol(90024)))
-    response += "90025: {}\n".format(len(bot.nodeList.getNodeCountForProtocol(90025)))
+    response += "90024: {}\n".format(bot.nodeList.getNodeCountForProtocol(90024))
+    response += "90025: {}\n".format(bot.nodeList.getNodeCountForProtocol(90025))
 
     return response
 
