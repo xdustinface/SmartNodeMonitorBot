@@ -299,7 +299,7 @@ class NodeDatabase(object):
 
         with self.connection as db:
 
-            db.cursor.execute("SELECT COUNT(id) FROM nodes")
+            db.cursor.execute("SELECT COUNT(collateral) FROM nodes")
 
             count = db.cursor.fetchone()[0]
 
