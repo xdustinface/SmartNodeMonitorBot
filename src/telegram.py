@@ -593,7 +593,7 @@ class SmartNodeBotTelegram(object):
 
         for dbUser in self.database.getUsers():
 
-            userNode = self.database.getNodes(str(n.collateral), dbU['id'])
+            userNode = self.database.getNodes(str(n.collateral), dbUser['id'])
 
             if not userNode:
                 continue
