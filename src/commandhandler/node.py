@@ -359,7 +359,7 @@ def balances(bot, userId, results):
 
         for result in results:
             for node in userNodes:
-                if result.node.id == node['node_id']:
+                if str(result.node.collateral) == node['collateral']:
 
                     if not util.isInt(result.data) and "error" in result.data:
                         response += "{} - Error: {}\n".format(node['name'], result.data["error"])
