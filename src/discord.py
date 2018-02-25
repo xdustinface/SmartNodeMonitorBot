@@ -357,9 +357,9 @@ class SmartNodeBotDiscord(object):
     # Called by: SmartNodeList
     #
     ######
-    def networkCB(self, ids, added):
+    def networkCB(self, collaterals, added):
 
-        response = common.networkUpdate(self, ids, added)
+        response = common.networkUpdate(self, collaterals, added)
 
         # Handle the network update notifications.
         for dbUser in self.database.getUsers('where network_n=1'):
