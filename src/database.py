@@ -276,7 +276,7 @@ class NodeDatabase(object):
                 return db.cursor.lastrowid
 
         except Exception as e:
-            logger.error("Duplicate?!", exc_info=e)
+            logger.debug("Duplicate?!", exc_info=e)
 
         return None
 
