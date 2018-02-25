@@ -243,7 +243,7 @@ class NodeDatabase(object):
 
         return len(tables) == 0
 
-    def addNode(self, tx, node):
+    def addNode(self, collateral, node):
 
         try:
 
@@ -262,7 +262,7 @@ class NodeDatabase(object):
                         values( ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )"
 
                 db.cursor.execute(query, (
-                                  str(tx),
+                                  str(collateral),
                                   node.payee,
                                   node.status,
                                   node.activeSeconds,
@@ -319,9 +319,9 @@ class NodeDatabase(object):
 
         return node
 
-    def updateNode(self, tx, node):
+    def updateNode(self, collateral, node):
 
-        if not self.addNode(tx, node):
+        if not self.addNode(collateral, node):
 
             with self.connection as db:
 
@@ -347,13 +347,13 @@ class NodeDatabase(object):
                                   node.protocol,\
                                   node.ip,
                                   node.timeout,
-                                  str(tx)))
+                                  str(collateral)))
 
-    def deleteNode(self, tx):
+    def deleteNode(self, collateral):
 
         with self.connection as db:
 
-            db.cursor.execute("DELETE FROM nodes WHERE collateral=?",[tx])
+            db.cursor.execute("DELETE FROM nodes WHERE collateral=?",[collateral])
 
     def reset(self):
 

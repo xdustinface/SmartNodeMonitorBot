@@ -335,7 +335,7 @@ def nodes(bot, update):
 
         for smartnode in nodes.sort(key=lambda x: x.position):
 
-            userNode = bot.database.getNodes(smartnode.tx, user['id'])
+            userNode = bot.database.getNodes(smartnode.collateral, user['id'])
 
             payoutText = util.secondsToText(smartnode.lastPaidTime)
             response += messages.markdown("<b>" + userNode['name'] + "<b> - `" + smartnode.status + "`\n",bot.messenger)

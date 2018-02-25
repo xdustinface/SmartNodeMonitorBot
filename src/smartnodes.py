@@ -58,7 +58,7 @@ class SmartNode(object):
 
     def __init__(self, **kwargs):
 
-        self.tx = kwargs['tx']
+        self.collateral = kwargs['collateral']
         self.payee = str(kwargs['payee'])
         self.status = str(kwargs['status'])
         self.activeSeconds = int(kwargs['active_seconds'])
@@ -73,11 +73,11 @@ class SmartNode(object):
 
 
     @classmethod
-    def fromRaw(cls,tx, raw):
+    def fromRaw(cls,collateral, raw):
 
         data = raw.split()
 
-        return cls(tx = tx,
+        return cls(collateral = collateral,
                    payee = data[PAYEE_INDEX],
                    status = data[STATUS_INDEX].replace('_','-'), # Avoid markdown problems
                    active_seconds = data[ACTIVE_INDEX],
@@ -92,9 +92,9 @@ class SmartNode(object):
     @classmethod
     def fromDb(cls, row):
 
-        tx = Transaction.fromString(row['collateral'])
+        collateral = Transaction.fromString(row['collateral'])
 
-        return cls(tx = tx,
+        return cls(collateral = collateral,
                    payee = row['payee'],
                    status = row['status'],
                    active_seconds = row['activeseconds'],
@@ -211,7 +211,7 @@ class SmartNodeList(object):
 
         for entry in dbList:
                 node = SmartNode.fromDb(entry)
-                self.nodeList[node.tx] = node
+                self.nodeList[node.collateral] = node
 
     def validateAddress(self, address):
 
@@ -349,20 +349,20 @@ class SmartNodeList(object):
 
             for key, data in nodes.items():
 
-                tx = Transaction.fromRaw(key)
+                collateral = Transaction.fromRaw(key)
 
-                currentList.append(tx)
+                currentList.append(collateral)
 
-                if tx not in self.nodeList:
+                if collateral not in self.nodeList:
 
                     logger.info("Add node {}".format(key))
-                    insert = SmartNode.fromRaw(tx, data)
+                    insert = SmartNode.fromRaw(collateral, data)
 
-                    id = self.db.addNode(tx,insert)
+                    id = self.db.addNode(collateral,insert)
 
                     if id:
-                        self.nodeList[tx] = insert
-                        newNodes.append(tx)
+                        self.nodeList[collateral] = insert
+                        newNodes.append(collateral)
 
                         logger.debug(" => added with collateral {}".format(insert.collateral))
                     else:
@@ -372,7 +372,7 @@ class SmartNodeList(object):
 
                     sync = False
 
-                    node = self.nodeList[tx]
+                    node = self.nodeList[collateral]
                     update = node.update(data)
 
                     if update['status'] :
@@ -383,7 +383,7 @@ class SmartNodeList(object):
                         logger.info("[{}] Protocol updated {}".format(node.payee, node.protocol))
 
                     if update['payee']:
-                        logger.info("[{}] Payee updated {}".format(txid, node.payee))
+                        logger.info("[{}] Payee updated {}".format(collateral, node.payee))
                         sync = True
 
                     if update['lastPaid'] :
@@ -398,10 +398,9 @@ class SmartNodeList(object):
                         sync = True
 
                     if sync:
-                        self.db.updateNode(tx,node)
+                        self.db.updateNode(collateral,node)
 
                     if sum(map(lambda x: x, update.values())):
-                        #logger.info("Write to DB {}".format(txid))
 
                         if self.nodeChangeCB != None:
                             self.nodeChangeCB(update, node)
@@ -410,7 +409,7 @@ class SmartNodeList(object):
                 ## Update the the position indicator of the node
                 #####
 
-                node = self.nodeList[tx]
+                node = self.nodeList[collateral]
 
                 if node.status == 'ENABLED':
 
@@ -435,7 +434,7 @@ class SmartNodeList(object):
                         # If not just use the active seconds.
                         positionTime = node.activeSeconds
 
-                    positionIndicators[tx] = positionTime
+                    positionIndicators[collateral] = positionTime
 
                 else:
                     node.position = -2
@@ -468,13 +467,13 @@ class SmartNodeList(object):
 
                 for dbNode in dbNodes:
 
-                    tx = Transaction.fromString(dbNode['collateral'])
+                    collateral = Transaction.fromString(dbNode['collateral'])
 
-                    if not tx in currentList:
+                    if not collateral in currentList:
                         logger.info("Remove node {}".format(dbNode))
                         removedNodes.append(dbNode['collateral'])
-                        self.db.deleteNode(tx)
-                        self.nodeList.pop(tx,None)
+                        self.db.deleteNode(collateral)
+                        self.nodeList.pop(collateral,None)
 
                 if len(removedNodes) != (dbCount - len(nodes)):
                     logger.warning("Remove nodes - something messed up.")
@@ -487,9 +486,9 @@ class SmartNodeList(object):
 
             positions = sorted(positionIndicators, key=positionIndicators.__getitem__, reverse=True)
             value = 0
-            for tx in positions:
+            for collateral in positions:
                 value +=1
-                self.nodeList[tx].updatePosition(value)
+                self.nodeList[collateral].updatePosition(value)
 
         #####
         # Disabled rank updates due to confusion of the users
@@ -524,12 +523,12 @@ class SmartNodeList(object):
 
                 rank = data
 
-                tx = Transaction.fromRaw(key)
+                collateral = Transaction.fromRaw(key)
 
-                if tx not in self.nodeList:
+                if collateral not in self.nodeList:
                     logger.error("Could not assign rank, node not available {}".format(key))
                 else:
-                    self.nodeList[tx].updateRank(data)
+                    self.nodeList[collateral].updateRank(data)
 
     def count(self):
         return len(self.nodeList)
@@ -544,16 +543,16 @@ class SmartNodeList(object):
 
         nodes = []
 
-        for collateral in collaterals:
+        for c in collaterals:
 
-            tx = None
+            collateral = None
 
-            if isinstance(collateral,Transaction):
-                tx = collateral
+            if isinstance(c,Transaction):
+                collateral = collateral
             else:
-                tx = Transaction.fromString(collateral)
+                collateral = Transaction.fromString(c)
 
-            if tx in self.nodeList:
-                nodes.append(self.nodeList[tx])
+            if collateral in self.nodeList:
+                nodes.append(self.nodeList[collateral])
 
         return nodes
