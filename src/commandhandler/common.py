@@ -24,7 +24,7 @@ def info(bot, update):
 
     response = messages.markdown("<u><b>SmartNode Network<b><u>\n\n",bot.messenger)
 
-    if bot.nodeList.synced():
+    if bot.nodeList.synced() and bot.nodeList.lastBlock:
 
         lastBlock = bot.nodeList.lastBlock
         created = bot.nodeList.count()
