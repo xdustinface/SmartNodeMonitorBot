@@ -381,7 +381,8 @@ class SmartNodeList(object):
 
                     if update['protocol'] :
                         logger.info("[{}] Protocol updated {}".format(node.payee, node.protocol))
-
+                        sync = True
+                        
                     if update['payee']:
                         logger.info("[{}] Payee updated {}".format(collateral, node.payee))
                         sync = True
