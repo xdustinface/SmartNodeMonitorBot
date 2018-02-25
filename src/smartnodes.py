@@ -463,7 +463,7 @@ class SmartNodeList(object):
 
                 logger.warning("Unequal node count - DB {}, CLI {}".format(dbCount,len(nodes)))
 
-                dbNodes = self.db.getNodes(('collateral'))
+                dbNodes = self.db.getNodes(['collateral'])
 
                 for dbNode in dbNodes:
 
