@@ -122,10 +122,10 @@ class BotDatabase(object):
         with self.connection as db:
 
             if userId:
-                db.cursor.execute("SELECT * FROM nodes WHERE collateral=? and user_id=?",(collateral,userId))
+                db.cursor.execute("SELECT * FROM nodes WHERE collateral=? and user_id=?",(str(collateral),userId))
                 nodes = db.cursor.fetchone()
             else:
-                db.cursor.execute("SELECT * FROM nodes WHERE collateral=?",[collateral])
+                db.cursor.execute("SELECT * FROM nodes WHERE collateral=?",[str(collateral)])
                 nodes = db.cursor.fetchall()
 
         return nodes
@@ -140,7 +140,7 @@ class BotDatabase(object):
 
         with self.connection as db:
 
-            db.cursor.execute("UPDATE nodes SET name=? WHERE collateral=? and user_id=?",(name, collateral, userId))
+            db.cursor.execute("UPDATE nodes SET name=? WHERE collateral=? and user_id=?",(name, str(collateral), userId))
 
     def updateStatusNotification(self, userId, state):
 
@@ -176,7 +176,7 @@ class BotDatabase(object):
 
         with self.connection as db:
 
-            db.cursor.execute("DELETE FROM nodes WHERE collateral=? and user_id=?",(collateral,userId))
+            db.cursor.execute("DELETE FROM nodes WHERE collateral=? and user_id=?",(str(collateral),userId))
 
     def deleteNodesForUser(self, userId):
 
@@ -186,7 +186,7 @@ class BotDatabase(object):
     def deleteNodesWithId(self, collateral):
 
         with self.connection as db:
-            db.cursor.execute("DELETE FROM nodes WHERE collateral=?",[collateral])
+            db.cursor.execute("DELETE FROM nodes WHERE collateral=?",[str(collateral)])
 
     def reset(self):
 
@@ -321,7 +321,7 @@ class NodeDatabase(object):
 
     def updateNode(self, collateral, node):
 
-        if not self.addNode(collateral, node):
+        if not self.addNode(str(collateral), node):
 
             with self.connection as db:
 
@@ -353,7 +353,7 @@ class NodeDatabase(object):
 
         with self.connection as db:
 
-            db.cursor.execute("DELETE FROM nodes WHERE collateral=?",[collateral])
+            db.cursor.execute("DELETE FROM nodes WHERE collateral=?",[str(collateral)])
 
     def reset(self):
 
