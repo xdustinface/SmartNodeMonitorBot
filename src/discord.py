@@ -225,8 +225,10 @@ class SmartNodeBotDiscord(object):
 
             # If there is no nodes added yet send an error and return
             if dbUser == None or userNodes == None or len(userNodes) == 0:
+                
                 response = messages.markdown("<u><b>Balances<b><u>\n\n",self.messenger)
-                response += messages.notActiveError(self.messenger)
+                response += messages.nodesRequired(self.messenger)
+
                 await self.sendMessage(message.author, response)
                 return
 
@@ -335,19 +337,19 @@ class SmartNodeBotDiscord(object):
     ######
     def nodeUpdateCB(self, update, n):
 
-        for user in self.database.getUsers():
+        for dbUser in self.database.getUsers():
 
-            userNode = self.database.getNodes(str(n.collateral), user['id'])
+            userNode = self.database.getNodes(str(n.collateral), dbUser['id'])
 
             if userNode == None:
                 continue
 
             logger.info("nodeChangeCB {}".format(n.payee))
 
-            member = self.findMember(user['id'])
+            member = self.findMember(dbUser['id'])
 
             if member:
-                for response in node.nodeUpdated(self, update, user, userNode, n):
+                for response in node.nodeUpdated(self, update, dbUser, userNode, n):
                     asyncio.run_coroutine_threadsafe(self.sendMessage(member, response), loop=self.client.loop)
 
     #####
