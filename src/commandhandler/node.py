@@ -319,7 +319,7 @@ def nodes(bot, update):
         collaterals = list(map(lambda x: x['collateral'],userNodes))
         nodes = bot.nodeList.getNodes(collaterals)
 
-        for smartnode in nodes.sort(key=lambda x: x.position):
+        for smartnode in sorted(nodes, key=lambda x: x.position):
 
             userNode = bot.database.getNodes(smartnode.collateral, user['id'])
 
