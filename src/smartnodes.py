@@ -573,6 +573,7 @@ class SmartNodeList(object):
         return len(self.nodeList)
 
     def protocolRequirement(self):
+        
         if time.time() < 1519824000:
             return 90024
         else:
