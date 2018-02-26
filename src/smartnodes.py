@@ -612,7 +612,7 @@ class SmartNodeList(object):
             return self.protocol_90024
         elif protocol == 90025:
             return self.protocol_90025
-        else
+        else:
             return len(self.nodeList)
 
     def protocolRequirement(self):
@@ -640,7 +640,7 @@ class SmartNodeList(object):
             return self.enabled_90024
         elif protocol == 90025:
             return self.enabled_90025
-        else
+        else:
             return self.enabled_90024 + self.enabled_90025
 
         return sum(list(map(lambda x: x.status == "ENABLED" , self.nodeList.values())))
