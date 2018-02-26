@@ -10,20 +10,6 @@ import discord
 
 logger = logging.getLogger("node")
 
-def payoutTimeToString(t):
-    if t:
-        return util.secondsToText( int(time.time()) - t )
-    else:
-        return "No payout yet."
-
-def positionToString(position):
-    if position == -1:
-        return 'Calculating...'
-    elif position == -2:
-        return "Not qualified for payouts"
-    else:
-        return "{}".format(position)
-
 ######
 # Telegram command handler for adding nodes for the user who fired the command.
 #
@@ -293,8 +279,8 @@ def detail(bot, update):
             response += "\n  `Payee` " + smartnode.payee
             response += "\n  `Active since` " + util.secondsToText(smartnode.activeSeconds)
             response += "\n  `Last seen` " + util.secondsToText( int(time.time()) - smartnode.lastSeen)
-            response += "\n  `Last payout (Block)` {}".format(smartnode.lastPaidBlock if smartnode.lastPaidBlock else "No payout yet.")
-            response += "\n  `Last payout (Time)` " + payoutTimeToString(smartnode.lastPaidTime)
+            response += "\n  `Last payout (Block)` " + smartnode.payoutBlockString()
+            response += "\n  `Last payout (Time)` " + smartnode.payoutTimeString()
             response += "\n  `Protocol` {}".format(smartnode.protocol)
             #response += "\n  `Rank` {}".format(smartnode.rank)
             response += "\n  " + messages.link(bot.messenger, 'https://explorer3.smartcash.cc/address/{}'.format(smartnode.payee),'Open the explorer!')
@@ -339,9 +325,9 @@ def nodes(bot, update):
 
             payoutText = util.secondsToText(smartnode.lastPaidTime)
             response += messages.markdown("<b>" + userNode['name'] + "<b> - `" + smartnode.status + "`\n",bot.messenger)
-            response += "Position {}\n".format(positionToString(smartnode.position))
+            response += "Position {}\n" + smartnode.positionString()
             response += "Last seen {}\n".format(util.secondsToText( int(time.time()) - smartnode.lastSeen))
-            response += "Last payout {}\n".format(payoutTimeToString(smartnode.lastPaidTime))
+            response += "Last payout {}\n" + smartnode.payoutTimeString()
             response += messages.link(bot.messenger, 'https://explorer3.smartcash.cc/address/{}\n'.format(smartnode.payee),'Open the explorer!')
 
     return response

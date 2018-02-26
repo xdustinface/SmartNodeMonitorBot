@@ -73,7 +73,7 @@ def secondsToText(secs):
     ("{0} hour{1}, ".format(hours, "s" if hours!=1 else "") if hours else "") + \
     ("{0} minute{1}, ".format(minutes, "s" if minutes!=1 else "") if minutes else "") + \
     ("{0} second{1} ".format(seconds, "s" if seconds!=1 else "") if seconds else "")
-    return result
+    return result if result != "" else "Now"
 
 def crossMessengerSplit(obj):
 

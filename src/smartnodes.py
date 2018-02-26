@@ -19,6 +19,12 @@ PAIDTIME_INDEX = 5
 PAIDBLOCK_INDEX = 6
 IPINDEX_INDEX = 7
 
+# Smartnode position states
+POS_CALCULATING = -1
+POS_UPDATE_REQUIRED = -2
+POS_TOO_NEW = -3
+POS_NOT_QUALIFIED = -4
+
 logger = logging.getLogger("smartnodes")
 
 transactionRawCheck = re.compile("COutPoint\([\d\a-f]{64},.[\d]{1,}\)")
@@ -69,7 +75,7 @@ class SmartNode(object):
         self.rank = int(kwargs['rank'])
         self.ip = str(kwargs['ip'])
         self.timeout = int(kwargs['timeout'])
-        self.position = -1
+        self.position = POS_CALCULATING
 
 
     @classmethod
@@ -162,6 +168,34 @@ class SmartNode(object):
             self.ip = data[IPINDEX_INDEX]
 
         return update
+
+    def payoutBlockString(self):
+
+        if self.lastPaidBlock > 0:
+            return str(self.lastPaidBlock)
+
+        return "No payout yet."
+
+    def payoutTimeString(self):
+
+        if self.lastPaidTime > 0:
+            return util.secondsToText( int(time.time()) - self.lastPaidTime )
+
+        return "No payout yet."
+
+    def positionString(self):
+
+        if position == POS_CALCULATING:
+            return "Calculating..."
+        elif position == POS_UPDATE_REQUIRED:
+            return "Node update required!"
+        elif position == POS_TOO_NEW:
+            return "Initial wait time."
+        elif position == POS_NOT_QUALIFIED:
+            return "Not qualified!"
+        else:
+            return str(position)
+
 
     def updateRank(self, rank):
         self.rank = int(rank)
@@ -382,7 +416,7 @@ class SmartNodeList(object):
                     if update['protocol'] :
                         logger.info("[{}] Protocol updated {}".format(node.payee, node.protocol))
                         sync = True
-                        
+
                     if update['payee']:
                         logger.info("[{}] Payee updated {}".format(collateral, node.payee))
                         sync = True
@@ -412,7 +446,11 @@ class SmartNodeList(object):
 
                 node = self.nodeList[collateral]
 
-                if node.status == 'ENABLED':
+                if node.activeSeconds < self.minimumUptime():
+                    node.position = POS_TOO_NEW
+                elif node.protocol < self.protocolRequirement():
+                    node.position = POS_UPDATE_REQUIRED
+                elif node.status == 'ENABLED':
 
                     positionTime = None
 
@@ -438,7 +476,7 @@ class SmartNodeList(object):
                     positionIndicators[collateral] = positionTime
 
                 else:
-                    node.position = -2
+                    node.position = POS_NOT_QUALIFIED
 
             #####
             ## Invoke the callback if we have new nodes
@@ -534,8 +572,23 @@ class SmartNodeList(object):
     def count(self):
         return len(self.nodeList)
 
-    def enabled(self):
-        return sum(list(map(lambda x: x.status == "ENABLED", self.nodeList.values())))
+    def protocolRequirement(self):
+        if time.time() < 1519824000:
+            return 90024
+        else
+            return 90025
+
+    def enabledWithMinProtocol(self):
+        return self.enabled(self.protocolRequirement())
+
+    def minimumUptime(self):
+        return self.enabledWithMinProtocol() * 156 # https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L561
+
+    def qualified(self):
+        return sum(list(map(lambda x: x.status == "ENABLED" and x.protocol >= protocol and x.activeSeconds >= self.minimumUptime(), self.nodeList.values())))
+
+    def enabled(self, protocol = -1):
+        return sum(list(map(lambda x: x.status == "ENABLED" and x.protocol >= protocol, self.nodeList.values())))
 
     def getNodeByIp(self, ip):
         return self.db.getNodeByIp(ip)
