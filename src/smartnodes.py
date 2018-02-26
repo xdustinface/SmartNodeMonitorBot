@@ -215,7 +215,6 @@ class SmartNodeList(object):
 
         self.lastBlock = 0
         self.lastQualified = 0
-        self.enabledWithMinProtocol = 0
         self.protocol_90024 = 0
         self.protocol_90025 = 0
         self.enabled_90024 = 0
