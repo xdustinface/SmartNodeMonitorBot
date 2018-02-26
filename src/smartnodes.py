@@ -214,6 +214,12 @@ class SmartNodeList(object):
     def __init__(self, db):
 
         self.lastBlock = 0
+        self.lastQualified = 0
+        self.enabledWithMinProtocol = 0
+        self.protocol_90024 = 0
+        self.protocol_90025 = 0
+        self.enabled_90024 = 0
+        self.enabled_90025 = 0
         self.nodeList = {}
 
         self.chainSynced = False
@@ -229,6 +235,7 @@ class SmartNodeList(object):
         self.load()
 
         self.startTimer()
+
 
     def pushAdmin(self, message):
 
@@ -345,6 +352,7 @@ class SmartNodeList(object):
                 self.startTimer()
                 return
 
+        self.lastQualified = 0
         newNodes = []
 
         nodes = None
@@ -442,6 +450,27 @@ class SmartNodeList(object):
                         if self.nodeChangeCB != None:
                             self.nodeChangeCB(update, node)
 
+
+
+                #####
+                ## Update vars for calculations
+                #
+                ####
+
+                if node.protocol == 90024:
+
+                    self.protocol_90024 += 1
+
+                    if node.status == 'ENABLED':
+                        self.enabled_90024 += 1
+
+                if node.protocol == 90025:
+
+                    self.protocol_90025 += 1
+
+                    if node.status == 'ENABLED':
+                        self.enabled_90025 += 1
+
                 #####
                 ## Update the the position indicator of the node
                 #
@@ -459,6 +488,7 @@ class SmartNodeList(object):
                     node.updatePosition(POS_UPDATE_REQUIRED)
                 elif node.status == 'ENABLED': #https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L539
 
+                    self.lastQualified += 1
                     positionTime = None
 
                     # If the node got paid we need need to decide further
@@ -578,10 +608,12 @@ class SmartNodeList(object):
 
     def count(self, protocol = -1):
 
-        if protocol != -1:
-            return sum(list(map(lambda x: x.protocol == protocol, self.nodeList.values())))
-
-        return len(self.nodeList)
+        if protocol == 90024:
+            return self.protocol_90024
+        elif protocol == 90025:
+            return self.protocol_90025
+        else
+            return len(self.nodeList)
 
     def protocolRequirement(self):
 
@@ -591,18 +623,25 @@ class SmartNodeList(object):
             return 90025
 
     def enabledWithMinProtocol(self):
-        return sum(list(map(lambda x: x.status == "ENABLED" and x.protocol >= self.protocolRequirement(), self.nodeList.values())))
+        if self.protocolRequirement() == 90024:
+            return self.enabled_90024 + self.enabled_90025
+        elif self.protocolRequirement() == 90025:
+            return self.enabled_90025
 
     def minimumUptime(self):
         return self.enabledWithMinProtocol() * 156 # https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L561
 
     def qualified(self):
-        return sum(list(map(lambda x: x.status == "ENABLED" and x.protocol >= self.protocolRequirement() and x.activeSeconds >= self.minimumUptime(), self.nodeList.values())))
+        return self.lastQualified
 
     def enabled(self, protocol = -1):
 
-        if protocol != -1:
-            return sum(list(map(lambda x: x.status == "ENABLED" and x.protocol == protocol, self.nodeList.values())))
+        if protocol == 90024:
+            return self.enabled_90024
+        elif protocol == 90025:
+            return self.enabled_90025
+        else
+            return self.enabled_90024 + self.enabled_90025
 
         return sum(list(map(lambda x: x.status == "ENABLED" , self.nodeList.values())))
 
