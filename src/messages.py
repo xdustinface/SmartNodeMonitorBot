@@ -113,11 +113,26 @@ def help(messenger):
 #                      Common messages                     #
 ############################################################
 
-def networkState(messenger, last, created, enabled):
+def networkState(messenger, last, created, enabled, qualified,
+                 protocolRequirement, protocol90024, protocol90025,
+                 initialWait):
 
     message = ("<b>Current block<b> {}\n\n"
                 "<b>Nodes created<b> {}\n"
-                "<b>Nodes enabled<b> {}\n\n").format(last,created,enabled)
+                "<b>Nodes enabled<b> {}\n"
+                "<b>Nodes qualified<b> {}\n\n"
+                "<b>Protocol requirement<b> {}\n\n"
+                "<b>Nodes with 90024<b> {}\n"
+                "<b>Nodes with 90025<b> {}\n\n"
+                "<b>Minimum active time to receive
+                " the first payout: <b> {}\n").format(last,
+                                                      created,
+                                                      enabled,
+                                                      qualified,
+                                                      protocolRequirement,
+                                                      protocol90024,
+                                                      protocol90025,
+                                                      initialWait)
 
     return markdown(message,messenger)
 

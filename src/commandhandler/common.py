@@ -29,8 +29,21 @@ def info(bot, update):
         lastBlock = bot.nodeList.lastBlock
         created = bot.nodeList.count()
         enabled = bot.nodeList.enabled()
+        qualified = bot.nodeList.enabled()
+        protocolRequirement = bot.nodeList.protocolRequirement()
+        protocol90024 = bot.nodeList.enabled(90024)
+        protocol90025 = bot.nodeList.enabled(90025)
+        initialWait = bot.nodeList.minimumUptime()
 
-        response += messages.networkState(bot.messenger, lastBlock, created, enabled)
+        response += messages.networkState(bot.messenger,
+                                          lastBlock,
+                                          created,
+                                          enabled,
+                                          qualified,
+                                          protocolRequirement,
+                                          protocol90024,
+                                          protocol90025,
+                                          initialWait)
 
     else:
         response += "*Sorry, the server is currently not synced with the network.*"
