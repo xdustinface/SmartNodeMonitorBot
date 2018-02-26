@@ -602,9 +602,9 @@ class SmartNodeList(object):
     def enabled(self, protocol = -1):
 
         if protocol != -1:
-            return sum(list(map(lambda x: x.status == "ENABLED", self.nodeList.values())))
+            return sum(list(map(lambda x: x.status == "ENABLED" and x.protocol == protocol, self.nodeList.values())))
 
-        return sum(list(map(lambda x: x.status == "ENABLED" and x.protocol == protocol, self.nodeList.values())))
+        return sum(list(map(lambda x: x.status == "ENABLED" , self.nodeList.values())))
 
     def getNodeByIp(self, ip):
         return self.db.getNodeByIp(ip)

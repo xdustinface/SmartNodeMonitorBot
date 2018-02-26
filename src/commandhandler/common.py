@@ -29,7 +29,7 @@ def info(bot, update):
         lastBlock = bot.nodeList.lastBlock
         created = bot.nodeList.count()
         enabled = bot.nodeList.enabled()
-        qualified = bot.nodeList.enabled()
+        qualified = bot.nodeList.qualified()
         protocolRequirement = bot.nodeList.protocolRequirement()
         protocol90024 = bot.nodeList.count(90024)
         protocol90025 = bot.nodeList.count(90025)
