@@ -132,7 +132,7 @@ class SmartNode(object):
 
         if int(self.protocol) != int(data[PROTOCOL_INDEX]):
             update['protocol'] = True
-            self.protocol = data[PROTOCOL_INDEX]
+            self.protocol = int(data[PROTOCOL_INDEX])
 
         if self.payee != data[PAYEE_INDEX]:
             update['payee'] = True
@@ -573,7 +573,7 @@ class SmartNodeList(object):
         return len(self.nodeList)
 
     def protocolRequirement(self):
-        
+
         if time.time() < 1519824000:
             return 90024
         else:
