@@ -31,8 +31,8 @@ def info(bot, update):
         enabled = bot.nodeList.enabled()
         qualified = bot.nodeList.enabled()
         protocolRequirement = bot.nodeList.protocolRequirement()
-        protocol90024 = bot.nodeList.enabled(90024)
-        protocol90025 = bot.nodeList.enabled(90025)
+        protocol90024 = bot.nodeList.count(90024)
+        protocol90025 = bot.nodeList.count(90025)
         initialWait = bot.nodeList.minimumUptime()
 
         response += messages.networkState(bot.messenger,

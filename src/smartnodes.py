@@ -444,15 +444,20 @@ class SmartNodeList(object):
 
                 #####
                 ## Update the the position indicator of the node
+                #
+                # MISSING:
+                #   https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L554
+                #   https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L569
+                #   ^^ should currently be covered by the min uptime.
                 #####
 
                 node = self.nodeList[collateral]
 
-                if node.activeSeconds < minimumUptime:
+                if node.activeSeconds < minimumUptime:# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L561
                     node.updatePosition(POS_TOO_NEW)
-                elif node.protocol < protocolRequirement:
+                elif node.protocol < protocolRequirement:# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L545
                     node.updatePosition(POS_UPDATE_REQUIRED)
-                elif node.status == 'ENABLED':
+                elif node.status == 'ENABLED': #https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L539
 
                     positionTime = None
 
@@ -580,7 +585,7 @@ class SmartNodeList(object):
 
     def protocolRequirement(self):
 
-        if time.time() < 1519824000:
+        if int(time.time()) <= 1519824000:
             return 90024
         else:
             return 90025
