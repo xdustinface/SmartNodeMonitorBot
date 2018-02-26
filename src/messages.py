@@ -115,7 +115,7 @@ def help(messenger):
 
 def networkState(messenger, last, created, enabled, qualified,
                  protocolRequirement, protocol90024, protocol90025,
-                 initialWait):
+                 initialWaitString):
 
     message = ("<b>Current block<b> {}\n\n"
                 "<b>Nodes created<b> {}\n"
@@ -132,7 +132,7 @@ def networkState(messenger, last, created, enabled, qualified,
                                                       protocolRequirement,
                                                       protocol90024,
                                                       protocol90025,
-                                                      util.secondsToText(initialWait))
+                                                      initialWaitString)
 
     return markdown(message,messenger)
 

@@ -43,7 +43,7 @@ def info(bot, update):
                                           protocolRequirement,
                                           protocol90024,
                                           protocol90025,
-                                          initialWait)
+                                          util.secondsToText(initialWait))
 
     else:
         response += "*Sorry, the server is currently not synced with the network.*"
