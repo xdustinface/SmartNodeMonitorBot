@@ -124,7 +124,7 @@ def networkState(messenger, last, created, enabled, qualified,
                 "<b>Protocol requirement<b> {}\n\n"
                 "<b>Nodes with 90024<b> {}\n"
                 "<b>Nodes with 90025<b> {}\n\n"
-                "<b>Minimum active time to receive
+                "<b>Minimum active time to receive"
                 " the first payout: <b> {}\n").format(last,
                                                       created,
                                                       enabled,
@@ -132,7 +132,7 @@ def networkState(messenger, last, created, enabled, qualified,
                                                       protocolRequirement,
                                                       protocol90024,
                                                       protocol90025,
-                                                      initialWait)
+                                                      util.secondsToText(initialWait))
 
     return markdown(message,messenger)
 
