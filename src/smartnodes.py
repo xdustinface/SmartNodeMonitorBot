@@ -185,16 +185,16 @@ class SmartNode(object):
 
     def positionString(self):
 
-        if position == POS_CALCULATING:
+        if self.position == POS_CALCULATING:
             return "Calculating..."
-        elif position == POS_UPDATE_REQUIRED:
+        elif self.position == POS_UPDATE_REQUIRED:
             return "Node update required!"
-        elif position == POS_TOO_NEW:
+        elif self.position == POS_TOO_NEW:
             return "Initial wait time."
-        elif position == POS_NOT_QUALIFIED:
+        elif self.position == POS_NOT_QUALIFIED:
             return "Not qualified!"
         else:
-            return str(position)
+            return str(self.position)
 
 
     def updateRank(self, rank):
@@ -380,6 +380,8 @@ class SmartNodeList(object):
             currentList = []
             positionIndicators = {}
             currentTime = int(time.time())
+            minimumUptime = self.minimumUptime()
+            protocolRequirement = self.protocolRequirement()
 
             for key, data in nodes.items():
 
@@ -446,10 +448,10 @@ class SmartNodeList(object):
 
                 node = self.nodeList[collateral]
 
-                if node.activeSeconds < self.minimumUptime():
-                    node.position = POS_TOO_NEW
-                elif node.protocol < self.protocolRequirement():
-                    node.position = POS_UPDATE_REQUIRED
+                if node.activeSeconds < minimumUptime:
+                    node.updatePosition(POS_TOO_NEW)
+                elif node.protocol < protocolRequirement:
+                    node.updatePosition(POS_UPDATE_REQUIRED)
                 elif node.status == 'ENABLED':
 
                     positionTime = None
@@ -476,7 +478,7 @@ class SmartNodeList(object):
                     positionIndicators[collateral] = positionTime
 
                 else:
-                    node.position = POS_NOT_QUALIFIED
+                    node.updatePosition(POS_NOT_QUALIFIED)
 
             #####
             ## Invoke the callback if we have new nodes
@@ -609,6 +611,7 @@ class SmartNodeList(object):
                 collateral = collateral
             else:
                 collateral = Transaction.fromString(c)
+                logger.debug("collateral from string ")
 
             if collateral in self.nodeList:
                 nodes.append(self.nodeList[collateral])
