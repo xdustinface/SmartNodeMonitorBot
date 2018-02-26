@@ -351,7 +351,6 @@ class SmartNodeList(object):
                 self.startTimer()
                 return
 
-        self.lastQualified = 0
         newNodes = []
 
         nodes = None
@@ -389,6 +388,13 @@ class SmartNodeList(object):
             currentTime = int(time.time())
             minimumUptime = self.minimumUptime()
             protocolRequirement = self.protocolRequirement()
+
+            # Reset the calculation vars
+            self.lastQualified = 0
+            self.protocol_90024 = 0
+            self.protocol_90025 = 0
+            self.enabled_90024 = 0
+            self.enabled_90025 = 0
 
             for key, data in nodes.items():
 
