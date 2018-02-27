@@ -139,24 +139,21 @@ def networkState(messenger, last, created, enabled, qualified,
 
     message += "<u><b>Initial payout<b><u>\n\n"
 
-    message += "<u><b>Minimum<b> uptime before you <u>"
-
     if qualified < (enabled / 3):
-        message += "<b>The network is currenty in upgrade mode. Recently started nodes "
+        message += "The network is currenty in upgrade mode. Recently started nodes "
         " do also do have the chance to get paid if their collateral transaction has "
         " at least {} confirmations. Your nodes's position needs to be less than {}."
         " If it is your node is in the random payout zone. This means you <b>could<b> get paid"
-        " from now on but in the <b>worst<b> case it still might take some days.\n  <b>\n"
+        " from now on but in the <b>worst<b> case it still might take some days."
     else:
-        message += "<b>Minimum active time to receive"
-        " the first payout: <b> {}\n"
+        message += ("The current **minimal** <u>uptime<u> to be eligible for "
+                   " SmartNode rewards is **{}**").format(initialWaitString)
 
-    message += "<u><b>Further payouts<b><u>\n\n"
+    message += "\n\n<u><b>Further payouts<b><u>\n\n"
     message += ("Once you received your first payout your node's position"
                " currenty needs to be less than <b>{}<b>. If it is your node"
                " is in the random payout zone. This means you <b>could<b> get paid"
-               " from now on but in the <b>worst<b> case it still might take some days.\n").format(enabled * 0.1)
-
+               " from now on but in the <b>worst<b> case it still might take some days.\n").format(int(enabled * 0.1))
 
     return markdown(message,messenger)
 

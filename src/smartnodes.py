@@ -540,7 +540,6 @@ class SmartNodeList(object):
                 elif node.status == 'ENABLED': #https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L539
 
                     self.lastQualified += 1
-                    positionTime = None
 
                     lastPaidVec.append(LastPaid(node.lastPaidBlock, collateral))
 
