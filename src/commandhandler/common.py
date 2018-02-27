@@ -27,6 +27,7 @@ def info(bot, update):
     if bot.nodeList.synced() and bot.nodeList.lastBlock:
 
         lastBlock = bot.nodeList.lastBlock
+        upgradeMode = bot.nodeList.upgradeMode
         created = bot.nodeList.count()
         enabled = bot.nodeList.enabled()
         qualified = bot.nodeList.qualified()
@@ -37,6 +38,7 @@ def info(bot, update):
 
         response += messages.networkState(bot.messenger,
                                           lastBlock,
+                                          upgradeMode,
                                           created,
                                           enabled,
                                           qualified,

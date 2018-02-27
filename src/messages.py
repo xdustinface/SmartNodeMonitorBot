@@ -113,7 +113,7 @@ def help(messenger):
 #                      Common messages                     #
 ############################################################
 
-def networkState(messenger, last, created, enabled, qualified,
+def networkState(messenger, last, upgradeMode, created, enabled, qualified,
                  protocolRequirement, protocol90024, protocol90025,
                  initialWaitString):
 
@@ -139,7 +139,7 @@ def networkState(messenger, last, created, enabled, qualified,
     #
     #https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L655
     ####
-    if qualified < (enabled / 3):
+    if upgradeMode:
         message += ("The network is currenty in upgrade mode. Recently started nodes "
         " do also do have the chance to get paid if their collateral transaction has "
         " at least {} confirmations. Your nodes's position needs to be less than {}."

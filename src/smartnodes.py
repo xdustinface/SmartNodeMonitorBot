@@ -260,6 +260,7 @@ class SmartNodeList(object):
     def __init__(self, db):
 
         self.lastBlock = 0
+        self.upgradeMode = False
         self.lastQualified = 0
         self.protocol_90024 = 0
         self.protocol_90025 = 0
@@ -550,7 +551,11 @@ class SmartNodeList(object):
 
                 if not upgradeMode and self.lastQualified < (self.enabledWithMinProtocol() / 3):
                     self.lastQualified = 0
+                    self.upgradeMode = True
                     calculatePositions(True)
+                    return
+
+                self.upgradeMode = False
 
             logger.info("Positions calculations: start")
             calculatePositions(False)
