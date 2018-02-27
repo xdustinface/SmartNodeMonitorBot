@@ -549,6 +549,7 @@ class SmartNodeList(object):
                         node.updatePosition(POS_NOT_QUALIFIED)
 
                 if self.lastQualified < (self.enabledWithMinProtocol() / 3):
+                    self.lastQualified = 0
                     calculatePositions(True)
 
             calculatePositions(False)
