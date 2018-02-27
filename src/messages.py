@@ -131,20 +131,20 @@ def networkState(messenger, last, created, enabled, qualified,
                                                       protocol90024,
                                                       protocol90025)
 
+
+    message += "<u><b>Initial payout<b><u>\n\n"
+
     ####
     # Check if the network is in upgrade mode.
     #
     #https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L655
     ####
-
-    message += "<u><b>Initial payout<b><u>\n\n"
-
     if qualified < (enabled / 3):
-        message += "The network is currenty in upgrade mode. Recently started nodes "
+        message += ("The network is currenty in upgrade mode. Recently started nodes "
         " do also do have the chance to get paid if their collateral transaction has "
         " at least {} confirmations. Your nodes's position needs to be less than {}."
         " If it is your node is in the random payout zone. This means you <b>could<b> get paid"
-        " from now on but in the <b>worst<b> case it still might take some days."
+        " from now on but in the <b>worst<b> case it still might take some days.").format(enabled, (enabled * 0.1))
     else:
         message += ("The current **minimal** <u>uptime<u> to be eligible for "
                    " SmartNode rewards is **{}**").format(initialWaitString)
