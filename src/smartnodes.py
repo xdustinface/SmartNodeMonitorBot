@@ -548,11 +548,13 @@ class SmartNodeList(object):
                     else:
                         node.updatePosition(POS_NOT_QUALIFIED)
 
-                if self.lastQualified < (self.enabledWithMinProtocol() / 3):
+                if not upgradeMode and self.lastQualified < (self.enabledWithMinProtocol() / 3):
                     self.lastQualified = 0
                     calculatePositions(True)
 
+            logger.info("Positions calculations: start")
             calculatePositions(False)
+            logger.info("Positions calculations: done")
             #####
             ## Invoke the callback if we have new nodes
             #####
