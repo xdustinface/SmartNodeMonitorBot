@@ -432,7 +432,6 @@ class SmartNodeList(object):
             currentList = []
             lastPaidVec = []
             currentTime = int(time.time())
-            minimumUptime = self.minimumUptime()
             protocolRequirement = self.protocolRequirement()
 
             # Reset the calculation vars
@@ -522,30 +521,37 @@ class SmartNodeList(object):
                     if node.status == 'ENABLED':
                         self.enabled_90025 += 1
 
-                #####
-                ## Update the the position indicator of the node
-                #
-                # CURRENTL MISSING:
-                #   https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L554
-                #   https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L569
-                #   ^^ should currently be covered by the min uptime.
-                #####
 
-                node = self.nodeList[collateral]
+            #####
+            ## Update the the position indicator of the node
+            #
+            # CURRENTL MISSING:
+            #   https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L554
+            #   https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L569
+            #   ^^ should currently be covered by the min uptime.
+            #####
 
-                if node.activeSeconds < minimumUptime:# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L561
-                    node.updatePosition(POS_TOO_NEW)
-                elif node.protocol < protocolRequirement:# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L545
-                    node.updatePosition(POS_UPDATE_REQUIRED)
-                elif node.status == 'ENABLED': #https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L539
+            def calculatePositions(upgradeMode):
 
-                    self.lastQualified += 1
+                for collateral, node in self.nodeList.items():
 
-                    lastPaidVec.append(LastPaid(node.lastPaidBlock, collateral))
+                    if not upgradeMode and node.activeSeconds < self.minimumUptime():# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L561
+                        node.updatePosition(POS_TOO_NEW)
+                    elif node.protocol < protocolRequirement:# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L545
+                        node.updatePosition(POS_UPDATE_REQUIRED)
+                    elif node.status == 'ENABLED': #https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L539
 
-                else:
-                    node.updatePosition(POS_NOT_QUALIFIED)
+                        self.lastQualified += 1
 
+                        lastPaidVec.append(LastPaid(node.lastPaidBlock, collateral))
+
+                    else:
+                        node.updatePosition(POS_NOT_QUALIFIED)
+
+                if self.lastQualified < (self.enabledWithMinProtocol() / 3):
+                    calculatePositions(True)
+
+            calculatePositions(False)
             #####
             ## Invoke the callback if we have new nodes
             #####
@@ -660,7 +666,8 @@ class SmartNodeList(object):
             return self.enabled_90025
 
     def minimumUptime(self):
-        return self.enabledWithMinProtocol() * 156 # https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L561
+        # https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L561
+        return self.enabledWithMinProtocol() * 156
 
     def qualified(self):
         return self.lastQualified
@@ -673,8 +680,6 @@ class SmartNodeList(object):
             return self.enabled_90025
         else:
             return self.enabled_90024 + self.enabled_90025
-
-        return sum(list(map(lambda x: x.status == "ENABLED" , self.nodeList.values())))
 
     def getNodeByIp(self, ip):
         return self.db.getNodeByIp(ip)
