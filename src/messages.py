@@ -123,16 +123,40 @@ def networkState(messenger, last, created, enabled, qualified,
                 "<b>Nodes qualified<b> {}\n\n"
                 "<b>Protocol requirement<b> {}\n\n"
                 "<b>Nodes with 90024<b> {}\n"
-                "<b>Nodes with 90025<b> {}\n\n"
-                "<b>Minimum active time to receive"
-                " the first payout: <b> {}\n").format(last,
+                "<b>Nodes with 90025<b> {}\n\n").format(last,
                                                       created,
                                                       enabled,
                                                       qualified,
                                                       protocolRequirement,
                                                       protocol90024,
-                                                      protocol90025,
-                                                      initialWaitString)
+                                                      protocol90025)
+
+    ####
+    # Check if the network is in upgrade mode.
+    #
+    #https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L655
+    ####
+
+    message += "<u><b>Initial payout<b><u>\n\n"
+
+    message += "<u><b>Minimum<b> uptime before you <u>"
+
+    if qualified < (enabled / 3):
+        message += "<b>The network is currenty in upgrade mode. Recently started nodes "
+        " do also do have the chance to get paid if their collateral transaction has "
+        " at least {} confirmations. Your nodes's position needs to be less than {}."
+        " If it is your node is in the random payout zone. This means you <b>could<b> get paid"
+        " from now on but in the <b>worst<b> case it still might take some days.\n  <b>\n"
+    else:
+        message += "<b>Minimum active time to receive"
+        " the first payout: <b> {}\n"
+
+    message += "<u><b>Further payouts<b><u>\n\n"
+    message += ("Once you received your first payout your node's position"
+               " currenty needs to be less than <b>{}<b>. If it is your node"
+               " is in the random payout zone. This means you <b>could<b> get paid"
+               " from now on but in the <b>worst<b> case it still might take some days.\n").format(enabled * 0.1)
+
 
     return markdown(message,messenger)
 

@@ -1,4 +1,4 @@
-import os, stat
+import os, stat, sys
 import re
 import subprocess
 import json
@@ -8,6 +8,7 @@ from src import util
 import logging
 import threading
 import re
+import ctypes
 
 # Index assignment of the "smartnodelist full"
 STATUS_INDEX = 0
@@ -27,6 +28,15 @@ POS_NOT_QUALIFIED = -4
 
 logger = logging.getLogger("smartnodes")
 
+libc = None
+
+if sys.platform == 'linux':
+    libc = ctypes.cdll.LoadLibrary("libc.so.6")
+elif sys.platform == 'mac':
+    libc = ctypes.cdll.LoadLibrary("libc.dylib")
+else:
+    sys.exit("Windows....")
+
 transactionRawCheck = re.compile("COutPoint\([\d\a-f]{64},.[\d]{1,}\)")
 transactionStringCheck = re.compile("[\d\a-f]{64}-[\d]{1,}")
 
@@ -42,6 +52,23 @@ class Transaction(object):
     def __eq__(self, other):
         return self.hash == other.hash and\
                 self.index == other.index
+
+    def __lt__(self, other):
+        # friend bool operator<(const CTxIn& a, const CTxIn& b)
+        # {
+        #     return a.prevout<b.prevout;
+        # }
+        # friend bool operator<(const COutPoint& a, const COutPoint& b)
+        # {
+        #     int cmp = a.hash.Compare(b.hash);
+        #     return cmp < 0 || (cmp == 0 && a.n < b.n);
+        # }
+        # https://github.com/SmartCash/smartcash/blob/1.1.1/src/uint256.h#L45
+        # https://github.com/SmartCash/smartcash/blob/1.1.1/src/primitives/transaction.h#L38
+        # https://github.com/SmartCash/smartcash/blob/1.1.1/src/primitives/transaction.h#L126
+        compare = libc.memcmp(self.hash, other.hash, len(self.hash))
+        return compare < 0 or ( compare == 0 and self.index < other.index )
+
 
     def __hash__(self):
         return hash((self.hash,self.index))
@@ -59,6 +86,25 @@ class Transaction(object):
         if transactionStringCheck.match(s):
             parts = s.split('-')
             return cls(parts[0], int(parts[1]))
+
+####
+# Used for the sort of the last paid vector
+###
+class LastPaid(object):
+
+    def __init__(self, lastPaidBlock, transaction):
+        self.transaction = transaction
+        self.lastPaidBlock = lastPaidBlock
+
+    def __str__(self):
+        return '[{0.lastPaidBlock}] {0.transaction}'.format(self)
+
+    def __lt__(self, other):
+
+        if self.lastPaidBlock != other.lastPaidBlock:
+            return self.lastPaidBlock < other.lastPaidBlock
+
+        return self.transaction < other.transaction
 
 class SmartNode(object):
 
@@ -384,7 +430,7 @@ class SmartNodeList(object):
                 self.lastBlock = info["blocks"]
 
             currentList = []
-            positionIndicators = {}
+            lastPaidVec = []
             currentTime = int(time.time())
             minimumUptime = self.minimumUptime()
             protocolRequirement = self.protocolRequirement()
@@ -479,7 +525,7 @@ class SmartNodeList(object):
                 #####
                 ## Update the the position indicator of the node
                 #
-                # MISSING:
+                # CURRENTL MISSING:
                 #   https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L554
                 #   https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L569
                 #   ^^ should currently be covered by the min uptime.
@@ -496,26 +542,7 @@ class SmartNodeList(object):
                     self.lastQualified += 1
                     positionTime = None
 
-                    # If the node got paid we need need to decide further
-                    if node.lastPaidTime:
-
-                        # Use the gab between the between now and the last paid
-                        gap = currentTime - node.lastPaidTime
-
-                        # Check if the gap is smaller then the active seconds
-                        if gap < node.activeSeconds:
-                            # If so, use the gap since this means the node is
-                            # already active longer then the last paid time
-                            positionTime = gap
-                        else:
-                            # If the gap is smaller this means the node got paid
-                            # already but has become restarted for any reason
-                            positionTime = node.activeSeconds
-                    else:
-                        # If not just use the active seconds.
-                        positionTime = node.activeSeconds
-
-                    positionIndicators[collateral] = positionTime
+                    lastPaidVec.append(LastPaid(node.lastPaidBlock, collateral))
 
                 else:
                     node.updatePosition(POS_NOT_QUALIFIED)
@@ -565,11 +592,11 @@ class SmartNodeList(object):
             ## Update positions
             #####
 
-            positions = sorted(positionIndicators, key=positionIndicators.__getitem__, reverse=True)
+            lastPaidVec.sort()
             value = 0
-            for collateral in positions:
+            for lastPaid in lastPaidVec:
                 value +=1
-                self.nodeList[collateral].updatePosition(value)
+                self.nodeList[lastPaid.transaction].updatePosition(value)
 
         #####
         # Disabled rank updates due to confusion of the users
