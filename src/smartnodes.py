@@ -551,11 +551,10 @@ class SmartNodeList(object):
 
                 if not upgradeMode and self.lastQualified < (self.enabledWithMinProtocol() / 3):
                     self.lastQualified = 0
-                    self.upgradeMode = True
                     calculatePositions(True)
                     return
 
-                self.upgradeMode = False
+                self.upgradeMode = upgradeMode
 
             logger.info("Positions calculations: start")
             calculatePositions(False)
