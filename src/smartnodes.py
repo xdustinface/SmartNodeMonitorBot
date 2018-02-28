@@ -267,6 +267,7 @@ class SmartNodeList(object):
         self.protocol_90025 = 0
         self.enabled_90024 = 0
         self.enabled_90025 = 0
+        self.lastPaidVec = []
         self.nodeList = {}
 
         self.chainSynced = False
@@ -432,7 +433,7 @@ class SmartNodeList(object):
                 self.lastBlock = info["blocks"]
 
             currentList = []
-            lastPaidVec = []
+            self.lastPaidVec = []
             currentTime = int(time.time())
             protocolRequirement = self.protocolRequirement()
 
@@ -535,7 +536,7 @@ class SmartNodeList(object):
 
             def calculatePositions(upgradeMode):
 
-                lastPaidVec = []
+                self.lastPaidVec = []
 
                 for collateral, node in self.nodeList.items():
 
@@ -544,15 +545,15 @@ class SmartNodeList(object):
                     elif node.protocol < protocolRequirement:# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L545
                         node.updatePosition(POS_UPDATE_REQUIRED)
                     elif node.status == 'ENABLED': #https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L539
-                        lastPaidVec.append(LastPaid(node.lastPaidBlock, collateral))
+                        self.lastPaidVec.append(LastPaid(node.lastPaidBlock, collateral))
                     else:
                         node.updatePosition(POS_NOT_QUALIFIED)
 
-                if not upgradeMode and len(lastPaidVec) < (self.enabledWithMinProtocol() / 3):
+                if not upgradeMode and len(self.lastPaidVec) < (self.enabledWithMinProtocol() / 3):
                     calculatePositions(True)
                     return
 
-                self.qualified = len(lastPaidVec)
+                self.qualified = len(self.lastPaidVec)
                 self.upgradeMode = upgradeMode
 
 
@@ -603,10 +604,10 @@ class SmartNodeList(object):
             ## Update positions
             #####
 
-            lastPaidVec.sort()
+            self.lastPaidVec.sort()
 
             value = 0
-            for lastPaid in lastPaidVec:
+            for lastPaid in self.lastPaidVec:
                 value +=1
                 self.nodeList[lastPaid.transaction].updatePosition(value)
 
