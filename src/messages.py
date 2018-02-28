@@ -144,7 +144,7 @@ def networkState(messenger, last, upgradeMode, created, enabled, qualified,
         " do also do have the chance to get paid if their collateral transaction has "
         " at least {} confirmations. Your nodes's position needs to be less than {}."
         " If it is your node is in the random payout zone. This means you <b>could<b> get paid"
-        " from now on but in the <b>worst<b> case it still might take some days.").format(enabled, (enabled * 0.1))
+        " from now on but in the <b>worst<b> case it still might take some days.").format(enabled, int(enabled * 0.1))
     else:
         message += ("The current **minimal** <u>uptime<u> to be eligible for "
                    " SmartNode rewards is **{}**").format(initialWaitString)

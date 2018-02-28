@@ -263,7 +263,6 @@ class SmartNodeList(object):
         self.upgradeMode = False
         self.upgradeMode = 0
         self.qualified = 0
-        self.qualifiedUpgradeMode = 0
         self.protocol_90024 = 0
         self.protocol_90025 = 0
         self.enabled_90024 = 0
@@ -440,7 +439,6 @@ class SmartNodeList(object):
             # Reset the calculation vars
             self.upgradeMode = False
             self.qualified = 0
-            self.qualifiedUpgradeMode = 0
             self.protocol_90024 = 0
             self.protocol_90025 = 0
             self.enabled_90024 = 0
@@ -538,6 +536,8 @@ class SmartNodeList(object):
 
             def calculatePositions(upgradeMode):
 
+                lastPaidVec = []
+
                 for collateral, node in self.nodeList.items():
 
                     if not upgradeMode and node.activeSeconds < self.minimumUptime():# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L561
@@ -545,22 +545,15 @@ class SmartNodeList(object):
                     elif node.protocol < protocolRequirement:# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L545
                         node.updatePosition(POS_UPDATE_REQUIRED)
                     elif node.status == 'ENABLED': #https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L539
-
-                        if upgradeMode:
-                            self.qualifiedUpgradeMode += 1
-                        else:
-                            self.qualified += 1
-
                         lastPaidVec.append(LastPaid(node.lastPaidBlock, collateral))
-
                     else:
                         node.updatePosition(POS_NOT_QUALIFIED)
 
-                if not upgradeMode and self.qualified < (self.enabledWithMinProtocol() / 3):
-                    self.qualifiedUpgradeMode = 0
+                if not upgradeMode and len(lastPaidVec) < (self.enabledWithMinProtocol() / 3):
                     calculatePositions(True)
                     return
 
+                self.qualified = len(lastPaidVec)
                 self.upgradeMode = upgradeMode
 
 
