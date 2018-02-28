@@ -510,20 +510,19 @@ class SmartNodeList(object):
                 #
                 ####
 
-                if node.protocol == 90024:
+                if self.nodeList[collateral].protocol == 90024:
 
                     self.protocol_90024 += 1
 
-                    if node.status == 'ENABLED':
+                    if self.nodeList[collateral].status == 'ENABLED':
                         self.enabled_90024 += 1
 
-                if node.protocol == 90025:
+                if self.nodeList[collateral].protocol == 90025:
 
                     self.protocol_90025 += 1
 
-                    if node.status == 'ENABLED':
+                    if self.nodeList[collateral].status == 'ENABLED':
                         self.enabled_90025 += 1
-
 
             #####
             ## Update the the position indicator of the node
