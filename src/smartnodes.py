@@ -338,35 +338,34 @@ class SmartNodeList(object):
 
         return False
 
+    def getCollateralAge(self, txhash):
 
-def getCollateralAge(self, txhash):
+        try:
 
-    try:
+            result = subprocess.check_output(['smartcash-cli', 'getrawtransaction',txhash, '1'])
+            rawTx = json.loads(result.decode('utf-8'))
 
-        result = subprocess.check_output(['smartcash-cli', 'getrawtransaction',txhash, '1'])
-        rawTx = json.loads(result.decode('utf-8'))
+        except Exception as e:
 
-    except Exception as e:
+            logging.error('Could not fetch raw transaction', exc_info=e)
 
-        logging.error('Could not fetch raw transaction', exc_info=e)
+        if 'error' in rawTx or not "blockhash" in rawTx:
+            return -1
 
-    if 'error' in rawTx or not "blockhash" in rawTx:
-        return -1
+        blockHash = rawTx['blockhash']
 
-    blockHash = rawTx['blockhash']
+        try:
 
-    try:
+            result = subprocess.check_output(['smartcash-cli', 'getblock',blockHash])
+            block = json.loads(result.decode('utf-8'))
 
-        result = subprocess.check_output(['smartcash-cli', 'getblock',blockHash])
-        block = json.loads(result.decode('utf-8'))
+        except Exception as e:
+            logging.error('Could not fetch block', exc_info=e)
 
-    except Exception as e:
-        logging.error('Could not fetch block', exc_info=e)
+        if 'error' in block or not 'height' in block:
+            return -1
 
-    if 'error' in block or not 'height' in block:
-        return -1
-
-    return block['height']
+        return block['height']
 
 
     def isValidDeamonResponse(self,json):
