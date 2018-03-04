@@ -533,7 +533,7 @@ class SmartNodeList(object):
                         sync = True
 
                     if update['lastPaid'] :
-                        logger.info("[{}] LastPaid updated {}".format(node.payee, node.lastPaidBlock))
+                        logger.info("[{}] LastPaid updated {} - P: {}".format(node.payee, node.lastPaidBlock, node.position))
                         sync = True
 
                     if update['ip'] :
