@@ -440,10 +440,6 @@ class SmartNodeList(object):
             # Reset the calculation vars
             self.upgradeMode = False
             self.qualified = 0
-            self.protocol_90024 = 0
-            self.protocol_90025 = 0
-            self.enabled_90024 = 0
-            self.enabled_90025 = 0
 
             for key, data in nodes.items():
 
@@ -560,7 +556,7 @@ class SmartNodeList(object):
             self.protocol_90025 = len(nodes90025)
 
             self.enabled_90024 = len(list(filter(lambda x: x.status == "ENABLED", nodes90024)))
-            self.enabled_90024 = len(list(filter(lambda x: x.status == "ENABLED", nodes90025)))
+            self.enabled_90025 = len(list(filter(lambda x: x.status == "ENABLED", nodes90025)))
 
             #####
             ## Update the the position indicator of the node
