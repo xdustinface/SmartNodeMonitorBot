@@ -26,6 +26,8 @@ def info(bot, update):
 
     if bot.nodeList.synced() and bot.nodeList.lastBlock:
 
+        bot.nodeList.acquire()
+
         lastBlock = bot.nodeList.lastBlock
         upgradeMode = bot.nodeList.upgradeMode
         created = bot.nodeList.count()
@@ -35,6 +37,8 @@ def info(bot, update):
         protocol90024 = bot.nodeList.count(90024)
         protocol90025 = bot.nodeList.count(90025)
         initialWait = bot.nodeList.minimumUptime()
+
+        bot.nodeList.release()
 
         response += messages.networkState(bot.messenger,
                                           lastBlock,

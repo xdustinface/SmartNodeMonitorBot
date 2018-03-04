@@ -259,6 +259,7 @@ class SmartNodeList(object):
 
     def __init__(self, db):
 
+        self.nodeListSem = threading.Lock()
         self.lastBlock = 0
         self.upgradeMode = False
         self.upgradeMode = 0
@@ -284,6 +285,13 @@ class SmartNodeList(object):
 
         self.startTimer()
 
+    def acquire(self):
+        logger.info("SmartNodeList acquire")
+        self.nodeListSem.acquire()
+
+    def release(self):
+        logger.info("SmartNodeList release")
+        self.nodeListSem.release()
 
     def pushAdmin(self, message):
 
@@ -437,6 +445,9 @@ class SmartNodeList(object):
             currentTime = int(time.time())
             protocolRequirement = self.protocolRequirement()
 
+            # Prevent reading during the calculations
+            self.acquire()
+
             # Reset the calculation vars
             self.upgradeMode = False
             self.qualified = 0
@@ -510,7 +521,6 @@ class SmartNodeList(object):
 
                 logger.info("Created: {}".format(len(nodes.values())))
                 logger.info("Enabled: {}\n".format(sum(map(lambda x: x.split()[STATUS_INDEX]  == "ENABLED", list(nodes.values())))))
-
 
             #####
             ## Remove nodes from the DB that are not longer in the global list
@@ -604,6 +614,8 @@ class SmartNodeList(object):
                 self.nodeList[lastPaid.transaction].updatePosition(value)
 
             logger.info("calculatePositions done")
+
+            self.release()
 
         #####
         # Disabled rank updates due to confusion of the users
