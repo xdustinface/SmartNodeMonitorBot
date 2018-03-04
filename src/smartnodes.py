@@ -557,7 +557,7 @@ def getCollateralAge(self, txhash):
             #####
 
             if not collateral.block:
-                logger.info("Collateral block missing {}".format(str(collateral))
+                logger.info("Collateral block missing {}".format(str(collateral)))
 
                 collateral.updateBlock(self.getCollateralAge(collateral.hash))
 
