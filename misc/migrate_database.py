@@ -99,6 +99,9 @@ def getCollateralAge(txhash, txindex):
 
         logging.error('Could not fetch raw transaction', exc_info=e)
 
+        if result:
+            logger.error("Output {}".format(result))
+
     if not "blockhash" in rawTx or not isValidDeamonResponse(rawTx):
         return None
 
