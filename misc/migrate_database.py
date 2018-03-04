@@ -46,7 +46,11 @@ def migrate():
 
     for node in nodesDB_v10_nodes:
 
-        tx = Transaction(node['txhash'], node['txindex'])
+        blockHeight = getCollateralAge(node['txhash'], node['txindex'])
+
+        if not blockHeight:
+            logger.warning("Could not fetch blockHeight for tx: {}-{}".format(node['txhash'], node['txindex']))
+        tx = Transaction(node['txhash'], node['txindex'], blockHeight)
         logger.info("Add {}".format(nodesDB_v11.addNode(tx, node)))
 
 
@@ -70,6 +74,47 @@ def migrate():
     logger.info("{} users in 1.1".format(len(botDB_v11.getUsers())))
     logger.info("{} user-nodes in 1.1".format(len(botDB_v11.getAllNodes())))
     logger.info("{} smartnodes in 1.1".format(len(nodesDB_v11.getNodes())))
+
+
+
+def isValidDeamonResponse(json):
+
+    if 'error' in json:
+        logger.warning("could not update list {}".format(json))
+        return False
+
+    return True
+
+def getCollateralAge(txhash, txindex):
+
+    rawTx = None
+
+    try:
+
+        result = subprocess.check_output(['smartcash-cli', 'getrawtransaction',txhash, txindex])
+        rawTx = json.loads(result.decode('utf-8'))
+
+    except Exception as e:
+
+        logging.error('Could not fetch raw transaction', exc_info=e)
+
+    if not "blockhash" in rawTx or not isValidDeamonResponse(rawTx):
+        return None
+
+    blockHash = rawTx['blockhash']
+
+    try:
+
+        result = subprocess.check_output(['smartcash-cli', 'getblock',blockHash])
+        block = json.loads(result.decode('utf-8'))
+
+    except Exception as e:
+        logging.error('Could not fetch block', exc_info=e)
+
+    if not 'height' in block or not isValidDeamonResponse(block):
+        return None
+
+    return block['height']
 
 class Transaction(object):
 
@@ -289,6 +334,7 @@ class NodeDatabase(object):
             with self.connection as db:
                 query = "INSERT INTO nodes(\
                         collateral,\
+                        collateral_block,\
                         payee, \
                         status,\
                         activeseconds,\
@@ -298,10 +344,11 @@ class NodeDatabase(object):
                         protocol,\
                         ip,\
                         timeout ) \
-                        values( ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )"
+                        values( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )"
 
                 db.cursor.execute(query, (
                                   str(tx),
+                                  tx.block,
                                   node['payee'],
                                   node['status'],
                                   node['activeSeconds'],
@@ -338,6 +385,7 @@ class NodeDatabase(object):
         BEGIN TRANSACTION;\
         CREATE TABLE "nodes" (\
         	`collateral` TEXT NOT NULL PRIMARY KEY,\
+            `collateral_block` INTEGER,\
         	`payee`	TEXT,\
         	`status` TEXT,\
         	`activeseconds`	INTEGER,\
