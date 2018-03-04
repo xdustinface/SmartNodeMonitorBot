@@ -242,7 +242,9 @@ class SmartNode(object):
         elif self.position == POS_UPDATE_REQUIRED:
             return "Node update required!"
         elif self.position == POS_TOO_NEW:
-            return "Initial wait time."
+            return "Initial wait time!"
+        elif self.position == POS_COLLATERAL_AGE:
+            return "Collateral too new!"
         elif self.position == POS_NOT_QUALIFIED:
             return "Not qualified!"
         else:
