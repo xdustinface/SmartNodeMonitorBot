@@ -504,61 +504,6 @@ class SmartNodeList(object):
                         if self.nodeChangeCB != None:
                             self.nodeChangeCB(update, node)
 
-
-
-                #####
-                ## Update vars for calculations
-                #
-                ####
-
-                if self.nodeList[collateral].protocol == 90024:
-
-                    self.protocol_90024 += 1
-
-                    if self.nodeList[collateral].status == 'ENABLED':
-                        self.enabled_90024 += 1
-
-                if self.nodeList[collateral].protocol == 90025:
-
-                    self.protocol_90025 += 1
-
-                    if self.nodeList[collateral].status == 'ENABLED':
-                        self.enabled_90025 += 1
-
-            #####
-            ## Update the the position indicator of the node
-            #
-            # CURRENTL MISSING:
-            #   https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L554
-            #   https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L569
-            #   ^^ should currently be covered by the min uptime.
-            #####
-
-            def calculatePositions(upgradeMode):
-
-                self.lastPaidVec = []
-
-                for collateral, node in self.nodeList.items():
-
-                    if not upgradeMode and node.activeSeconds < self.minimumUptime():# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L561
-                        node.updatePosition(POS_TOO_NEW)
-                    elif node.protocol < protocolRequirement:# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L545
-                        node.updatePosition(POS_UPDATE_REQUIRED)
-                    elif node.status == 'ENABLED': #https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L539
-                        self.lastPaidVec.append(LastPaid(node.lastPaidBlock, collateral))
-                    else:
-                        node.updatePosition(POS_NOT_QUALIFIED)
-
-                if not upgradeMode and len(self.lastPaidVec) < (self.enabledWithMinProtocol() / 3):
-                    calculatePositions(True)
-                    return
-
-                self.qualified = len(self.lastPaidVec)
-                self.upgradeMode = upgradeMode
-
-
-            calculatePositions(False)
-
             #####
             ## Invoke the callback if we have new nodes
             #####
@@ -600,6 +545,57 @@ class SmartNodeList(object):
 
                 if self.networkCB:
                     self.networkCB(removedNodes, False)
+
+            logger.info("calculatePositions start")
+
+            #####
+            ## Update vars for calculations
+            #
+            ####
+
+            nodes90024 = list(map(lambda x: x.protocol == 90024, self.nodeList.values()))
+            nodes90025 = list(map(lambda x: x.protocol == 90025, self.nodeList.values()))
+
+            self.protocol_90024 = len(nodes90024)
+            self.protocol_90025 = len(nodes90025)
+
+            self.enabled_90024 = len(list(map(lambda x: x.status == "ENABLED", nodes90024)))
+            self.enabled_90024 = len(list(map(lambda x: x.status == "ENABLED", nodes90025)))
+
+            #####
+            ## Update the the position indicator of the node
+            #
+            # CURRENTL MISSING:
+            #   https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L554
+            #   https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L569
+            #   ^^ should currently be covered by the min uptime.
+            #####
+
+            def calculatePositions(upgradeMode):
+
+                self.lastPaidVec = []
+
+                for collateral, node in self.nodeList.items():
+
+                    if not upgradeMode and node.activeSeconds < self.minimumUptime():# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L561
+                        node.updatePosition(POS_TOO_NEW)
+                    elif node.protocol < protocolRequirement:# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L545
+                        node.updatePosition(POS_UPDATE_REQUIRED)
+                    elif node.status == 'ENABLED': #https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L539
+                        self.lastPaidVec.append(LastPaid(node.lastPaidBlock, collateral))
+                    else:
+                        node.updatePosition(POS_NOT_QUALIFIED)
+
+                if not upgradeMode and len(self.lastPaidVec) < (self.enabledWithMinProtocol() / 3):
+                    calculatePositions(True)
+                    return
+
+                self.qualified = len(self.lastPaidVec)
+                self.upgradeMode = upgradeMode
+
+            calculatePositions(False)
+
+
             #####
             ## Update positions
             #####
@@ -611,6 +607,8 @@ class SmartNodeList(object):
                 value +=1
                 self.nodeList[lastPaid.transaction].updatePosition(value)
 
+            logger.info("calculatePositions done")
+            
         #####
         # Disabled rank updates due to confusion of the users
         #self.updateRanks()
