@@ -84,14 +84,14 @@ class Transaction(object):
 
         if transactionRawCheck.match(s):
             parts = s[10:-1].split(', ')
-            return cls(parts[0], int(parts[1],-1))
+            return cls(parts[0], int(parts[1]), -1)
 
     @classmethod
     def fromString(cls, s):
 
         if transactionStringCheck.match(s):
             parts = s.split('-')
-            return cls(parts[0], int(parts[1],-1))
+            return cls(parts[0], int(parts[1]), -1)
 
 ####
 # Used for the sort of the last paid vector
