@@ -639,7 +639,7 @@ class SmartNodeList(object):
                         node.updatePosition(POS_TOO_NEW)
                     elif node.protocol < protocolRequirement:# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L545
                         node.updatePosition(POS_UPDATE_REQUIRED)
-                    elif node.collateral.block < self.enabledWithMinProtocol():
+                    elif (self.lastBlock - node.collateral.block) < self.enabledWithMinProtocol():
                         node.updatePosition(POS_COLLATERAL_AGE)
                     elif node.status == 'ENABLED': #https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L539
                         self.lastPaidVec.append(LastPaid(node.lastPaidBlock, collateral))
