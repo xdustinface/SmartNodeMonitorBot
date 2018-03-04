@@ -21,10 +21,12 @@ PAIDBLOCK_INDEX = 6
 IPINDEX_INDEX = 7
 
 # Smartnode position states
-POS_CALCULATING = -1
-POS_UPDATE_REQUIRED = -2
-POS_TOO_NEW = -3
-POS_NOT_QUALIFIED = -4
+POS_NOT_QUALIFIED = -1
+POS_CALCULATING = -2
+POS_UPDATE_REQUIRED = -3
+POS_TOO_NEW = -4
+POS_COLLATERAL_AGE = -5
+
 
 logger = logging.getLogger("smartnodes")
 
@@ -123,7 +125,6 @@ class SmartNode(object):
         self.timeout = int(kwargs['timeout'])
         self.position = POS_CALCULATING
 
-
     @classmethod
     def fromRaw(cls,collateral, raw):
 
@@ -145,6 +146,7 @@ class SmartNode(object):
     def fromDb(cls, row):
 
         collateral = Transaction.fromString(row['collateral'])
+        collateral.block = row['collateral_block']
 
         return cls(collateral = collateral,
                    payee = row['payee'],
@@ -332,6 +334,37 @@ class SmartNodeList(object):
 
         return False
 
+
+def getCollateralAge(self, txhash):
+
+    try:
+
+        result = subprocess.check_output(['smartcash-cli', 'getrawtransaction',txhash, '1'])
+        rawTx = json.loads(result.decode('utf-8'))
+
+    except Exception as e:
+
+        logging.error('Could not fetch raw transaction', exc_info=e)
+
+    if 'error' in rawTx or not "blockhash" in rawTx:
+        return -1
+
+    blockHash = rawTx['blockhash']
+
+    try:
+
+        result = subprocess.check_output(['smartcash-cli', 'getblock',blockHash])
+        block = json.loads(result.decode('utf-8'))
+
+    except Exception as e:
+        logging.error('Could not fetch block', exc_info=e)
+
+    if 'error' in block or not 'height' in block:
+        return -1
+
+    return block['height']
+
+
     def isValidDeamonResponse(self,json):
 
         if 'error' in json:
@@ -460,6 +493,8 @@ class SmartNodeList(object):
 
                 if collateral not in self.nodeList:
 
+                    collateral.block = self.getCollateralAge(collateral.hash)
+
                     logger.info("Add node {}".format(key))
                     insert = SmartNode.fromRaw(collateral, data)
 
@@ -510,6 +545,20 @@ class SmartNodeList(object):
 
                         if self.nodeChangeCB != None:
                             self.nodeChangeCB(update, node)
+
+
+            #####
+            ## Check if the collateral height is already detemined
+            ## if not try it!
+            #####
+
+            if not collateral.block:
+                logger.info("Collateral block missing {}".format(str(collateral))
+
+                collateral.block = self.getCollateralAge(collateral.hash)
+
+                if collateral.block:
+                    self.db.updateNode(collateral,node)
 
             #####
             ## Invoke the callback if we have new nodes
@@ -573,8 +622,6 @@ class SmartNodeList(object):
             #
             # CURRENTL MISSING:
             #   https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L554
-            #   https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L569
-            #   ^^ should currently be covered by the min uptime.
             #####
 
             def calculatePositions(upgradeMode):
@@ -587,6 +634,8 @@ class SmartNodeList(object):
                         node.updatePosition(POS_TOO_NEW)
                     elif node.protocol < protocolRequirement:# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L545
                         node.updatePosition(POS_UPDATE_REQUIRED)
+                    elif node.collateral.block < self.enabledWithMinProtocol():
+                        node.updatePosition(POS_COLLATERAL_AGE)
                     elif node.status == 'ENABLED': #https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L539
                         self.lastPaidVec.append(LastPaid(node.lastPaidBlock, collateral))
                     else:

@@ -250,6 +250,7 @@ class NodeDatabase(object):
             with self.connection as db:
                 query = "INSERT INTO nodes(\
                         collateral,\
+                        collateral_block,\
                         payee, \
                         status,\
                         activeseconds,\
@@ -259,10 +260,11 @@ class NodeDatabase(object):
                         protocol,\
                         ip,\
                         timeout ) \
-                        values( ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )"
+                        values( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )"
 
                 db.cursor.execute(query, (
                                   str(collateral),
+                                  collateral.block,
                                   node.payee,
                                   node.status,
                                   node.activeSeconds,
@@ -329,6 +331,7 @@ class NodeDatabase(object):
             with self.connection as db:
 
                 query = "UPDATE nodes SET\
+                                collateral_block=?,\
                                 payee=?,\
                                 status=?,\
                                 activeseconds=?,\
@@ -341,6 +344,7 @@ class NodeDatabase(object):
                                 WHERE collateral=?"
 
                 db.cursor.execute(query, (\
+                                  collateral.block,\
                                   node.payee,\
                                   node.status,\
                                   node.activeSeconds,\
@@ -364,6 +368,7 @@ class NodeDatabase(object):
         BEGIN TRANSACTION;\
         CREATE TABLE "nodes" (\
         	`collateral` TEXT NOT NULL PRIMARY KEY,\
+            `collateral_block` INTEGER,\
         	`payee`	TEXT,\
         	`status` TEXT,\
         	`activeseconds`	INTEGER,\
