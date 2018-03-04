@@ -556,7 +556,7 @@ class SmartNodeList(object):
             nodes90024 = list(filter(lambda x: x.protocol == 90024, self.nodeList.values()))
             nodes90025 = list(filter(lambda x: x.protocol == 90025, self.nodeList.values()))
 
-            self.protocol_90024 = len(listnodes90024)
+            self.protocol_90024 = len(nodes90024)
             self.protocol_90025 = len(nodes90025)
 
             self.enabled_90024 = len(list(filter(lambda x: x.status == "ENABLED", nodes90024)))
