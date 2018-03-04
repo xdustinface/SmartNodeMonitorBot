@@ -553,14 +553,14 @@ class SmartNodeList(object):
             #
             ####
 
-            nodes90024 = list(map(lambda x: x.protocol == 90024, self.nodeList.values()))
-            nodes90025 = list(map(lambda x: x.protocol == 90025, self.nodeList.values()))
+            nodes90024 = filter(lambda x: x.protocol == 90024, self.nodeList.values())
+            nodes90025 = filter(lambda x: x.protocol == 90025, self.nodeList.values())
 
             self.protocol_90024 = len(nodes90024)
             self.protocol_90025 = len(nodes90025)
 
-            self.enabled_90024 = len(list(map(lambda x: x.status == "ENABLED", nodes90024)))
-            self.enabled_90024 = len(list(map(lambda x: x.status == "ENABLED", nodes90025)))
+            self.enabled_90024 = len(filter(lambda x: x.status == "ENABLED", nodes90024))
+            self.enabled_90024 = len(filter(lambda x: x.status == "ENABLED", nodes90025))
 
             #####
             ## Update the the position indicator of the node
@@ -608,7 +608,7 @@ class SmartNodeList(object):
                 self.nodeList[lastPaid.transaction].updatePosition(value)
 
             logger.info("calculatePositions done")
-            
+
         #####
         # Disabled rank updates due to confusion of the users
         #self.updateRanks()
