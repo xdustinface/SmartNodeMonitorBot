@@ -49,6 +49,9 @@ class Transaction(object):
         self.index = txindex
         self.block = block
 
+    def updateBlock(self, block):
+        self.block = block
+
     def __str__(self):
         return '{0.hash}-{0.index}'.format(self)
 
@@ -147,7 +150,7 @@ class SmartNode(object):
     def fromDb(cls, row):
 
         collateral = Transaction.fromString(row['collateral'])
-        collateral.block = row['collateral_block']
+        collateral.updateBlock(row['collateral_block'])
 
         return cls(collateral = collateral,
                    payee = row['payee'],
@@ -494,7 +497,7 @@ def getCollateralAge(self, txhash):
 
                 if collateral not in self.nodeList:
 
-                    collateral.block = self.getCollateralAge(collateral.hash)
+                    collateral.updateBlock(self.getCollateralAge(collateral.hash))
 
                     logger.info("Add node {}".format(key))
                     insert = SmartNode.fromRaw(collateral, data)
@@ -556,7 +559,7 @@ def getCollateralAge(self, txhash):
             if not collateral.block:
                 logger.info("Collateral block missing {}".format(str(collateral))
 
-                collateral.block = self.getCollateralAge(collateral.hash)
+                collateral.updateBlock(self.getCollateralAge(collateral.hash))
 
                 if collateral.block:
                     self.db.updateNode(collateral,node)
