@@ -44,9 +44,10 @@ transactionStringCheck = re.compile("[\d\a-f]{64}-[\d]{1,}")
 
 class Transaction(object):
 
-    def __init__(self, txhash, txindex):
+    def __init__(self, txhash, txindex, block):
         self.hash = txhash
         self.index = txindex
+        self.block = block
 
     def __str__(self):
         return '{0.hash}-{0.index}'.format(self)
