@@ -5,6 +5,7 @@ import threading
 import sqlite3 as sql
 import os
 import subprocess
+import json
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -47,7 +48,7 @@ def migrate():
 
     for node in nodesDB_v10_nodes:
 
-        blockHeight = getCollateralAge(node['txhash'], node['txindex'])
+        blockHeight = getCollateralAge(node['txhash'])
 
         if not blockHeight:
             logger.warning("Could not fetch blockHeight for tx: {}-{}".format(node['txhash'], node['txindex']))
@@ -86,21 +87,18 @@ def isValidDeamonResponse(json):
 
     return True
 
-def getCollateralAge(txhash, txindex):
+def getCollateralAge(txhash):
 
     rawTx = None
 
     try:
 
-        result = subprocess.check_output(['smartcash-cli', 'getrawtransaction',txhash, txindex])
+        result = subprocess.check_output(['smartcash-cli', 'getrawtransaction',txhash, '1'])
         rawTx = json.loads(result.decode('utf-8'))
 
     except Exception as e:
 
         logging.error('Could not fetch raw transaction', exc_info=e)
-
-        if result:
-            logger.error("Output {}".format(result))
 
     if not "blockhash" in rawTx or not isValidDeamonResponse(rawTx):
         return None
@@ -122,9 +120,10 @@ def getCollateralAge(txhash, txindex):
 
 class Transaction(object):
 
-    def __init__(self, txhash, txindex):
+    def __init__(self, txhash, txindex, block):
         self.hash = txhash
         self.index = txindex
+        self.block = block
 
     def __str__(self):
         return '{0.hash}-{0.index}'.format(self)
