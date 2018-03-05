@@ -97,9 +97,7 @@ def memcmp ( str1, str2, count):
 
     while count > 0:
         count -= 1
-
-        print( str(str1[count]) + " " + str(str2[count]))
-
+        
         if str1[count] != str2[count]:
             return -1 if str1[count] < str2[count] else 1
 
