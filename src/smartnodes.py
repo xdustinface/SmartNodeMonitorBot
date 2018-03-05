@@ -517,10 +517,10 @@ class SmartNodeList(object):
                     node = self.nodeList[collateral]
                     update = node.update(data)
 
-                    if update['status']
-                    or update['protocol']
-                    or update['payee']
-                    or update['lastPaid']
+                    if update['status']\
+                    or update['protocol']\
+                    or update['payee']\
+                    or update['lastPaid']\
                     or update['timeout']:
                         self.db.updateNode(collateral,node)
 
