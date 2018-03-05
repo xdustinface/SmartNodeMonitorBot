@@ -169,14 +169,17 @@ class SmartNode(object):
         status = data[STATUS_INDEX].replace('_','-') # replace _ with - to avoid md problems
 
         if self.status != status:
+            logger.info("[{}] Status updated {} => {}".format(self.collateral, self.status, status))
             update['status'] = True
             self.status = status
 
         if int(self.protocol) != int(data[PROTOCOL_INDEX]):
+            logger.info("[{}] Protocol updated {} => {}".format(self.collateral, self.protocol, int(data[PROTOCOL_INDEX])))
             update['protocol'] = True
             self.protocol = int(data[PROTOCOL_INDEX])
 
         if self.payee != data[PAYEE_INDEX]:
+            logger.info("[{}] Payee updated {} => {}".format(self.collateral, self.payee, data[PAYEE_INDEX]))
             update['payee'] = True
             self.payee = data[PAYEE_INDEX]
 
@@ -197,17 +200,23 @@ class SmartNode(object):
 
         self.activeSeconds = int(data[ACTIVE_INDEX])
 
-        if self.lastPaidBlock != int(data[PAIDBLOCK_INDEX]):
+        lastPaidBlock = int(data[PAIDBLOCK_INDEX])
 
-            self.lastPaidBlock = int(data[PAIDBLOCK_INDEX])
+        if self.lastPaidBlock != lastPaidBlock:
+            logger.info("[{}] LastPaid updated {} => {} - P: {}, UP: {}".format(self.collateral, self.lastPaidBlock, lastPaidBlock, self.position, self.activeSeconds))
+            self.lastPaidBlock = lastPaidBlock
             self.lastPaidTime = int(data[PAIDTIME_INDEX])
 
             if self.lastPaidBlock != 0 and self.lastPaidBlock != -1:
                 update['lastPaid'] = True
 
         if self.ip != data[IPINDEX_INDEX]:
+            logger.info("[{}] IP updated {} => {}".format(self.collateral, self.ip, data[IPINDEX_INDEX]))
             update['ip'] = True
             self.ip = data[IPINDEX_INDEX]
+
+        if update['timeout'] :
+            logger.debug("[{}] Timeout updated {}".format(self.collateral, self.timeout))
 
         return update
 
@@ -505,35 +514,14 @@ class SmartNodeList(object):
 
                 else:
 
-                    sync = False
-
                     node = self.nodeList[collateral]
                     update = node.update(data)
 
                     if update['status'] :
-                        logger.info("[{}] Status updated {}".format(node.payee, node.status))
-                        sync = True
-
-                    if update['protocol'] :
-                        logger.info("[{}] Protocol updated {}".format(node.payee, node.protocol))
-                        sync = True
-
-                    if update['payee']:
-                        logger.info("[{}] Payee updated {}".format(collateral, node.payee))
-                        sync = True
-
-                    if update['lastPaid'] :
-                        logger.info("[{}] LastPaid updated {} - P: {}".format(node.payee, node.lastPaidBlock, node.position))
-                        sync = True
-
-                    if update['ip'] :
-                        logger.info("[{}] IP updated {}".format(node.payee, node.ip))
-
-                    if update['timeout'] :
-                        logger.debug("[{}] Timeout updated {}".format(node.payee, node.timeout))
-                        sync = True
-
-                    if sync:
+                    or update['protocol']
+                    or update['payee']
+                    or update['lastPaid']
+                    or update['timeout']
                         self.db.updateNode(collateral,node)
 
                     if sum(map(lambda x: x, update.values())):
