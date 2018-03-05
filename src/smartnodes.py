@@ -8,7 +8,6 @@ from src import util
 import logging
 import threading
 import re
-import ctypes
 
 # Index assignment of the "smartnodelist full"
 STATUS_INDEX = 0
@@ -29,15 +28,6 @@ POS_COLLATERAL_AGE = -5
 
 
 logger = logging.getLogger("smartnodes")
-
-libc = None
-
-if sys.platform == 'linux':
-    libc = ctypes.cdll.LoadLibrary("libc.so.6")
-elif sys.platform == 'mac':
-    libc = ctypes.cdll.LoadLibrary("libc.dylib")
-else:
-    sys.exit("Windows....")
 
 transactionRawCheck = re.compile("COutPoint\([\d\a-f]{64},.[\d]{1,}\)")
 transactionStringCheck = re.compile("[\d\a-f]{64}-[\d]{1,}")
@@ -72,7 +62,7 @@ class Transaction(object):
         # https://github.com/SmartCash/smartcash/blob/1.1.1/src/uint256.h#L45
         # https://github.com/SmartCash/smartcash/blob/1.1.1/src/primitives/transaction.h#L38
         # https://github.com/SmartCash/smartcash/blob/1.1.1/src/primitives/transaction.h#L126
-        compare = libc.memcmp(self.hash, other.hash, len(self.hash))
+        compare = util.memcmp(bytes.fromhex(self.hash), bytes.fromhex(other.hash),len(bytes.fromhex(self.hash)))
         return compare < 0 or ( compare == 0 and self.index < other.index )
 
 
