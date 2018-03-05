@@ -203,7 +203,7 @@ class SmartNode(object):
         lastPaidBlock = int(data[PAIDBLOCK_INDEX])
 
         if self.lastPaidBlock != lastPaidBlock:
-            logger.info("[{}] LastPaid updated {} => {} - P: {}, UP: {}".format(self.collateral, self.payoutTimeString(), lastPaidBlock, self.position, util.secondsToText(self.activeSeconds)))
+            logger.info("[{}] Reward {} - Last: {}, P: {}, UP: {}".format(self.collateral, lastPaidBlock, self.payoutTimeString(), self.position, util.secondsToText(self.activeSeconds)))
             self.lastPaidBlock = lastPaidBlock
             self.lastPaidTime = int(data[PAIDTIME_INDEX])
 
