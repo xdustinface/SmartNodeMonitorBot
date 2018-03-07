@@ -761,18 +761,18 @@ class SmartNodeList(object):
             else:
                 logger.debug("Current count: {}".format(calcCount))
                 logger.debug("Current time: {}".format(currentCheckTime))
-                logger.debug("Current accuracy: {}".format(abs(requiredNodes - count)))
+                logger.debug("Current accuracy: {}".format(abs(requiredNodes - calcCount)))
 
                 if time.time() - start > 2:
                     start = time.time()
                     accuracy += 5
 
-                if abs(requiredNodes - count) < accuracy:
+                if abs(requiredNodes - calcCount) < accuracy:
                     logger.debug("Final accuracy {}".format(accuracy))
-                    logger.debug("Final accuracy matched {}".format(abs(requiredNodes - count)))
+                    logger.debug("Final accuracy matched {}".format(abs(requiredNodes - calcCount)))
                     logger.debug("Remaining duration: {}".format( secondsToText((self.minimumUptime() - currentCheckTime))))
                     return self.minimumUptime() - currentCheckTime
-                elif count > requiredNodes:
+                elif calcCount > requiredNodes:
                     currentCheckTime += currentCheckTime * 0.5
                 else:
                     currentCheckTime -= currentCheckTime * 0.5
@@ -780,46 +780,6 @@ class SmartNodeList(object):
         logger.debug("Could not determine duration?!")
 
         return None
-
-
-        # if we are around +/-100 nodes from the requirement its
-        # it should be accurate enough for an esitmation.
-        accuracy = 100
-        # walk through the database in 10 minute steps
-        steps = 600
-
-        requiredNodes = int(self.enabledWithMinProtocol() / 3)
-
-        currentCheckTime = 0
-
-        maxActiveQuery = "select max(activeseconds) as max_active from nodes where status='ENABLED' and protocol=90025"
-        maxActiveResult = self.db.raw(maxActiveQuery)
-        nodes90024 = list(filter(lambda x: x.protocol == self.protocolRequirement() and status == 'ENABLED', self.nodeList.values()))
-        nodes90025 = list(filter(lambda x: x.protocol == 90025, self.nodeList.values()))
-
-
-        if maxActiveSeconds:
-            currentCheckTime = maxActiveResult['max_active']
-        else:
-            return None
-
-        queryFilter = ("status='ENABLED' and protocol={}"
-                       "and activeseconds>{} and collateral_block>{}")
-
-        while currentCheckTime > steps:
-            currentCheckTime -= steps
-
-            count = self.db.getNodeCount(queryFilter.format(self.protocolRequirement(),currentCheckTime,))
-
-            if not count:
-                return None
-            else:
-
-                if abs(requiredNodes - count) < accuracy:
-                    return self.minimumUptime() - currentCheckTime
-
-        return None
-
 
     def getNodeByIp(self, ip):
         return self.db.getNodeByIp(ip)
