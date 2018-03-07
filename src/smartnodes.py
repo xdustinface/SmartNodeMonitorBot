@@ -761,7 +761,7 @@ class SmartNodeList(object):
                 logger.debug("Current count: {}".format(calcCount))
                 logger.debug("Current time: {}".format(currentCheckTime))
                 logger.debug("Current accuracy: {}".format(accuracy))
-                logger.debug("Current accuracy matched: {}".format(abs(requiredNodes - calcCount)))
+                logger.debug("Current accuracy matched: {}\n".format(abs(requiredNodes - calcCount)))
 
                 if int(time.time() - start) > 2:
                     start = time.time()

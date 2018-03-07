@@ -251,7 +251,7 @@ class NodeDatabase(object):
 
         return None
 
-        
+
     def addNode(self, collateral, node):
 
         try:
@@ -335,7 +335,7 @@ class NodeDatabase(object):
 
     def updateNode(self, collateral, node):
 
-        if not self.addNode(str(collateral), node):
+        if not self.addNode(collateral, node):
 
             with self.connection as db:
 
