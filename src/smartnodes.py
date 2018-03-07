@@ -290,7 +290,7 @@ class SmartNodeList(object):
 
         self.load()
 
-        self.startTimer()
+        self.startTimer(5)
 
     def acquire(self):
         logger.info("SmartNodeList acquire")
@@ -305,8 +305,8 @@ class SmartNodeList(object):
         if self.adminCB:
             self.adminCB(message)
 
-    def startTimer(self):
-        self.timer = threading.Timer(30, self.updateList)
+    def startTimer(self, timeout = 30):
+        self.timer = threading.Timer(timeout, self.updateList)
         self.timer.start()
 
     def load(self):
