@@ -114,8 +114,8 @@ def help(messenger):
 ############################################################
 
 def networkState(messenger, last, created, enabled, qualifiedNormal,
-                 qualifiedUpgrade, protocolRequirement, protocol90024,
-                 protocol90025, initialWaitString):
+                 qualifiedUpgrade, upgradeModeDuration, protocolRequirement,
+                 protocol90024, protocol90025, initialWaitString):
 
     message = ("<b>Current block<b> {}\n\n"
                 "<b>Nodes created<b> {}\n"
@@ -156,7 +156,8 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
         " to be in the random payout zone. If you are there you have the <b>chance<b> get paid"
         " from now on but in the <b>worst<b> case it still might take some days.\n\n").format(enabled, int(minPosition))
 
-        message += "The upgrade mode will be active until <b>{}<b> nodes has become eligible. Right now we have <b>{}<b> of them.\n\n".format(minEligible, qualifiedUpgrade)
+        message += ("The upgrade mode will be active until <b>{}<b> nodes has become eligible. Right now we have <b>{}<b> of them. This will"
+                    " currently last around <b>{}<b>\n\n").format(minEligible, qualifiedUpgrade,util.secondsToText(upgradeModeDuration))
 
     message += "<u><b>Further payouts<b><u>\n\n"
     message += ("Once you received your first payout your node's position"

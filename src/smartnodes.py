@@ -268,6 +268,7 @@ class SmartNodeList(object):
 
         self.nodeListSem = threading.Lock()
         self.lastBlock = 0
+        self.remainingUpgradeModeDuration = 0
         self.qualifiedUpgrade = -1
         self.qualifiedNormal = 0
         self.protocol_90024 = 0
@@ -487,6 +488,7 @@ class SmartNodeList(object):
             # Reset the calculation vars
             self.qualifiedNormal = 0
             self.qualifiedUpgrade = 0
+            self.remainingUpgradeModeDuration = 0
 
             for key, data in nodes.items():
 
@@ -647,6 +649,10 @@ class SmartNodeList(object):
 
             logger.info("calculatePositions done")
 
+            logger.info("calculateUpgradeModeDuration start")
+            self.remainingUpgradeModeDuration = self.calculateUpgradeModeDuration()
+            logger.info("calculateUpgradeModeDuration done")
+
             self.release()
 
         #####
@@ -723,6 +729,44 @@ class SmartNodeList(object):
             return self.enabled_90025
         else:
             return self.enabled_90024 + self.enabled_90025
+
+    def calculateUpgradeModeDuration(self):
+
+        # if we are around +/-100 nodes from the requirement its
+        # it should be accurate enough for an esitmation.
+        accuracy = 100
+        # walk through the database in 10 minute steps
+        steps = 600
+
+        requiredNodes = int(self.enabledWithMinProtocol() / 3)
+
+        currentCheckTime = 0
+
+        maxActiveQuery = "select max(activeseconds) as max_active from nodes where status='ENABLED' and protocol=90025"
+        maxActiveResult = self.db.raw(maxActiveQuery)
+
+        if maxActiveSeconds:
+            currentCheckTime = maxActiveResult['max_active']
+        else:
+            return None
+
+        queryFilter = ("status='ENABLED' and protocol={}"
+                       "and activeseconds>{} and collateral_block>{}")
+
+        while currentCheckTime > steps:
+            currentCheckTime -= steps
+
+            count = self.db.getNodeCount(queryFilter.format(self.protocolRequirement(),currentCheckTime,))
+
+            if not count:
+                return None
+            else:
+
+                if abs(requiredNodes - count) > accuracy:
+                    return self.minimumUptime() - currentCheckTime
+
+        return None
+
 
     def getNodeByIp(self, ip):
         return self.db.getNodeByIp(ip)

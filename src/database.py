@@ -243,6 +243,15 @@ class NodeDatabase(object):
 
         return len(tables) == 0
 
+    def raw(self, query):
+
+        with self.connection as db:
+            db.cursor.execute(query)
+            return db.cursor.fetchall()
+
+        return None
+
+        
     def addNode(self, collateral, node):
 
         try:

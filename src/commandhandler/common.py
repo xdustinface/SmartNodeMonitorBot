@@ -33,6 +33,7 @@ def info(bot, update):
         enabled = bot.nodeList.enabled()
         qualifiedNormal = bot.nodeList.qualifiedNormal
         qualifiedUpgrade = bot.nodeList.qualifiedUpgrade
+        upgradeModeDuration = bot.nodeList.remainingUpgradeModeDuration
         protocolRequirement = bot.nodeList.protocolRequirement()
         protocol90024 = bot.nodeList.count(90024)
         protocol90025 = bot.nodeList.count(90025)
@@ -46,6 +47,7 @@ def info(bot, update):
                                           enabled,
                                           qualifiedNormal,
                                           qualifiedUpgrade,
+                                          upgradeModeDuration,
                                           protocolRequirement,
                                           protocol90024,
                                           protocol90025,
