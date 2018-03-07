@@ -747,7 +747,7 @@ class SmartNodeList(object):
 
         calcCount = None
 
-        while True:
+        while accuracy < 1000:
 
             calcCount = len(list(filter(lambda x: x.protocol == self.protocolRequirement() and\
                                                   x.status == 'ENABLED' and\
