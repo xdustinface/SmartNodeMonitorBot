@@ -133,7 +133,7 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
 
     message += ("<b>Protocol requirement<b> {}\n\n"
                 "<b>Nodes with 90024<b> {}\n"
-                "<b>Nodes with 90025<b> {}\n\n".).format(protocolRequirement,
+                "<b>Nodes with 90025<b> {}\n\n").format(protocolRequirement,
                                                         protocol90024,
                                                         protocol90025)
 
