@@ -168,9 +168,10 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
                " from now on but in the <b>worst<b> case it still might take some days.\n\n").format(int(minPosition))
 
     # Use qualifiedNormal instead of (qualifiedNormal * 0.9) to give the worst case
-    message += "<b>Reaching the payout zone should currently take roughly {} days<b>\n\n".format(int(qualifiedNormal / 1570))
+    message += "<b>Reaching the payout zone<b> should currently take roughly <b>{}<b> days\n\n".format(int(qualifiedNormal / 1570))
 
-    message += "<u><b>The positions of your nodes and the calculations above should be quite accurate but please don't realy 100% on them until the wallet version 1.2.0 is released which should fix the current issues<b><u>".format(int(qualifiedNormal / 1570))
+    message += "<u><b>Warning<b><u>\n\n"
+    message += "The positions of your nodes and the calculations above should be quite accurate but <b>please don't realy 100% on them until the wallet version 1.2.0 is released<b> which should fix the current issues".format(int(qualifiedNormal / 1570))
 
     return markdown(message,messenger)
 
