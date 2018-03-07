@@ -743,7 +743,7 @@ class SmartNodeList(object):
         currentCheckTime -= currentCheckTime * 0.5
 
         # Start time for accuracy descrease if needed
-        start = time.time()
+        start = int(time.time())
 
         calcCount = None
 
@@ -759,14 +759,14 @@ class SmartNodeList(object):
             logger.debug("Current accuracy: {}".format(accuracy))
             logger.debug("Current accuracy matched: {}\n".format(abs(requiredNodes - calcCount)))
 
-            if int(time.time() - start) > 2:
+            if int(time.time()) - start >= 2:
                 start = time.time()
-                accuracy += 5
+                accuracy += 10
 
             if abs(requiredNodes - calcCount) < accuracy:
                 logger.debug("Final accuracy {}".format(accuracy))
                 logger.debug("Final accuracy matched {}".format(abs(requiredNodes - calcCount)))
-                logger.debug("Remaining duration: {}".format( secondsToText((self.minimumUptime() - currentCheckTime))))
+                logger.debug("Remaining duration: {}".format( util.secondsToText((self.minimumUptime() - currentCheckTime))))
                 return self.minimumUptime() - currentCheckTime
             elif calcCount > requiredNodes:
                 currentCheckTime += currentCheckTime * 0.5 + (int(time.time()) % 60)
