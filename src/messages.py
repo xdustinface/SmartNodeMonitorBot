@@ -124,6 +124,7 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
                                                       enabled)
 
     minPosition = enabled * 0.1
+    minEligible = int(enabled / 3)
 
     if qualifiedUpgrade != -1:
         message += "<b>Nodes qualified<b> {}\n".format(qualifiedUpgrade)
@@ -138,8 +139,8 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
                                                         protocol90025)
 
     message += "<u><b>Minimum uptime<b><u>\n\n"
-    message += ("The current **minimum** uptime after a restart to be eligible for "
-               " SmartNode rewards is **{}**\n\n").format(initialWaitString)
+    message += ("The current <b>minimum<b> uptime after a restart to be eligible for"
+               " SmartNode rewards is <b>{}<b>\n\n").format(initialWaitString)
 
     message += "<u><b>Initial payout<b><u>\n\n"
 
@@ -149,16 +150,18 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
     #https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L655
     ####
     if qualifiedUpgrade != -1:
-        message += ("The network is currenty in upgrade mode. Recently started nodes "
-        " do also do have the chance to get paid (**The minimum uptime above does not matter**) if their collateral transaction has "
+        message += ("The network is currenty in <b>upgrade mode<b>. Recently started nodes"
+        " do also do have the chance to get paid (<b>The minimum uptime above does not matter<b>) if their collateral transaction has"
         " at least {} confirmations. Your nodes's position needs to be less than {}."
-        " to be in the random payout zone. In this case you <b>could<b> get paid"
-        " from now on but in the <b>worst<b> case it still might take some days.").format(enabled, int(minPosition))
+        " to be in the random payout zone. If you are there you have the <b>chance<b> get paid"
+        " from now on but in the <b>worst<b> case it still might take some days.\n\n").format(enabled, int(minPosition))
 
-    message += "\n\n<u><b>Further payouts<b><u>\n\n"
+        message += "The upgrade mode will be active until <b>{}<b> nodes has become eligible. Right now we have <b>{}<b> of them.\n\n".format(minEligible, qualifiedNormal)
+
+    message += "<u><b>Further payouts<b><u>\n\n"
     message += ("Once you received your first payout your node's position"
-               " currenty needs to be higher less than <b>{}<b> "
-               " to be in the random payout zone. In this case you <b>could<b> get paid"
+               " currenty needs to be less than <b>{}<b>"
+               " to be in the random payout zone. If you are there you have the <b>chance<b> get paid"
                " from now on but in the <b>worst<b> case it still might take some days.\n").format(int(minPosition))
 
     return markdown(message,messenger)
