@@ -167,7 +167,10 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
                " to be in the random payout zone. If you are there you have the <b>chance<b> get paid"
                " from now on but in the <b>worst<b> case it still might take some days.\n\n").format(int(minPosition))
 
+    # Use qualifiedNormal instead of (qualifiedNormal * 0.9) to give the worst case
     message += "<b>Reaching the payout zone should currently take roughly {} days<b>".format(int(qualifiedNormal / 1570))
+
+    message += "<u><b>Please don't rely 100% on the calculations until the 1.2 release has fixed all <b><u>".format(int(qualifiedNormal / 1570))
 
     return markdown(message,messenger)
 
