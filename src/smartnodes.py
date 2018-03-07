@@ -752,7 +752,7 @@ class SmartNodeList(object):
 
             calcCount = len(list(filter(lambda x: x.protocol == 90025 and\
                                               x.status == 'ENABLED' and\
-                                              (self.lastBlock - x.collateral_block) > self.enabledWithMinProtocol() and\
+                                              (self.lastBlock - x.collateral.block) > self.enabledWithMinProtocol() and\
                                               x.activeSeconds > currentCheckTime, self.nodeList.values() )))
 
             if not calcCount:
