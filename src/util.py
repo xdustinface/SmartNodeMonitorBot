@@ -71,8 +71,8 @@ def secondsToText(secs):
     seconds = secs - days*86400 - hours*3600 - minutes*60
     result = ("{0} day{1}, ".format(days, "s" if days!=1 else "") if days else "") + \
     ("{0} hour{1}, ".format(hours, "s" if hours!=1 else "") if hours else "") + \
-    ("{0} minute{1}, ".format(minutes, "s" if minutes!=1 else "") if minutes else "") + \
-    ("{0} second{1} ".format(seconds, "s" if seconds!=1 else "") if seconds else "")
+    ("{0} minute{1}, ".format(minutes, "s" if minutes!=1 and not days else "") if minutes else "") + \
+    ("{0} second{1} ".format(seconds, "s" if seconds!=1 and not days else "") if seconds else "")
     return result if result != "" else "Now"
 
 def crossMessengerSplit(obj):
@@ -97,7 +97,7 @@ def memcmp ( str1, str2, count):
 
     while count > 0:
         count -= 1
-        
+
         if str1[count] != str2[count]:
             return -1 if str1[count] < str2[count] else 1
 
