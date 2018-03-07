@@ -268,9 +268,8 @@ class SmartNodeList(object):
 
         self.nodeListSem = threading.Lock()
         self.lastBlock = 0
-        self.upgradeMode = False
-        self.upgradeMode = 0
-        self.qualified = 0
+        self.qualifiedUpgrade = -1
+        self.qualifiedNormal = 0
         self.protocol_90024 = 0
         self.protocol_90025 = 0
         self.enabled_90024 = 0
@@ -486,8 +485,8 @@ class SmartNodeList(object):
             self.acquire()
 
             # Reset the calculation vars
-            self.upgradeMode = False
-            self.qualified = 0
+            self.qualifiedNormal = 0
+            self.qualifiedUpgrade = 0
 
             for key, data in nodes.items():
 
@@ -625,12 +624,12 @@ class SmartNodeList(object):
                         node.updatePosition(POS_NOT_QUALIFIED)
 
                 if not upgradeMode and len(self.lastPaidVec) < (self.enabledWithMinProtocol() / 3):
-                    logger.info("Start upgradeMode calculation: {}".format(len(self.lastPaidVec)))
+                    self.qualifiedUpgrade = len(self.lastPaidVec)
+                    logger.info("Start upgradeMode calculation: {}".format(len(self.qualifiedUpgrade)))
                     calculatePositions(True)
                     return
 
-                self.qualified = len(self.lastPaidVec)
-                self.upgradeMode = upgradeMode
+                self.qualifiedNormal = len(self.lastPaidVec)
 
             calculatePositions(False)
 

@@ -113,24 +113,37 @@ def help(messenger):
 #                      Common messages                     #
 ############################################################
 
-def networkState(messenger, last, upgradeMode, created, enabled, qualified,
-                 protocolRequirement, protocol90024, protocol90025,
-                 initialWaitString):
+def networkState(messenger, last, created, enabled, qualifiedNormal,
+                 qualifiedUpgrade, protocolRequirement, protocol90024,
+                 protocol90025, initialWaitString):
 
     message = ("<b>Current block<b> {}\n\n"
                 "<b>Nodes created<b> {}\n"
                 "<b>Nodes enabled<b> {}\n"
-                "<b>Nodes qualified<b> {}\n\n"
-                "<b>Protocol requirement<b> {}\n\n"
-                "<b>Nodes with 90024<b> {}\n"
-                "<b>Nodes with 90025<b> {}\n\n").format(last,
+                "<b>Nodes qualified<b> {}\n").format(last,
                                                       created,
                                                       enabled,
-                                                      qualified,
+                                                      qualifiedNormal,
                                                       protocolRequirement,
                                                       protocol90024,
                                                       protocol90025)
 
+    minPosition = enabled * 0.1
+
+    if qualifiedUpgrade != -1:
+        message += "<b>Nodes qualified<b> {}\n".format(qualifiedUpgrade)
+        message += "<b>Nodes qualified (UpgradeMode)<b> {}\n".format(qualifiedNormal)
+
+    else:
+        message += "<b>Nodes qualified<b> {}\n".format(qualifiedNormal)
+
+    message += ("<b>Protocol requirement<b> {}\n\n"
+                "<b>Nodes with 90024<b> {}\n"
+                "<b>Nodes with 90025<b> {}\n\n")
+
+    message += "<u><b>Minimum uptime<b><u>\n\n"
+    message += ("The current **minimum** uptime after a restart to be eligible for "
+               " SmartNode rewards is **{}**\n\n").format(initialWaitString)
 
     message += "<u><b>Initial payout<b><u>\n\n"
 
@@ -139,21 +152,18 @@ def networkState(messenger, last, upgradeMode, created, enabled, qualified,
     #
     #https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L655
     ####
-    if upgradeMode:
+    if qualifiedUpgrade != -1:
         message += ("The network is currenty in upgrade mode. Recently started nodes "
-        " do also do have the chance to get paid if their collateral transaction has "
+        " do also do have the chance to get paid (**The minimum uptime above does not matter**) if their collateral transaction has "
         " at least {} confirmations. Your nodes's position needs to be less than {}."
-        " If it is your node is in the random payout zone. This means you <b>could<b> get paid"
-        " from now on but in the <b>worst<b> case it still might take some days.").format(enabled, int(enabled * 0.1))
-    else:
-        message += ("The current **minimal** <u>uptime<u> to be eligible for "
-                   " SmartNode rewards is **{}**").format(initialWaitString)
+        " to be in the random payout zone. In this case you <b>could<b> get paid"
+        " from now on but in the <b>worst<b> case it still might take some days.").format(enabled, int(minPosition))
 
     message += "\n\n<u><b>Further payouts<b><u>\n\n"
     message += ("Once you received your first payout your node's position"
-               " currenty needs to be less than <b>{}<b>. If it is your node"
-               " is in the random payout zone. This means you <b>could<b> get paid"
-               " from now on but in the <b>worst<b> case it still might take some days.\n").format(int(enabled * 0.1))
+               " currenty needs to be higher less than <b>{}<b> "
+               " to be in the random payout zone. In this case you <b>could<b> get paid"
+               " from now on but in the <b>worst<b> case it still might take some days.\n").format(int(minPosition))
 
     return markdown(message,messenger)
 
