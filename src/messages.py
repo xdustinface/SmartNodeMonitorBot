@@ -152,7 +152,7 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
     if qualifiedUpgrade != -1:
         message += ("The network is currenty in <b>upgrade mode<b>. Recently started nodes"
         " do also do have the chance to get paid (<b>The minimum uptime above does not matter<b>) if their collateral transaction has"
-        " at least {} confirmations. Your nodes's position needs to be less than {}."
+        " at least {} confirmations. Your nodes's position needs to be less than {}"
         " to be in the random payout zone. If you are there you have the <b>chance<b> get paid"
         " from now on but in the <b>worst<b> case it still might take some days.\n\n").format(enabled, int(minPosition))
 
@@ -165,7 +165,9 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
     message += ("Once you received your first payout your node's position"
                " currenty needs to be less than <b>{}<b>"
                " to be in the random payout zone. If you are there you have the <b>chance<b> get paid"
-               " from now on but in the <b>worst<b> case it still might take some days.\n").format(int(minPosition))
+               " from now on but in the <b>worst<b> case it still might take some days.\n\n").format(int(minPosition))
+
+    message += "<b>Reaching the payout zone should currently take roughly {} days<b>".format(int(qualifiedNormal / 1570))
 
     return markdown(message,messenger)
 

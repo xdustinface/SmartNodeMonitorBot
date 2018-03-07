@@ -775,7 +775,7 @@ class SmartNodeList(object):
 
         logger.warning("Could not determine duration?!")
         logger.warning("Final accuracy {}".format(accuracy))
-        logger.warning("Final accuracy before step {}".format(abs(requiredNodes - calcCount)))
+        logger.warning("Final accuracy before step out {}".format(abs(requiredNodes - calcCount)))
 
         return None
 
