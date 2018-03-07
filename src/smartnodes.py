@@ -625,7 +625,7 @@ class SmartNodeList(object):
 
                 if not upgradeMode and len(self.lastPaidVec) < (self.enabledWithMinProtocol() / 3):
                     self.qualifiedUpgrade = len(self.lastPaidVec)
-                    logger.info("Start upgradeMode calculation: {}".format(len(self.qualifiedUpgrade)))
+                    logger.info("Start upgradeMode calculation: {}".format(self.qualifiedUpgrade))
                     calculatePositions(True)
                     return
 
