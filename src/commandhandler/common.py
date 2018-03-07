@@ -42,7 +42,6 @@ def info(bot, update):
 
         response += messages.networkState(bot.messenger,
                                           lastBlock,
-                                          upgradeMode,
                                           created,
                                           enabled,
                                           qualifiedNormal,
@@ -53,7 +52,7 @@ def info(bot, update):
                                           util.secondsToText(initialWait))
 
     else:
-        response += "*Sorry, the server is currently not synced with the network.*"
+        response += "*Sorry, the bot is currently not synced with the network. Try it again in few minutes...*"
 
     return response
 
