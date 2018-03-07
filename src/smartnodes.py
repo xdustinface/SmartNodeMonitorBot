@@ -733,7 +733,7 @@ class SmartNodeList(object):
 
         # Start with an accuracy of 5 nodes.
         # Will become increased if it takes too long
-        accuracy = 5
+        accuracy = 20
         # Minimum required nodes to continue with normal mode
         requiredNodes = int(self.enabledWithMinProtocol() / 3)
         # Get the max active seconds to determine a start point
@@ -759,9 +759,9 @@ class SmartNodeList(object):
             logger.debug("Current accuracy: {}".format(accuracy))
             logger.debug("Current accuracy matched: {}\n".format(abs(requiredNodes - calcCount)))
 
-            if int(time.time()) - start >= 2:
+            if int(time.time()) - start >= 1:
                 start = time.time()
-                accuracy += 10
+                accuracy += 20
 
             if abs(requiredNodes - calcCount) < accuracy:
                 logger.debug("Final accuracy {}".format(accuracy))
