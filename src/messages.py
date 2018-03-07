@@ -119,27 +119,23 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
 
     message = ("<b>Current block<b> {}\n\n"
                 "<b>Nodes created<b> {}\n"
-                "<b>Nodes enabled<b> {}\n"
-                "<b>Nodes qualified<b> {}\n").format(last,
+                "<b>Nodes enabled<b> {}\n").format(last,
                                                       created,
-                                                      enabled,
-                                                      qualifiedNormal,
-                                                      protocolRequirement,
-                                                      protocol90024,
-                                                      protocol90025)
+                                                      enabled)
 
     minPosition = enabled * 0.1
 
     if qualifiedUpgrade != -1:
         message += "<b>Nodes qualified<b> {}\n".format(qualifiedUpgrade)
-        message += "<b>Nodes qualified (UpgradeMode)<b> {}\n".format(qualifiedNormal)
-
+        message += "<b>Nodes qualified (UpgradeMode)<b> {}\n\n".format(qualifiedNormal)
     else:
-        message += "<b>Nodes qualified<b> {}\n".format(qualifiedNormal)
+        message += "<b>Nodes qualified<b> {}\n\n".format(qualifiedNormal)
 
     message += ("<b>Protocol requirement<b> {}\n\n"
                 "<b>Nodes with 90024<b> {}\n"
-                "<b>Nodes with 90025<b> {}\n\n")
+                "<b>Nodes with 90025<b> {}\n\n".).format(protocolRequirement,
+                                                        protocol90024,
+                                                        protocol90025)
 
     message += "<u><b>Minimum uptime<b><u>\n\n"
     message += ("The current **minimum** uptime after a restart to be eligible for "
