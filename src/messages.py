@@ -159,7 +159,7 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
         message += ("The upgrade mode will be active until <b>{}<b> nodes has become eligible. Right now we have <b>{}<b> of them.\n\n").format(minEligible, qualifiedUpgrade)
 
         if upgradeModeDuration:
-            message += "<b>Remaining upgrade mode duration<b> ~{}\n\n".format(util.secondsToText(upgradeModeDuration))
+            message += "<b>Remaining upgrade mode duration<b> ~{}\n\n".format(upgradeModeDuration)
 
     message += "<u><b>Further payouts<b><u>\n\n"
     message += ("Once you received your first payout your node's position"

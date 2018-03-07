@@ -39,6 +39,9 @@ def info(bot, update):
         protocol90025 = bot.nodeList.count(90025)
         initialWait = bot.nodeList.minimumUptime()
 
+        if upgradeModeDuration:
+            upgradeModeDuration = util.secondsToText(upgradeModeDuration)
+
         bot.nodeList.release()
 
         response += messages.networkState(bot.messenger,
