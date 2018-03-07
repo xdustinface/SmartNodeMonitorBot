@@ -754,28 +754,24 @@ class SmartNodeList(object):
                                                   (self.lastBlock - x.collateral.block) >= self.enabledWithMinProtocol() and\
                                                   x.activeSeconds > currentCheckTime, self.nodeList.values() )))
 
-            if not calcCount:
-                logger.warning("No calcCount?!")
-                return None
+            logger.debug("Current count: {}".format(calcCount))
+            logger.debug("Current time: {}".format(currentCheckTime))
+            logger.debug("Current accuracy: {}".format(accuracy))
+            logger.debug("Current accuracy matched: {}\n".format(abs(requiredNodes - calcCount)))
+
+            if int(time.time() - start) > 2:
+                start = time.time()
+                accuracy += 5
+
+            if abs(requiredNodes - calcCount) < accuracy:
+                logger.debug("Final accuracy {}".format(accuracy))
+                logger.debug("Final accuracy matched {}".format(abs(requiredNodes - calcCount)))
+                logger.debug("Remaining duration: {}".format( secondsToText((self.minimumUptime() - currentCheckTime))))
+                return self.minimumUptime() - currentCheckTime
+            elif calcCount > requiredNodes:
+                currentCheckTime += currentCheckTime * 0.5 + (int(time.time()) % 60)
             else:
-                logger.debug("Current count: {}".format(calcCount))
-                logger.debug("Current time: {}".format(currentCheckTime))
-                logger.debug("Current accuracy: {}".format(accuracy))
-                logger.debug("Current accuracy matched: {}\n".format(abs(requiredNodes - calcCount)))
-
-                if int(time.time() - start) > 2:
-                    start = time.time()
-                    accuracy += 5
-
-                if abs(requiredNodes - calcCount) < accuracy:
-                    logger.debug("Final accuracy {}".format(accuracy))
-                    logger.debug("Final accuracy matched {}".format(abs(requiredNodes - calcCount)))
-                    logger.debug("Remaining duration: {}".format( secondsToText((self.minimumUptime() - currentCheckTime))))
-                    return self.minimumUptime() - currentCheckTime
-                elif calcCount > requiredNodes:
-                    currentCheckTime += currentCheckTime * 0.5
-                else:
-                    currentCheckTime -= currentCheckTime * 0.5
+                currentCheckTime -= currentCheckTime * 0.5 + (int(time.time()) % 60)
 
         logger.warning("Could not determine duration?!")
         logger.warning("Final accuracy {}".format(accuracy))
