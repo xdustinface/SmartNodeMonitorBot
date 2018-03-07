@@ -732,6 +732,56 @@ class SmartNodeList(object):
 
     def calculateUpgradeModeDuration(self):
 
+        # Start with an accuracy of 5 nodes.
+        # Will become increased if it takes too long
+        accuracy = 5
+        # walk through the database in 10 minute steps
+        steps = 120
+        # Minimum required nodes to continue with normal mode
+        requiredNodes = int(self.enabledWithMinProtocol() / 3)
+        # Get the max active seconds to determine a start point
+        currentCheckTime = max(list(map(lambda x: x.activeSeconds if x.protocol == 90025 and x.status == 'ENABLED' else 0, self.nodeList.values())))
+        logger.debug("Maximum uptime {}".format(currentCheckTime))
+        # Start value
+        currentCheckTime -= currentCheckTime * 0.5
+
+        # Start time for accuracy descrease if needed
+        start = time.time()
+
+        while True:
+
+            calcCount = len(list(filter(lambda x: x.protocol == 90025 and\
+                                              x.status == 'ENABLED' and\
+                                              (self.lastBlock - x.collateral_block) > self.enabledWithMinProtocol() and\
+                                              x.activeSeconds > currentCheckTime, nodeList.values() )))
+
+            if not calcCount:
+                logger.debug("No calcCount?!")
+                return None
+            else:
+                logger.debug("Current count: {}".format(calcCount))
+                logger.debug("Current time: {}".format(currentCheckTime))
+                logger.debug("Current accuracy: {}".format(abs(requiredNodes - count)))
+
+                if time.time() - start > 2:
+                    start = time.time()
+                    accuracy += 5
+
+                if abs(requiredNodes - count) < accuracy:
+                    logger.debug("Final accuracy {}".format(accuracy))
+                    logger.debug("Final accuracy matched {}".format(abs(requiredNodes - count)))
+                    logger.debug("Remaining duration: {}".format( secondsToText((self.minimumUptime()) - currentCheckTime)))
+                    return self.minimumUptime()) - currentCheckTime
+                elif count > requiredNodes:
+                    currentCheckTime += currentCheckTime * 0.5
+                else:
+                    currentCheckTime -= currentCheckTime * 0.5
+
+        logger.debug("Could not determine duration?!")
+
+        return None
+
+
         # if we are around +/-100 nodes from the requirement its
         # it should be accurate enough for an esitmation.
         accuracy = 100
@@ -744,6 +794,9 @@ class SmartNodeList(object):
 
         maxActiveQuery = "select max(activeseconds) as max_active from nodes where status='ENABLED' and protocol=90025"
         maxActiveResult = self.db.raw(maxActiveQuery)
+        nodes90024 = list(filter(lambda x: x.protocol == self.protocolRequirement() and status == 'ENABLED', self.nodeList.values()))
+        nodes90025 = list(filter(lambda x: x.protocol == 90025, self.nodeList.values()))
+
 
         if maxActiveSeconds:
             currentCheckTime = maxActiveResult['max_active']
@@ -762,7 +815,7 @@ class SmartNodeList(object):
                 return None
             else:
 
-                if abs(requiredNodes - count) > accuracy:
+                if abs(requiredNodes - count) < accuracy:
                     return self.minimumUptime() - currentCheckTime
 
         return None

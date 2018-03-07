@@ -156,8 +156,10 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
         " to be in the random payout zone. If you are there you have the <b>chance<b> get paid"
         " from now on but in the <b>worst<b> case it still might take some days.\n\n").format(enabled, int(minPosition))
 
-        message += ("The upgrade mode will be active until <b>{}<b> nodes has become eligible. Right now we have <b>{}<b> of them. This will"
-                    " currently last around <b>{}<b>\n\n").format(minEligible, qualifiedUpgrade,util.secondsToText(upgradeModeDuration))
+        message += ("The upgrade mode will be active until <b>{}<b> nodes has become eligible. Right now we have <b>{}<b> of them.\n\n").format(minEligible, qualifiedUpgrade)
+
+        if upgradeModeDuration:
+            message += "<b>Remaining upgrade mode duration<b> ~{}\n\n".format(util.secondsToText(upgradeModeDuration))
 
     message += "<u><b>Further payouts<b><u>\n\n"
     message += ("Once you received your first payout your node's position"
