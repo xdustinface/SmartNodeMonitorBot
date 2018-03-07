@@ -770,8 +770,8 @@ class SmartNodeList(object):
                 if abs(requiredNodes - count) < accuracy:
                     logger.debug("Final accuracy {}".format(accuracy))
                     logger.debug("Final accuracy matched {}".format(abs(requiredNodes - count)))
-                    logger.debug("Remaining duration: {}".format( secondsToText((self.minimumUptime()) - currentCheckTime)))
-                    return self.minimumUptime()) - currentCheckTime
+                    logger.debug("Remaining duration: {}".format( secondsToText((self.minimumUptime() - currentCheckTime))))
+                    return self.minimumUptime() - currentCheckTime
                 elif count > requiredNodes:
                     currentCheckTime += currentCheckTime * 0.5
                 else:
