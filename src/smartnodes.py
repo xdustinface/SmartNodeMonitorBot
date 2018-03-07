@@ -257,7 +257,7 @@ class SmartNode(object):
 
         if self.position != position:
             self.position = position
-            logger.debug("[{}] Position updated {}".format(self.payee, self.position))
+            #logger.debug("[{}] Position updated {}".format(self.payee, self.position))
             return True
 
         return False
@@ -268,7 +268,7 @@ class SmartNodeList(object):
 
         self.nodeListSem = threading.Lock()
         self.lastBlock = 0
-        self.remainingUpgradeModeDuration = 0
+        self.remainingUpgradeModeDuration = None
         self.qualifiedUpgrade = -1
         self.qualifiedNormal = 0
         self.protocol_90024 = 0
@@ -488,7 +488,6 @@ class SmartNodeList(object):
             # Reset the calculation vars
             self.qualifiedNormal = 0
             self.qualifiedUpgrade = 0
-            self.remainingUpgradeModeDuration = 0
 
             for key, data in nodes.items():
 
@@ -651,7 +650,7 @@ class SmartNodeList(object):
 
             logger.info("calculateUpgradeModeDuration start")
             self.remainingUpgradeModeDuration = self.calculateUpgradeModeDuration()
-            logger.info("calculateUpgradeModeDuration done")
+            logger.info("calculateUpgradeModeDuration done {}".format(self.remainingUpgradeModeDuration if self.remainingUpgradeModeDuration else "Error?"))
 
             self.release()
 
@@ -735,8 +734,6 @@ class SmartNodeList(object):
         # Start with an accuracy of 5 nodes.
         # Will become increased if it takes too long
         accuracy = 5
-        # walk through the database in 10 minute steps
-        steps = 120
         # Minimum required nodes to continue with normal mode
         requiredNodes = int(self.enabledWithMinProtocol() / 3)
         # Get the max active seconds to determine a start point
@@ -748,22 +745,25 @@ class SmartNodeList(object):
         # Start time for accuracy descrease if needed
         start = time.time()
 
+        calcCount = None
+
         while True:
 
-            calcCount = len(list(filter(lambda x: x.protocol == 90025 and\
-                                              x.status == 'ENABLED' and\
-                                              (self.lastBlock - x.collateral.block) > self.enabledWithMinProtocol() and\
-                                              x.activeSeconds > currentCheckTime, self.nodeList.values() )))
+            calcCount = len(list(filter(lambda x: x.protocol == self.protocolRequirement() and\
+                                                  x.status == 'ENABLED' and\
+                                                  (self.lastBlock - x.collateral.block) >= self.enabledWithMinProtocol() and\
+                                                  x.activeSeconds > currentCheckTime, self.nodeList.values() )))
 
             if not calcCount:
-                logger.debug("No calcCount?!")
+                logger.warning("No calcCount?!")
                 return None
             else:
                 logger.debug("Current count: {}".format(calcCount))
                 logger.debug("Current time: {}".format(currentCheckTime))
-                logger.debug("Current accuracy: {}".format(abs(requiredNodes - calcCount)))
+                logger.debug("Current accuracy: {}".format(accuracy))
+                logger.debug("Current accuracy matched: {}".format(abs(requiredNodes - calcCount)))
 
-                if time.time() - start > 2:
+                if int(time.time() - start) > 2:
                     start = time.time()
                     accuracy += 5
 
@@ -777,7 +777,9 @@ class SmartNodeList(object):
                 else:
                     currentCheckTime -= currentCheckTime * 0.5
 
-        logger.debug("Could not determine duration?!")
+        logger.warning("Could not determine duration?!")
+        logger.warning("Final accuracy {}".format(accuracy))
+        logger.warning("Final accuracy before step {}".format(abs(requiredNodes - calcCount)))
 
         return None
 
