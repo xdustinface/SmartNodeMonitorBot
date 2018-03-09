@@ -825,7 +825,7 @@ class SmartNodeList(object):
                 uptimeString = "No uptime!"
 
             result['ip'] = node.cleanIp()
-            result['position'] = node.position > self.enabledWithMinProtocol() * 0.1
+            result['position'] = node.position < self.enabledWithMinProtocol() * 0.1
             result['position_string'] = node.positionString()
 
             result['status'] = node.status == 'ENABLED'
@@ -839,5 +839,7 @@ class SmartNodeList(object):
 
             result['collateral'] = (self.lastBlock - node.collateral.block) >= self.enabledWithMinProtocol()
             result['collateral_string'] = "{}".format((self.lastBlock - node.collateral.block))
+
+            reuslt['upgrade_mode'] = self.upgradeMode
 
         return result
