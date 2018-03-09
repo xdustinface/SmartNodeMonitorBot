@@ -183,12 +183,21 @@ def lookupResult(messenger, result):
         return "✅" if value else "🛑"
 
     message = "<u><b>Result {}<b><u>\n\n".format(result['ip'])
-    message += "<b>Position - {}<b>\n\n".format(result['position'])
-    message += "{} - Enabled\n".format(resultEmoji(result['enabled']))
-    message += "{} - Collateral age\n".format(resultEmoji(result['collateral_age']))
-    message += "{} - Uptime\n".format(resultEmoji(result['uptime']))
-    message += "{} - Protocol\n\n".format(resultEmoji(result['protocol']))
 
+    message += "{} - <b>Position<b>\n".format(result['position'])
+    message += result['position_string'] + "\n\n"
+
+    message += "{} - <b>Status<b>\n".format(resultEmoji(result['status']))
+    message += result['status_string'] + "\n\n"
+
+    message += "{} - <b>Collateral age<b>\n".format(resultEmoji(result['collateral']))
+    message += result['collateral_string'] + "\n\n"
+
+    message += "{} - <b>Uptime<b>\n".format(resultEmoji(result['uptime']))
+    message += result['uptime_string'] + "\n\n"
+
+    message += "{} - <b>Protocol<b>\n\n".format(resultEmoji(result['protocol']))
+    message += result['protocol_string'] + "\n\n"
 
     return markdown(message,messenger)
 
