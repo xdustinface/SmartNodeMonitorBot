@@ -652,7 +652,7 @@ class SmartNodeList(object):
 
             logger.info("calculateUpgradeModeDuration start")
             self.remainingUpgradeModeDuration = self.calculateUpgradeModeDuration()
-            logger.info("calculateUpgradeModeDuration done {}".format(self.remainingUpgradeModeDuration if self.remainingUpgradeModeDuration else "Error?"))
+            logger.info("calculateUpgradeModeDuration done {}".format("Success" if self.remainingUpgradeModeDuration else "Error?"))
 
             self.release()
 
@@ -746,6 +746,7 @@ class SmartNodeList(object):
 
         # Start time for accuracy descrease if needed
         start = int(time.time())
+        rounds = 1
 
         calcCount = None
 
@@ -761,14 +762,15 @@ class SmartNodeList(object):
             logger.debug("Current accuracy: {}".format(accuracy))
             logger.debug("Current accuracy matched: {}\n".format(abs(requiredNodes - calcCount)))
 
-            if int(time.time()) - start >= 1:
-                start = time.time()
+            if int(time.time()) - start >= 2 * rounds:
+                rounds += 1
                 accuracy += 20
 
             if abs(requiredNodes - calcCount) < accuracy:
-                logger.debug("Final accuracy {}".format(accuracy))
-                logger.debug("Final accuracy matched {}".format(abs(requiredNodes - calcCount)))
-                logger.debug("Remaining duration: {}".format( util.secondsToText((self.minimumUptime() - currentCheckTime))))
+                logger.info("Final accuracy {}".format(accuracy))
+                logger.info("Final accuracy matched {}".format(abs(requiredNodes - calcCount)))
+                logger.info("Remaining duration: {}".format( util.secondsToText((self.minimumUptime() - currentCheckTime))))
+                logger.info("CalcTime: {}, Rounds: {}".format( int(time.time()) - start,rounds))
                 return self.minimumUptime() - currentCheckTime
             elif calcCount > requiredNodes:
                 currentCheckTime += currentCheckTime * 0.5 + (int(time.time()) % 60)

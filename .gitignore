@@ -104,3 +104,4 @@ smart.conf
 bot.db
 nodes.db
 .last
+misc/*.db
