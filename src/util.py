@@ -53,7 +53,7 @@ def validateName( name ):
 def validateIp( ip ):
 
     if re.match('^(?:(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])(\.(?!$)|$)){4}$',ip):
-        return name
+        return ip
 
     return None
 
