@@ -328,7 +328,8 @@ def nodes(bot, update):
             response += "\nPosition " + smartnode.positionString()
             response += "\nLast seen " + util.secondsToText( int(time.time()) - smartnode.lastSeen)
             response += "\nLast payout " + smartnode.payoutTimeString()
-            response += "\n" + messages.link(bot.messenger, 'https://explorer3.smartcash.cc/address/{}\n'.format(smartnode.payee),'Open the explorer!')
+            response += "\n" + messages.link(bot.messenger, 'https://explorer3.smartcash.cc/address/{}'.format(smartnode.payee),'Open the explorer!')
+            response += "\n\n"
 
     return response
 
@@ -354,18 +355,18 @@ def balances(bot, userId, results):
                     else:
 
                         try:
-                            total += int(result.data)
+                            total += round(result.data,1)
                             response += "{} - {} SMART\n".format(node['name'], result.data)
                         except:
                             error = True
                             logger.warning("Balance response invalid: {}".format(result.data))
                             response += "{} - Error: Could not fetch this balance.\n".format(node['name'])
 
-        response += messages.markdown("\nTotal: <b>{} SMART<b>".format(total),bot.messenger)
+        response += messages.markdown("\nTotal: <b>{} SMART<b>".format(round(total,1)),bot.messenger)
 
         # Only show the profit if there was no error since it would make not much sense otherwise.
         if not error:
-            response += messages.markdown("\nProfit: <b>{} SMART<b>".format(total - len(userNodes) * 10000),bot.messenger)
+            response += messages.markdown("\nProfit: <b>{} SMART<b>".format(round(total - len(userNodes) * 10000,1)),bot.messenger)
 
     else:
         response += "Sorry, could not check your balances! Looks like all explorers are down. Try it again later.\n\n"
