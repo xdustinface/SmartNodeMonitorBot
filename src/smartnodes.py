@@ -489,7 +489,7 @@ class SmartNodeList(object):
 
             # Reset the calculation vars
             self.qualifiedNormal = 0
-            self.qualifiedUpgrade = 0
+            self.qualifiedUpgrade = -1
 
             for key, data in nodes.items():
 
@@ -840,6 +840,6 @@ class SmartNodeList(object):
             result['collateral'] = (self.lastBlock - node.collateral.block) >= self.enabledWithMinProtocol()
             result['collateral_string'] = "{}".format((self.lastBlock - node.collateral.block))
 
-            reuslt['upgrade_mode'] = self.upgradeMode
+            reuslt['upgrade_mode'] = self.qualifiedUpgrade != -1
 
         return result
