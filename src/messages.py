@@ -72,6 +72,8 @@ def link(messenger, link, text = ''):
 
     if messenger == 'telegram':
         msg = "[{}]({})".format(text,link)
+    elif messenger == 'discord':
+        msg = "<{}>".format(link)
 
     return msg
 
@@ -138,20 +140,20 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
                                                         protocol90024,
                                                         protocol90025)
 
-    message += "<u><b>Minimum uptime<b><u>\n\n"
+    message += "<u><b>Initial payout/Minimum uptime<b><u>\n\n"
+
     message += ("The current <b>minimum<b> uptime after a restart to be eligible for"
-               " SmartNode rewards is <b>{}<b>\n\n").format(initialWaitString)
-
-    message += "<u><b>Initial payout<b><u>\n\n"
-
+                   " SmartNode rewards is <b>{}<b>\n\n").format(initialWaitString)
+    message += ("Once your node has reached the minimum uptime requirement it may
+                " join the payout queue if the other requirements are met.")
     ####
     # Check if the network is in upgrade mode.
     #
     #https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L655
     ####
     if qualifiedUpgrade != -1:
-        message += ("The network is currenty in <b>upgrade mode<b>. Recently started nodes"
-        " do also do have the chance to get paid (<b>The minimum uptime above does not matter<b>) if their collateral transaction has"
+        message += ("<b>The network is currenty in upgrade mode<b>. Recently started nodes"
+        " do also do have the chance to get paid - <b>The minimum uptime above does not matter<b> - if their collateral transaction has"
         " at least {} confirmations. Your nodes's position needs to be less than {}"
         " to be in the random payout zone. If you are there you have the <b>chance<b> get paid"
         " from now on but in the <b>worst<b> case it still might take some days.\n\n").format(enabled, int(minPosition))
