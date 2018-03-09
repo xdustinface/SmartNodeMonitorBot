@@ -422,14 +422,8 @@ def lookup(bot, userId, args):
                 else:
                     errors.append(messages.nodeNotInListError(bot.messenger,ip))
 
-        if len(errors):
-            response += "ERRORS\n\n"
-
         for e in errors:
             response += e
-
-        if len(lookups):
-            response += "RESULTS\n\n"
 
         for l in lookups:
             response += l

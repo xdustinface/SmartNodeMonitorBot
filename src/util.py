@@ -50,8 +50,12 @@ class RepeatingTimer(object):
 def validateName( name ):
    return re.match('^[a-zA-Z0-9.,#-]{1,20}$',name)
 
-def validateIp( name ):
- return re.match('^(?:(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])(\.(?!$)|$)){4}$',name)
+def validateIp( ip ):
+
+    if re.match('^(?:(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])(\.(?!$)|$)){4}$',ip):
+        return name
+
+ return None
 
 def isInt(s):
     try:
