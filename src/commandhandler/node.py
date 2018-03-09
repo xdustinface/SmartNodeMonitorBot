@@ -414,10 +414,12 @@ def lookup(bot, userId, args):
 
                 if dbNode:
 
-                    n = bot.nodeList.getNodes([dbNode['collateral']])
+                    result = bot.nodeList.lookup(dbNode['collateral'])
 
-                    if len(n):
-                        lookups.append("yo")
+                    if result:
+                        lookups.append(messages.lookupResult(bot.messenger,result))
+                    else:
+                        errors.append(messages.lookupError(bot.messenger,ip))
 
                 else:
                     errors.append(messages.nodeNotInListError(bot.messenger,ip))

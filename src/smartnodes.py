@@ -807,3 +807,17 @@ class SmartNodeList(object):
                 nodes.append(self.nodeList[collateral])
 
         return nodes
+
+    def lookup(self, collateral):
+
+        result = None
+        node = self.getNodes([collateral])
+
+        if len(node) == 1:
+            result = {}
+            node = node[0]
+
+            result['ip'] = node.cleanIp()
+            result['uptime'] = True
+
+        return result

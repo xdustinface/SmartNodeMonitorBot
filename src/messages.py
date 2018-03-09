@@ -177,6 +177,14 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
 
     return markdown(message,messenger)
 
+def lookupResult(messenger, result):
+
+    message = "<b>{}<b>\n".format(result['ip'])
+    message += "Uptime: {}\n\n".format(✅ if result['uptime'] else 🛑)
+
+    return markdown(message,messenger)
+
+
 ############################################################
 #                      User messages                       #
 ############################################################
@@ -280,3 +288,6 @@ def nodesRequired(messenger):
 
 def lookupArgumentRequiredError(messenger):
     return markdown("<b>ERROR<b>: Aguments required. You can lookup one or multiple IP's: ip0 ip1 ... ipN\n",messenger)
+
+def lookupError(messenger, ip):
+    return markdown("<b>ERROR<b>: Could not check ip {}\n".format(ip),messenger)
