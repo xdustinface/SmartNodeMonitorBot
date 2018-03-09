@@ -489,7 +489,6 @@ class SmartNodeList(object):
 
             # Reset the calculation vars
             self.qualifiedNormal = 0
-            self.qualifiedUpgrade = -1
 
             for key, data in nodes.items():
 
@@ -631,6 +630,9 @@ class SmartNodeList(object):
                     logger.info("Start upgradeMode calculation: {}".format(self.qualifiedUpgrade))
                     calculatePositions(True)
                     return
+
+                if not upgradeMode:
+                    self.qualifiedUpgrade = -1
 
                 self.qualifiedNormal = len(self.lastPaidVec)
 
