@@ -827,7 +827,7 @@ class SmartNodeList(object):
                 uptimeString = "No uptime!"
 
             result['ip'] = node.cleanIp()
-            result['position'] = node.position < self.enabledWithMinProtocol() * 0.1
+            result['position'] = node.position < self.enabledWithMinProtocol() * 0.1 and node.position > 0
             result['position_string'] = node.positionString()
 
             result['status'] = node.status == 'ENABLED'
