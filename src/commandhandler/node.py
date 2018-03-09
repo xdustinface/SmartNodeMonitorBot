@@ -425,12 +425,14 @@ def lookup(bot, userId, args):
         if len(errors):
             response += "ERRORS\n\n"
 
-        response += [ e for e in errors ]
+        for e in errors:
+            response += e
 
         if len(lookups):
             response += "RESULTS\n\n"
 
-        response += [ l for l in lookups ]
+        for l in lookups:
+            response += l
 
     return response
 
