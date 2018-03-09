@@ -817,27 +817,20 @@ class SmartNodeList(object):
             result = {}
             node = node[0]
 
-            positionString = None
-
-            if node.position > 0:
-                positionString = "Current position: {}".format(node.position)
-            else:
-                positionString = node.positionString()
-
             result['ip'] = node.cleanIp()
             result['position'] = node.position > self.enabledWithMinProtocol() * 0.1
-            result['position_string'] = positionString
+            result['position_string'] = node.positionString()
 
             result['status'] = node.status == 'ENABLED'
-            result['status_string'] = "Current status: {}".format(node.status)
+            result['status_string'] = "{}".format(node.status)
 
             result['uptime'] = node.activeSeconds >= self.minimumUptime()
-            result['uptime_string'] = "Current uptime: " + util.secondsToText(node.activeSeconds)
+            result['uptime_string'] = util.secondsToText(node.activeSeconds)
 
             result['protocol'] = node.protocol == self.protocolRequirement()
-            result['protocol_string'] = "Active protocol: {}".format(node.protocol)
+            result['protocol_string'] = "{}".format(node.protocol)
 
             result['collateral'] = (self.lastBlock - node.collateral.block) >= self.enabledWithMinProtocol()
-            result['collateral_string'] = "Collateral confirmations: {}".format((self.lastBlock - node.collateral.block))
+            result['collateral_string'] = "{}".format((self.lastBlock - node.collateral.block))
 
         return result

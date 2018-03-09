@@ -184,19 +184,19 @@ def lookupResult(messenger, result):
 
     message = "<u><b>Result {}<b><u>\n\n".format(result['ip'])
 
-    message += "{} - <b>Position<b>\n    ".format(result['position'])
+    message += "{} <b>Position<b> - ".format(resultEmoji(result['position']))
     message += result['position_string'] + "\n\n"
 
-    message += "{} - <b>Status<b>\n    ".format(resultEmoji(result['status']))
+    message += "{} <b>Status<b> - ".format(resultEmoji(result['status']))
     message += result['status_string'] + "\n\n"
 
-    message += "{} - <b>Collateral age<b>\n    ".format(resultEmoji(result['collateral']))
+    message += "{} <b>Collateral confirmations<b> - ".format(resultEmoji(result['collateral']))
     message += result['collateral_string'] + "\n\n"
 
-    message += "{} - <b>Uptime<b>\n    ".format(resultEmoji(result['uptime']))
+    message += "{} - <b>Uptime<b> - ".format(resultEmoji(result['uptime']))
     message += result['uptime_string'] + "\n\n"
 
-    message += "{} - <b>Protocol<b>\n    ".format(resultEmoji(result['protocol']))
+    message += "{} - <b>Protocol<b> - ".format(resultEmoji(result['protocol']))
     message += result['protocol_string'] + "\n\n"
 
     return markdown(message,messenger)
