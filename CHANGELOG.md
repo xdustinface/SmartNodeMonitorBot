@@ -6,7 +6,9 @@
 
 # v1.1
 - Position integration
-  - Ca
+- Upgrade mode calculations
+- Node lookup command
+- Improved info command
 - Update/Remove multiple nodes with one command call
 - Backend update
   - Removed the need of the node-id column in the database
