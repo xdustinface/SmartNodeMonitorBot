@@ -828,8 +828,8 @@ class SmartNodeList(object):
             result['position'] = node.position > self.enabledWithMinProtocol() * 0.1
             result['position_string'] = positionString
 
-            result['enabled'] = node.status == 'ENABLED'
-            result['enabled_string'] = "Current status: {}".format(node.status)
+            result['status'] = node.status == 'ENABLED'
+            result['status_string'] = "Current status: {}".format(node.status)
 
             result['uptime'] = node.activeSeconds >= self.minimumUptime()
             result['uptime_string'] = "Current uptime: " + util.secondsToText(node.activeSeconds)
