@@ -180,7 +180,7 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
 def lookupResult(messenger, result):
 
     message = "<b>{}<b>\n".format(result['ip'])
-    message += "Uptime: {}\n\n".format(✅ if result['uptime'] else 🛑)
+    message += "Uptime: {}\n\n".format("✅" if result['uptime'] else "🛑")
 
     return markdown(message,messenger)
 
