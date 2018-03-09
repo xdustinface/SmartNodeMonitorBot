@@ -194,10 +194,10 @@ def lookupResult(messenger, result):
     message += result['collateral_string'] + "\n\n"
 
     if result['upgrade_mode']:
-        message += "  {} <b>Uptime<b> - ".format(resultEmoji(result['uptime']))
+        message += "  {} <b>Uptime (upgrade mode)<b> - ".format(resultEmoji(True))
         message += result['uptime_string'] + "\n\n"
     else:
-        message += "  {} <b>Uptime (upgrade mode)<b> - ".format(resultEmoji(True))
+        message += "  {} <b>Uptime<b> - ".format(resultEmoji(result['uptime']))
         message += result['uptime_string'] + "\n\n"
 
     message += "  {} <b>Protocol<b> - ".format(resultEmoji(result['protocol']))
