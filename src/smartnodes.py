@@ -249,6 +249,8 @@ class SmartNode(object):
         else:
             return str(self.position)
 
+    def cleanIp(self):
+        return self.ip.replace(':9678','')
 
     def updateRank(self, rank):
         self.rank = int(rank)

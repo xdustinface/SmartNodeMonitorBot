@@ -313,6 +313,7 @@ class SmartNodeBotTelegram(object):
         dp.add_handler(CommandHandler('detail', self.detail))
         dp.add_handler(CommandHandler('nodes', self.nodes))
         dp.add_handler(CommandHandler('balance', self.balance))
+        dp.add_handler(CommandHandler('lookup', self.lookup, pass_args=True))
 
         #### Setup user related handler ####
         dp.add_handler(CommandHandler('username', self.username, pass_args=True))
@@ -398,8 +399,9 @@ class SmartNodeBotTelegram(object):
 
     def nodes(self, bot, update):
 
-        response = node.nodes(self, update)
-        self.sendMessage(update.message.chat_id, response,'\n\n')
+        if not self.isGroup(update):
+            response = node.nodes(self, update)
+            self.sendMessage(update.message.chat_id, response,'\n\n')
 
     def balance(self, bot, update):
 
@@ -440,6 +442,11 @@ class SmartNodeBotTelegram(object):
 
             if failed:
                 self.balancesCB(failed,None)
+
+    def lookup(self, bot, update, args):
+
+        response = node.lookup(self, update, args)
+        self.sendMessage(update.message.chat_id, response)
 
     ############################################################
     #                 User handler calls                     #

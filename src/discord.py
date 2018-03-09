@@ -149,7 +149,7 @@ class SmartNodeBotDiscord(object):
                     # User commmands
                     'me':1,'status':1,'reward':1,'network':1, 'timeout':1,
                     # Node commands
-                    'add':1,'update':1,'remove':1,'nodes':1, 'detail':1, 'balance':1,
+                    'add':1,'update':1,'remove':1,'nodes':1, 'detail':1, 'balance':1, 'lookup':0,
                     # Admin commands
                     'stats':2, 'broadcast':2
         }
@@ -225,7 +225,7 @@ class SmartNodeBotDiscord(object):
 
             # If there is no nodes added yet send an error and return
             if dbUser == None or userNodes == None or len(userNodes) == 0:
-                
+
                 response = messages.markdown("<u><b>Balances<b><u>\n\n",self.messenger)
                 response += messages.nodesRequired(self.messenger)
 
@@ -253,7 +253,9 @@ class SmartNodeBotDiscord(object):
 
             if failed:
                 self.balancesCB(failed,None)
-
+        elif command == 'lookup':
+            response = node.lookup(self,message, args)
+            await self.sendMessage(receiver, response)
         ### User command handler ###
         elif command == 'me':
             response = user.me(self,message)

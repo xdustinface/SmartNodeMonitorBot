@@ -11,16 +11,16 @@ import discord
 logger = logging.getLogger("node")
 
 ######
-# Telegram command handler for adding nodes for the user who fired the command.
+# Command handler for adding nodes for the user who fired the command.
 #
-# Command: /node :ip0;name0 ... :ipN;nameN
+# Command: node :ip0;name0 ... :ipN;nameN
 #
 # Command parameter: :ip0 - Address of the first node to add
 #                    :name0 - Name of the first node
 #                    :ipN - Address of the last node to add
 #                    :nameN - Name of the last node
 #
-# Gets only called by the telegram bot api
+# Only called by the bot instance
 ######
 def nodeAdd(bot, update, args):
 
@@ -53,20 +53,20 @@ def nodeAdd(bot, update, args):
                 valid = False
             else:
 
-                if not util.validateIp( newNode[0] ):
+                ip = util.validateIp( newNode[0] )
+                name = util.validateName( newNode[1] )
+
+                if not ip:
 
                     response += messages.invalidIpError(bot.messenger, newNode[0])
                     valid = False
 
-                if not util.validateName( newNode[1] ):
+                if not name:
 
                     response += messages.invalidNameError(bot.messenger, newNode[1])
                     valid = False
 
             if valid:
-
-                ip = newNode[0]
-                name = newNode[1]
 
                 node = bot.nodeList.getNodeByIp(ip)
 
@@ -85,14 +85,14 @@ def nodeAdd(bot, update, args):
     return response
 
 ######
-# Telegram command handler for updating nodes for the user who fired the command.
+# Command handler for updating nodes for the user who fired the command.
 #
-# Command: /add :ip :newname
+# Command: add :ip :newname
 #
 # Command parameter: :ip - Address of the node to update
 #                    :newname - New name for the node
 #
-# Gets only called by the telegram bot api
+# Only called by the bot instance
 ######
 def nodeUpdate(bot, update, args):
 
@@ -132,15 +132,15 @@ def nodeUpdate(bot, update, args):
                 valid = False
             else:
 
-                ip = nodeEdit[0]
-                name = nodeEdit[1]
+                ip = util.validateIp( nodeEdit[0] )
+                name = util.validateName( nodeEdit[1] )
 
-                if not util.validateIp( ip ):
+                if not ip:
 
                     response += messages.invalidIpError(bot.messenger, ip)
                     valid = False
 
-                if not util.validateName( name ):
+                if not name:
 
                     response += messages.invalidNameError(bot.messenger, name)
                     valid = False
@@ -168,14 +168,13 @@ def nodeUpdate(bot, update, args):
     return response
 
 ######
-# Telegram command handler for removing nodes for the user who fired the command.
+# Command handler for removing nodes for the user who fired the command.
 #
-# Command: /remove :ip
+# Command: remove :ip
 #
 # Command parameter: :ip - Address of the node to remove
 #
-#
-# Gets only called by the telegram bot api
+# Only called by the bot instance
 ######
 def nodeRemove(bot, update, args):
 
@@ -213,9 +212,9 @@ def nodeRemove(bot, update, args):
             # Else go through the parameters
             for arg in args:
 
-                ip = arg
+                ip = util.validateIp( arg )
 
-                if not util.validateIp(ip):
+                if not ip:
 
                     response += messages.invalidIpError(bot.messenger, ip)
                     valid = False
@@ -241,12 +240,12 @@ def nodeRemove(bot, update, args):
     return response
 
 ######
-# Telegram command handler for reading the amounts of each node of the users
-# in the pool
+# Command handler for printing a detailed list for all nodes
+# of the user
 #
-# Command: /nodes
+# Command: detail
 #
-# Gets only called by the telegram bot api
+# Only called by the bot instance
 ######
 def detail(bot, update):
 
@@ -288,12 +287,14 @@ def detail(bot, update):
 
     return response
 
+
 ######
-# Telegram command handler for printing the details of each node of the users
+# Command handler for printing a shortened list sorted by positions for all nodes
+# of the user
 #
-# Command: /nodes
+# Command: nodes
 #
-# Gets only called by the telegram bot api
+# Only called by the bot instance
 ######
 def nodes(bot, update):
 
@@ -333,6 +334,15 @@ def nodes(bot, update):
 
     return response
 
+
+######
+# Command handler for printing the balances for all nodes
+# of the user
+#
+# Command: balance
+#
+# Only called by the bot instance
+######
 def balances(bot, userId, results):
 
     response = messages.markdown("<u><b>Balances<b><u>\n\n",bot.messenger)
@@ -370,6 +380,57 @@ def balances(bot, userId, results):
 
     else:
         response += "Sorry, could not check your balances! Looks like all explorers are down. Try it again later.\n\n"
+
+    return response
+
+######
+# Command handler for printing the balances for all nodes
+# of the user
+#
+# Command: balance
+#
+# Only called by the bot instance
+######
+def lookup(bot, userId, args):
+
+    response = messages.markdown("<u><b>Node lookup<b><u>\n\n",bot.messenger)
+
+    if not len(args):
+
+    else:
+
+        errors = []
+        lookups = []
+
+        for arg in args:
+
+            ip = util.validateIp( arg )
+
+            if not ip:
+                errors.append(messages.invalidIpError(bot.messenger,arg))
+            else:
+
+                dbNode = bot.nodeList.getNodeByIp(ip)
+
+                if dbNode:
+
+                    n = bot.nodeList.getNodes([dbNode['collateral']])
+
+                    if len(n):
+                        lookups.append("yo")
+
+                else:
+                    errors.append(messages.nodeNotInListError(bot.messenger,ip))
+
+    if len(errors):
+        response += "ERRORS\n\n"
+
+    response += [ e for e in errors ]
+
+    if len(lookups):
+        response += "RESULTS\n\n"
+
+    response += [ l for l in lookups ]
 
     return response
 
