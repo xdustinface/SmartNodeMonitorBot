@@ -182,12 +182,12 @@ def lookupResult(messenger, result):
     def resultEmoji(value):
         return "✅" if value else "🛑"
 
-    message = "<b>{} - Result<b>\n".format(result['ip'])
-    message += "Position - <b>{}<b>\n".format(result['position'])
-    message += "  {} - Enabled\n".format(resultEmoji(result['enabled']))
-    message += "  {} - Collateral age\n".format(resultEmoji(result['collateral_age']))
-    message += "  {} - Uptime\n".format(resultEmoji(result['uptime']))
-    message += "  {} - Protocol\n\n".format(resultEmoji(result['protocol']))
+    message = "<u><b>Result {}<b><u>\n\n".format(result['ip'])
+    message += "<b>Position - {}<b>\n\n".format(result['position'])
+    message += "{} - Enabled\n".format(resultEmoji(result['enabled']))
+    message += "{} - Collateral age\n".format(resultEmoji(result['collateral_age']))
+    message += "{} - Uptime\n".format(resultEmoji(result['uptime']))
+    message += "{} - Protocol\n\n".format(resultEmoji(result['protocol']))
 
 
     return markdown(message,messenger)
