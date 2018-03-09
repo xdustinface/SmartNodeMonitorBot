@@ -193,10 +193,10 @@ def lookupResult(messenger, result):
     message += "{} <b>Collateral confirmations<b> - ".format(resultEmoji(result['collateral']))
     message += result['collateral_string'] + "\n\n"
 
-    message += "{} - <b>Uptime<b> - ".format(resultEmoji(result['uptime']))
+    message += "{} <b>Uptime<b> - ".format(resultEmoji(result['uptime']))
     message += result['uptime_string'] + "\n\n"
 
-    message += "{} - <b>Protocol<b> - ".format(resultEmoji(result['protocol']))
+    message += "{} <b>Protocol<b> - ".format(resultEmoji(result['protocol']))
     message += result['protocol_string'] + "\n\n"
 
     return markdown(message,messenger)
