@@ -832,7 +832,7 @@ class SmartNodeList(object):
             result['enabled_string'] = "Current status: {}".format(node.status)
 
             result['uptime'] = node.activeSeconds >= self.minimumUptime()
-            result['uptime_string'] = "Current uptime: " + util.secondsToText(node.uptime)
+            result['uptime_string'] = "Current uptime: " + util.secondsToText(node.activeSeconds)
 
             result['protocol'] = node.protocol == self.protocolRequirement()
             result['uptime_string'] = "Active protocol: {}".format(node.protocol)
