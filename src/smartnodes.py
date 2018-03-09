@@ -817,6 +817,13 @@ class SmartNodeList(object):
             result = {}
             node = node[0]
 
+            uptimeString = None
+
+            if node.activeSeconds > 0:
+                uptimeString = util.secondsToText(node.activeSeconds)
+            else:
+                uptimeString = "No uptime!"
+
             result['ip'] = node.cleanIp()
             result['position'] = node.position > self.enabledWithMinProtocol() * 0.1
             result['position_string'] = node.positionString()
@@ -825,7 +832,7 @@ class SmartNodeList(object):
             result['status_string'] = "{}".format(node.status)
 
             result['uptime'] = node.activeSeconds >= self.minimumUptime()
-            result['uptime_string'] = util.secondsToText(node.activeSeconds)
+            result['uptime_string'] = uptimeString
 
             result['protocol'] = node.protocol == self.protocolRequirement()
             result['protocol_string'] = "{}".format(node.protocol)
