@@ -396,7 +396,7 @@ def lookup(bot, userId, args):
     response = messages.markdown("<u><b>Node lookup<b><u>\n\n",bot.messenger)
 
     if not len(args):
-
+        response += messages.lookupArgumentRequiredError(bot.messenger)
     else:
 
         errors = []

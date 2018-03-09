@@ -277,3 +277,6 @@ def notAvailableInGroups(messenger):
 def nodesRequired(messenger):
     return markdown(("You need to add nodes first. "
              "Type <cb>help<ca> to show the list of commands."),messenger)
+
+def lookupArgumentRequiredError(messenger):
+    return markdown("<b>ERROR<b>: Aguments required. You can lookup one or multiple IP's: ip0 ip1 ... ipN\n",messenger)
