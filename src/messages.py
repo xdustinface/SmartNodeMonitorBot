@@ -144,7 +144,7 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
 
     message += ("The current <b>minimum<b> uptime after a restart to be eligible for"
                    " SmartNode rewards is <b>{}<b>\n\n").format(initialWaitString)
-    message += ("Once your node has reached the minimum uptime requirement it may
+    message += ("Once your node has reached the minimum uptime requirement it may"
                 " join the payout queue if the other requirements are met.")
     ####
     # Check if the network is in upgrade mode.
