@@ -7,6 +7,8 @@ import discord
 import asyncio
 import uuid
 
+from fuzzywuzzy import process as fuzzy
+
 from src import util
 from src import messages
 from src.commandhandler import node
@@ -143,14 +145,22 @@ class SmartNodeBotDiscord(object):
         ####
         commands = {
                     # Common commands
-                    'info':0,
+                    'help':0, 'info':0,
                     # User commmands
                     'me':1,'status':1,'reward':1,'network':1, 'timeout':1,
                     # Node commands
-                    'add':1,'update':1,'remove':1,'nodes':1, 'detail':1, 'balance':1,
+                    'add':1,'update':1,'remove':1,'nodes':1, 'detail':1, 'balance':1, 'lookup':0,
                     # Admin commands
                     'stats':2, 'broadcast':2
         }
+
+        choices = fuzzy.extract(command,commands.keys(),limit=2)
+
+        if choices[0][1] == choices[1][1] or choices[0][1] < 60:
+            logger.debug('Invalid fuzzy result {}'.format(choices))
+            command = 'unknown'
+        else:
+            command = choices[0][0]
 
         # If the command is DM only
         if command in commands and commands[command] == 1:
@@ -210,9 +220,20 @@ class SmartNodeBotDiscord(object):
             failed = None
             nodes = []
 
-            for n in self.database.getNodes(message.author.id):
-                nodes.append(self.nodeList.getNodeById(n['node_id']))
+            dbUser = self.database.getUser(message.author.id)
+            userNodes = self.database.getAllNodes(message.author.id)
 
+            # If there is no nodes added yet send an error and return
+            if dbUser == None or userNodes == None or len(userNodes) == 0:
+
+                response = messages.markdown("<u><b>Balances<b><u>\n\n",self.messenger)
+                response += messages.nodesRequired(self.messenger)
+
+                await self.sendMessage(message.author, response)
+                return
+
+            collaterals = list(map(lambda x: x['collateral'],userNodes))
+            nodes = self.nodeList.getNodes(collaterals)
             check = self.explorer.balances(nodes)
 
             # Needed cause the balanceChecks dict also gets modified from other
@@ -232,7 +253,9 @@ class SmartNodeBotDiscord(object):
 
             if failed:
                 self.balancesCB(failed,None)
-
+        elif command == 'lookup':
+            response = node.lookup(self,message, args)
+            await self.sendMessage(receiver, response)
         ### User command handler ###
         elif command == 'me':
             response = user.me(self,message)
@@ -255,8 +278,15 @@ class SmartNodeBotDiscord(object):
             response = common.stats(self)
             await self.sendMessage(receiver, response)
         elif command == 'broadcast':
-            response = common.broadcast(self,message,args)
-            await self.sendMessage(receiver, response)
+
+            response = " ".join(args[1:])
+
+            for dbUser in self.database.getUsers():
+
+                member = self.findMember(dbUser['id'])
+
+                if member:
+                    await self.sendMessage(member, response)
 
         # Help message
         elif command == 'help':
@@ -309,19 +339,19 @@ class SmartNodeBotDiscord(object):
     ######
     def nodeUpdateCB(self, update, n):
 
-        for user in self.database.getUsers():
+        for dbUser in self.database.getUsers():
 
-            userNode = self.database.getNode(n.id, user['id'])
+            userNode = self.database.getNodes(str(n.collateral), dbUser['id'])
 
             if userNode == None:
                 continue
 
             logger.info("nodeChangeCB {}".format(n.payee))
 
-            member = self.findMember(user['id'])
+            member = self.findMember(dbUser['id'])
 
             if member:
-                for response in node.nodeUpdated(self, update, user, userNode, n):
+                for response in node.nodeUpdated(self, update, dbUser, userNode, n):
                     asyncio.run_coroutine_threadsafe(self.sendMessage(member, response), loop=self.client.loop)
 
     #####
@@ -331,18 +361,37 @@ class SmartNodeBotDiscord(object):
     # Called by: SmartNodeList
     #
     ######
-    def networkCB(self, ids, added):
+    def networkCB(self, collaterals, added):
 
-        response = common.networkUpdate(self, ids, added)
+        response = common.networkUpdate(self, collaterals, added)
 
-        for user in self.database.getUsers():
+        # Handle the network update notifications.
+        for dbUser in self.database.getUsers('where network_n=1'):
 
-            if user['network_n']:
+            member = self.findMember(dbUser['id'])
 
-                member = self.findMember(user['id'])
+            if member:
+                asyncio.run_coroutine_threadsafe(self.sendMessage(member, response), loop=self.client.loop)
+
+        if added:
+            # If the callback is related to new nodes no need for
+            # the continue here.
+            return
+
+        # Remove the nodes also from the user database
+        for collateral in collaterals:
+
+            # Before chec if a node from anyone got removed and let him know about it.
+            for userNode in self.database.getNodes(collateral):
+
+                member = self.findMember(userNode['user_id'])
 
                 if member:
+                    response = messages.nodeRemovedNotification(self.messenger, userNode['name'])
                     asyncio.run_coroutine_threadsafe(self.sendMessage(member, response), loop=self.client.loop)
+
+            # Remove all entries containing this node in the db
+            self.database.deleteNodesWithId(collateral)
 
     ######
     # Callback which gets called from the SmartNodeList when a balance request triggered by any user

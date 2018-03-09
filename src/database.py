@@ -58,31 +58,32 @@ class BotDatabase(object):
 
         return user
 
-    def addNode(self, nodeId,name,userId,userName):
+    def addNode(self, collateral,name,userId,userName):
 
         user = self.addUser(userId, userName)
-        node = self.getNode(nodeId, user)
+        node = self.getNodes(collateral, user)
 
         if node == None or node['user_id'] != user:
 
-            logger.info("addNode: Not found, try to add {} ".format(nodeId))
-
             with self.connection as db:
 
-                db.cursor.execute("INSERT INTO nodes( node_id, name, user_id  )  values( ?, ?, ? )", ( nodeId, name, user ) )
+                db.cursor.execute("INSERT INTO nodes( collateral, name, user_id  )  values( ?, ?, ? )", ( collateral, name, user ) )
 
                 return True
 
         return False
 
-    def getUsers(self):
+    def getUsers(self, condition = None ):
 
         users = []
 
         with self.connection as db:
+            query = "SELECT * FROM users"
 
-            db.cursor.execute("SELECT * FROM users")
+            if condition:
+                query += (' ' + condition)
 
+            db.cursor.execute(query)
             users = db.cursor.fetchall()
 
         return users
@@ -99,41 +100,35 @@ class BotDatabase(object):
 
         return user
 
-    def getAllNodes(self):
-
-        users = []
-
-        with self.connection as db:
-
-            db.cursor.execute("SELECT * FROM nodes")
-
-            users = db.cursor.fetchall()
-
-        return users
-
-    def getNodes(self, userId):
+    def getAllNodes(self, userId = None):
 
         nodes = []
 
         with self.connection as db:
 
-            db.cursor.execute("SELECT * FROM nodes WHERE user_id=? ORDER BY name",[userId])
+            if userId:
+                db.cursor.execute("SELECT * FROM nodes WHERE user_id=? ORDER BY name",[userId])
+            else:
+                db.cursor.execute("SELECT * FROM nodes")
 
             nodes = db.cursor.fetchall()
 
         return nodes
 
-    def getNode(self, nodeId, userId):
+    def getNodes(self, collateral, userId = None):
 
-        node = None
+        nodes = None
 
         with self.connection as db:
 
-            db.cursor.execute("SELECT * FROM nodes WHERE node_id=? and user_id=?",(nodeId,userId))
+            if userId:
+                db.cursor.execute("SELECT * FROM nodes WHERE collateral=? and user_id=?",(str(collateral),userId))
+                nodes = db.cursor.fetchone()
+            else:
+                db.cursor.execute("SELECT * FROM nodes WHERE collateral=?",[str(collateral)])
+                nodes = db.cursor.fetchall()
 
-            node = db.cursor.fetchone()
-
-        return node
+        return nodes
 
     def updateUsername(self, name, userId):
 
@@ -141,17 +136,11 @@ class BotDatabase(object):
 
             db.cursor.execute("UPDATE users SET name=? WHERE id=?",(name,userId))
 
-    def updateNode(self, nodeId, userId, name):
+    def updateNode(self, collateral, userId, name):
 
         with self.connection as db:
 
-            db.cursor.execute("UPDATE nodes SET name=? WHERE node_id=? and user_id=?",(name, nodeId, userId))
-
-    def updateChatId(self, chatId, newChatId):
-
-        with self.connection as db:
-
-            db.cursor.execute("UPDATE users SET id = ? WHERE id=?",(newChatId,chatId))
+            db.cursor.execute("UPDATE nodes SET name=? WHERE collateral=? and user_id=?",(name, str(collateral), userId))
 
     def updateStatusNotification(self, userId, state):
 
@@ -183,21 +172,21 @@ class BotDatabase(object):
 
             db.cursor.execute("DELETE FROM users WHERE id=?",[userId])
 
-    def deleteNode(self, nodeId, userId):
+    def deleteNode(self, collateral, userId):
 
         with self.connection as db:
 
-            db.cursor.execute("DELETE FROM nodes WHERE node_id=? and user_id=?",(nodeId,userId))
+            db.cursor.execute("DELETE FROM nodes WHERE collateral=? and user_id=?",(str(collateral),userId))
 
     def deleteNodesForUser(self, userId):
 
         with self.connection as db:
             db.cursor.execute("DELETE FROM nodes WHERE user_id=?",[userId])
 
-    def deleteNodesWithId(self, nodeId):
+    def deleteNodesWithId(self, collateral):
 
         with self.connection as db:
-            db.cursor.execute("DELETE FROM nodes WHERE node_id=?",[nodeId])
+            db.cursor.execute("DELETE FROM nodes WHERE collateral=?",[str(collateral)])
 
     def reset(self):
 
@@ -208,16 +197,17 @@ class BotDatabase(object):
         	`status_n`	INTEGER,\
         	`reward_n`	INTEGER,\
         	`timeout_n`	INTEGER,\
-        	`network_n` INTEGER\
+        	`network_n` INTEGER,\
+            `detail_n` INTEGER,\
+            `last_activity`	INTEGER\
         );\
         CREATE TABLE "nodes" (\
         	`id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
         	`user_id` INTEGER,\
-        	`node_id`	INTEGER NOT NULL,\
-        	`name`	TEXT NOT NULL,\
-        	`last_activity`	INTEGER\
+        	`collateral` STRING NOT NULL,\
+        	`name` TEXT NOT NULL\
         );\
-        CREATE INDEX `node_id` ON `nodes` (`node_id` );\
+        CREATE INDEX `node_id` ON `nodes` (`collateral` );\
         CREATE INDEX `node_user` ON `nodes` (`user_id` );\
         COMMIT;'
 
@@ -253,14 +243,23 @@ class NodeDatabase(object):
 
         return len(tables) == 0
 
-    def addNode(self, tx, node):
+    def raw(self, query):
 
-        if self.getNodeByTx(tx) == None:
+        with self.connection as db:
+            db.cursor.execute(query)
+            return db.cursor.fetchall()
+
+        return None
+
+
+    def addNode(self, collateral, node):
+
+        try:
 
             with self.connection as db:
                 query = "INSERT INTO nodes(\
-                        txhash,\
-                        txindex,\
+                        collateral,\
+                        collateral_block,\
                         payee, \
                         status,\
                         activeseconds,\
@@ -269,23 +268,26 @@ class NodeDatabase(object):
                         last_seen,\
                         protocol,\
                         ip,\
-                        rank ) \
+                        timeout ) \
                         values( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )"
 
-                db.cursor.execute(query, (\
-                                  tx.hash,\
-                                  tx.index,\
-                                  node.payee,\
-                                  node.status,\
-                                  node.activeSeconds,\
-                                  node.lastPaidBlock,\
-                                  node.lastPaidTime,\
-                                  node.lastSeen,\
-                                  node.protocol,\
+                db.cursor.execute(query, (
+                                  str(collateral),
+                                  collateral.block,
+                                  node.payee,
+                                  node.status,
+                                  node.activeSeconds,
+                                  node.lastPaidBlock,
+                                  node.lastPaidTime,
+                                  node.lastSeen,
+                                  node.protocol,
                                   node.ip,
-                                  node.rank))
+                                  node.timeout))
 
                 return db.cursor.lastrowid
+
+        except Exception as e:
+            logger.debug("Duplicate?!", exc_info=e)
 
         return None
 
@@ -302,41 +304,20 @@ class NodeDatabase(object):
 
         return nodes
 
-    def getNodeCount(self):
+    def getNodeCount(self, where = None):
 
         count = 0
 
         with self.connection as db:
 
-            db.cursor.execute("SELECT COUNT(id) FROM nodes")
+            if where:
+                db.cursor.execute("SELECT COUNT(collateral) FROM nodes WHERE {}".format(where))
+            else:
+                db.cursor.execute("SELECT COUNT(collateral) FROM nodes")
 
             count = db.cursor.fetchone()[0]
 
         return count
-
-    def getNodeByTx(self, tx):
-
-        node = None
-
-        with self.connection as db:
-
-            db.cursor.execute("SELECT * FROM nodes WHERE txhash=? AND txindex=?",(tx.hash,tx.index))
-
-            node = db.cursor.fetchone()
-
-        return node
-
-    def getNodeById(self, id):
-
-        node = None
-
-        with self.connection as db:
-
-            db.cursor.execute("SELECT * FROM nodes WHERE id=?",[id])
-
-            node = db.cursor.fetchone()
-
-        return node
 
     def getNodeByIp(self, ip):
 
@@ -352,25 +333,14 @@ class NodeDatabase(object):
 
         return node
 
-    def getNodeByPayee(self, payee):
+    def updateNode(self, collateral, node):
 
-        node = None
-
-        with self.connection as db:
-
-            db.cursor.execute("SELECT * FROM nodes WHERE payee=?",[payee])
-
-            node = db.cursor.fetchone()
-
-        return node
-
-    def updateNode(self, tx, node):
-
-        if not self.addNode(tx, node):
+        if not self.addNode(collateral, node):
 
             with self.connection as db:
 
                 query = "UPDATE nodes SET\
+                                collateral_block=?,\
                                 payee=?,\
                                 status=?,\
                                 activeseconds=?,\
@@ -379,10 +349,11 @@ class NodeDatabase(object):
                                 last_seen=?,\
                                 protocol=?,\
                                 ip=?,\
-                                rank=?\
-                                WHERE txhash=? AND txindex=?"
+                                timeout=?\
+                                WHERE collateral=?"
 
                 db.cursor.execute(query, (\
+                                  collateral.block,\
                                   node.payee,\
                                   node.status,\
                                   node.activeSeconds,\
@@ -391,23 +362,22 @@ class NodeDatabase(object):
                                   node.lastSeen,\
                                   node.protocol,\
                                   node.ip,
-                                  node.rank,
-                                  tx.hash,tx.index))
+                                  node.timeout,
+                                  str(collateral)))
 
-    def deleteNode(self, tx):
+    def deleteNode(self, collateral):
 
         with self.connection as db:
 
-            db.cursor.execute("DELETE FROM nodes WHERE txhash=? AND txindex=?",(tx.hash,tx.index))
+            db.cursor.execute("DELETE FROM nodes WHERE collateral=?",[str(collateral)])
 
     def reset(self):
 
         sql = '\
         BEGIN TRANSACTION;\
         CREATE TABLE "nodes" (\
-            `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
-        	`txhash` TEXT NOT NULL,\
-        	`txindex` INTEGER NOT NULL,\
+        	`collateral` TEXT NOT NULL PRIMARY KEY,\
+            `collateral_block` INTEGER,\
         	`payee`	TEXT,\
         	`status` TEXT,\
         	`activeseconds`	INTEGER,\
@@ -415,10 +385,9 @@ class NodeDatabase(object):
         	`last_paid_time` INTEGER,\
         	`last_seen`	INTEGER,\
         	`protocol`	INTEGER,\
-        	`ip` TEXT,\
-        	`rank`	INTEGER\
+            `timeout` INTEGER,\
+        	`ip` TEXT\
         );\
-        CREATE INDEX `payee` ON `nodes` (`payee`);\
         COMMIT;'
 
         with self.connection as db:

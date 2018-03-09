@@ -163,4 +163,3 @@ class WebExplorer(SmartExplorer):
         self.requestSem.release()
 
         return check
-

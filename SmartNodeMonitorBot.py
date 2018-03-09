@@ -11,7 +11,7 @@ from src import discord
 from src import util
 from src.smartnodes import SmartNodeList
 
-__version__ = "1.0"
+__version__ = "1.1"
 
 def checkConfig(config,category, name):
     try:
@@ -38,6 +38,12 @@ def main(argv):
     checkConfig(config, 'general','password')
     checkConfig(config, 'general','githubuser')
     checkConfig(config, 'general','githubpassword')
+    checkConfig(config, 'general','environment')
+
+
+    if config.get('bot', 'app') != 'telegram' and\
+       config.get('bot', 'app') != 'discord':
+        sys.exit("You need to set 'telegram' or 'discord' as 'app' in the configfile.")
 
     # Set the log level
     level = int(config.get('general','loglevel'))
@@ -46,7 +52,18 @@ def main(argv):
         sys.exit("Invalid log level.\n 1 - debug\n 2 - info\n 3 - warning\n 4 - error")
 
     # Enable logging
-    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+
+    environment = int(config.get('general','environment'))
+
+    if environment != 1 and\
+       environment != 2:
+       sys.exit("Invalid environment.\n 1 - development\n 2 - production\n")
+
+    if environment == 1: # development
+        logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'.format(config.get('bot', 'app')),
+                        level=level*10)
+    else:# production
+        logging.basicConfig(format='monitor_{} %(name)s - %(levelname)s - %(message)s'.format(config.get('bot', 'app')),
                         level=level*10)
 
     # Load the user database
@@ -60,14 +77,14 @@ def main(argv):
     githubUser = config.get('general','githubuser')
     githubPassword = config.get('general','githubpassword')
 
-    nodelist = SmartNodeList(nodedb)
+    nodeList = SmartNodeList(nodedb)
 
     nodeBot = None
 
     if config.get('bot', 'app') == 'telegram':
-        nodeBot = telegram.SmartNodeBotTelegram(config.get('bot','token'), admin, password, botdb, nodelist)
+        nodeBot = telegram.SmartNodeBotTelegram(config.get('bot','token'), admin, password, botdb, nodeList)
     elif config.get('bot', 'app') == 'discord':
-        nodeBot = discord.SmartNodeBotDiscord(config.get('bot','token'), admin, password, botdb, nodelist)
+        nodeBot = discord.SmartNodeBotDiscord(config.get('bot','token'), admin, password, botdb, nodeList)
     else:
         sys.exit("You need to set 'telegram' or 'discord' as 'app' in the configfile.")
 

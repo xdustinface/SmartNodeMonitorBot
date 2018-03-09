@@ -252,8 +252,8 @@ class MessagingMachine(object):
                 logger.warning("Exception: RetryAfter {}".format(e))
 
                 queue.lock(e.retry_after)
-
-                self.bot.sendMessage(chat_id=chatId, text = messages.rateLimitError.format(util.secondsToText(int(e.retry_after))),parse_mode=telegram.ParseMode.MARKDOWN )
+                warnMessage = messages.rateLimitError(self.messenger, util.secondsToText(int(e.retry_after)))
+                self.bot.sendMessage(chat_id=chatId, text = warnMessage ,parse_mode=telegram.ParseMode.MARKDOWN )
 
             except TelegramError as e:
                 logger.warning("Exception: TelegramError {}".format(e))
@@ -313,6 +313,7 @@ class SmartNodeBotTelegram(object):
         dp.add_handler(CommandHandler('detail', self.detail))
         dp.add_handler(CommandHandler('nodes', self.nodes))
         dp.add_handler(CommandHandler('balance', self.balance))
+        dp.add_handler(CommandHandler('lookup', self.lookup, pass_args=True))
 
         #### Setup user related handler ####
         dp.add_handler(CommandHandler('username', self.username, pass_args=True))
@@ -326,7 +327,6 @@ class SmartNodeBotTelegram(object):
         dp.add_handler(CommandHandler('start', self.started))
         dp.add_handler(CommandHandler('help', self.help))
         dp.add_handler(CommandHandler('info', self.info))
-        dp.add_handler(MessageHandler(Filters.command, self.unknown))
 
         #### Setup admin handler, Not public ####
         dp.add_handler(CommandHandler('broadcast', self.broadcast, pass_args=True))
@@ -334,6 +334,7 @@ class SmartNodeBotTelegram(object):
         dp.add_handler(CommandHandler('loglevel', self.loglevel, pass_args=True))
         dp.add_handler(CommandHandler('settings', self.settings, pass_args=True))
 
+        dp.add_handler(MessageHandler(Filters.command, self.unknown))
         dp.add_error_handler(self.error)
 
         self.sendMessage(self.admin, "*Bot Started*")
@@ -350,7 +351,7 @@ class SmartNodeBotTelegram(object):
 
         if update.message.chat_id != update.message.from_user.id:
             logger.warning("not allowed group action")
-            response = messages.notAvailableInGroups
+            response = messages.notAvailableInGroups(self.messenger)
             self.sendMessage(update.message.chat_id, response )
             return True
 
@@ -398,8 +399,9 @@ class SmartNodeBotTelegram(object):
 
     def nodes(self, bot, update):
 
-        response = node.nodes(self, update)
-        self.sendMessage(update.message.chat_id, response,'\n\n')
+        if not self.isGroup(update):
+            response = node.nodes(self, update)
+            self.sendMessage(update.message.chat_id, response,'\n\n')
 
     def balance(self, bot, update):
 
@@ -408,33 +410,43 @@ class SmartNodeBotTelegram(object):
             failed = None
             nodes = []
 
-            dbNodes = self.database.getNodes(update.message.chat_id)
-            user = self.database.getUser(update.message.chat_id)
+            dbUser = self.database.getUser(update.message.chat_id)
+            userNodes = self.database.getAllNodes(update.message.chat_id)
 
-            if user == None or dbNodes == None or len(dbNodes) == 0:
+            if dbUser == None or userNodes == None or len(userNodes) == 0:
 
-               response +=  messages.nodesRequired
+                response = messages.markdown("<u><b>Balances<b><u>\n\n",self.messenger)
+                response +=  messages.nodesRequired(self.messenger)
 
-               self.sendMessage(update.message.chat_id, response)
-               return
+                self.sendMessage(update.message.chat_id, response)
+                return
 
-            for node in dbNodes:
-                nodes.append(self.nodeList.getNodeById(node['node_id']))
-
+            collaterals = list(map(lambda x: x['collateral'],userNodes))
+            nodes = self.nodeList.getNodes(collaterals)
             check = self.explorer.balances(nodes)
 
+            # Needed cause the balanceChecks dict also gets modified from other
+            # threads.
             self.balanceSem.acquire()
 
             if check:
                 self.balanceChecks[check] = update.message.chat_id
             else:
+                logger.info("Balance check failed instant.")
                 failed = uuid.uuid4()
                 self.balanceChecks[failed] = update.message.chat_id
 
+            # Needed cause the balanceChecks dict also gets modified from other
+            # threads.
             self.balanceSem.release()
 
             if failed:
                 self.balancesCB(failed,None)
+
+    def lookup(self, bot, update, args):
+
+        response = node.lookup(self, update, args)
+        self.sendMessage(update.message.chat_id, response)
 
     ############################################################
     #                 User handler calls                     #
@@ -482,7 +494,7 @@ class SmartNodeBotTelegram(object):
 
     def started(self, bot, update):
 
-        self.sendMessage(update.message.chat_id, '**Welcome**\n\n' + messages.helpMsgTelegram)
+        self.sendMessage(update.message.chat_id, '**Welcome**\n\n' + messages.help(self.messenger))
 
     def help(self, bot, update):
 
@@ -502,8 +514,8 @@ class SmartNodeBotTelegram(object):
 
             response = " ".join(args[1:])
 
-            for user in self.database.getUsers():
-                self.sendMessage(user['id'], response)
+            for dbUser in self.database.getUsers():
+                self.sendMessage(dbUser['id'], response)
         else:
             response = common.unknown(self, update)
             self.sendMessage(update.message.chat_id, response)
@@ -573,8 +585,8 @@ class SmartNodeBotTelegram(object):
     ######
     def updateCheckCallback(self, tag):
 
-        for user in self.database.getUsers():
-            self.sendMessage(user['id'], ("*Node update available*\n\n"
+        for dbUser in self.database.getUsers():
+            self.sendMessage(dbUser['id'], ("*Node update available*\n\n"
                                          "https://github.com/SmartCash/smartcash/releases/tag/{}").format(tag))
 
     ######
@@ -586,30 +598,47 @@ class SmartNodeBotTelegram(object):
     ######
     def nodeUpdateCB(self, update, n):
 
-        for user in self.database.getUsers():
+        for dbUser in self.database.getUsers():
 
-            userNode = self.database.getNode(n.id, user['id'])
+            userNode = self.database.getNodes(str(n.collateral), dbUser['id'])
 
-            if userNode == None:
+            if not userNode:
                 continue
 
             logger.info("nodeUpdateCB {}".format(n.payee))
 
-            for response in node.nodeUpdated(self, update, user, userNode, n):
-                self.sendMessage(user['id'], response)
+            for response in node.nodeUpdated(self, update, dbUser, userNode, n):
+                self.sendMessage(dbUser['id'], response)
 
     ######
     # Callback for evaluating if someone has enabled network notifications
     # and send messages to all relevant chats
     ######
-    def networkCB(self, ids, added):
+    def networkCB(self, collaterals, added):
 
-        response = common.networkUpdate(self, ids, added)
+        response = common.networkUpdate(self, collaterals, added)
 
-        for user in self.database.getUsers():
+        for dbUser in self.database.getUsers('where network_n=1'):
 
-            if user['network_n']:
-                self.sendMessage(user['id'], response)
+            self.sendMessage(dbUser['id'], response)
+
+        if added:
+            # If the callback is related to new nodes no need for
+            # the continue here.
+            return
+
+        # Remove the nodes also from the user database
+        for collateral in collaterals:
+
+            # Before chec if a node from anyone got removed and let him know about it.
+            for userNode in self.database.getNodes(collateral):
+
+                response = messages.nodeRemovedNotification(self.messenger, userNode['name'])
+
+                self.sendMessage(userNode['user_id'], response)
+
+            # Remove all entries containing this node in the db
+            self.database.deleteNodesWithId(collateral)
 
 
     ######
@@ -625,6 +654,7 @@ class SmartNodeBotTelegram(object):
 
         if not check in self.balanceChecks:
             logger.error("Ivalid balance check received {} - count {}".format(check,len(results)))
+            self.balanceSem.release()
             return
 
         userId = self.balanceChecks[check]

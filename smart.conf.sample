@@ -13,6 +13,13 @@ token = <bot_token>
 
 [general]
 
+###################
+# Environments    #
+# 1 - development #
+# 2 - production  #
+###################
+environment=
+
 ###############
 # Log Levels  #
 # 1 - debug   #

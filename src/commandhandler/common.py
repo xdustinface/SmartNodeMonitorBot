@@ -24,16 +24,40 @@ def info(bot, update):
 
     response = messages.markdown("<u><b>SmartNode Network<b><u>\n\n",bot.messenger)
 
-    if bot.nodeList.synced():
+    if bot.nodeList.synced() and bot.nodeList.lastBlock:
+
+        bot.nodeList.acquire()
 
         lastBlock = bot.nodeList.lastBlock
         created = bot.nodeList.count()
         enabled = bot.nodeList.enabled()
+        qualifiedNormal = bot.nodeList.qualifiedNormal
+        qualifiedUpgrade = bot.nodeList.qualifiedUpgrade
+        upgradeModeDuration = bot.nodeList.remainingUpgradeModeDuration
+        protocolRequirement = bot.nodeList.protocolRequirement()
+        protocol90024 = bot.nodeList.count(90024)
+        protocol90025 = bot.nodeList.count(90025)
+        initialWait = bot.nodeList.minimumUptime()
 
-        response += messages.networkState(bot.messenger, lastBlock, created, enabled)
+        if upgradeModeDuration:
+            upgradeModeDuration = util.secondsToText(upgradeModeDuration)
+
+        bot.nodeList.release()
+
+        response += messages.networkState(bot.messenger,
+                                          lastBlock,
+                                          created,
+                                          enabled,
+                                          qualifiedNormal,
+                                          qualifiedUpgrade,
+                                          upgradeModeDuration,
+                                          protocolRequirement,
+                                          protocol90024,
+                                          protocol90025,
+                                          util.secondsToText(initialWait))
 
     else:
-        response += "*Sorry, the server is currently not synced with the network.*"
+        response += "*Sorry, the bot is currently not synced with the network. Try it again in few minutes...*"
 
     return response
 
@@ -49,10 +73,6 @@ def networkUpdate(bot, ids, added):
         response += "{} new node{} detected\n\n".format(count,"s" if count > 1 else "")
     else:
         response += "{} node{} left us!\n\n".format(abs(count),"s" if count < 1 else "")
-
-        # Remove the nodes also from the user database
-        for id in ids:
-            bot.database.deleteNodesWithId(id)
 
     response += messages.markdown("We have <b>{}<b> created nodes now!\n\n".format(bot.nodeList.count()),bot.messenger)
     response += messages.markdown("<b>{}<b> of them are enabled.".format(bot.nodeList.enabled()), bot.messenger)
@@ -73,7 +93,10 @@ def stats(bot):
     response = messages.markdown("<u><b>Statistics<b><u>\n\n",bot.messenger)
 
     response += "User: {}\n".format(len(bot.database.getUsers()))
-    response += "Nodes: {}".format(len(bot.database.getAllNodes()))
+    response += "Nodes: {}\n".format(len(bot.database.getAllNodes()))
+
+    response += "90024: {}\n".format(bot.nodeList.getNodeCountForProtocol(90024))
+    response += "90025: {}\n".format(bot.nodeList.getNodeCountForProtocol(90025))
 
     return response
 
