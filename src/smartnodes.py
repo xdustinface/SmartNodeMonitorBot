@@ -835,7 +835,7 @@ class SmartNodeList(object):
             result['uptime_string'] = "Current uptime: " + util.secondsToText(node.activeSeconds)
 
             result['protocol'] = node.protocol == self.protocolRequirement()
-            result['uptime_string'] = "Active protocol: {}".format(node.protocol)
+            result['protocol_string'] = "Active protocol: {}".format(node.protocol)
 
             result['collateral'] = (self.lastBlock - node.collateral.block) >= self.enabledWithMinProtocol()
             result['collateral_string'] = "Collateral confirmations: {}".format((self.lastBlock - node.collateral.block))
