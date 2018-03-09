@@ -818,6 +818,10 @@ class SmartNodeList(object):
             node = node[0]
 
             result['ip'] = node.cleanIp()
-            result['uptime'] = True
+            result['position'] = node.positionString()
+            result['enabled'] = node.status == 'ENABLED'
+            result['uptime'] = node.activeSeconds >= self.minimumUptime()
+            result['protocol'] = node.protocol == self.protocolRequirement()
+            result['collateral_age'] = (self.lastBlock - node.collateral.block) >= self.enabledWithMinProtocol()
 
         return result

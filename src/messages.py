@@ -179,8 +179,16 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
 
 def lookupResult(messenger, result):
 
-    message = "<b>{}<b>\n".format(result['ip'])
-    message += "Uptime: {}\n\n".format("✅" if result['uptime'] else "🛑")
+    def resultEmoji(value):
+        return "✅" if value else "🛑"
+
+    message = "<b>{} - Result<b>\n".format(result['ip'])
+    message += "Position - <b>{}<b>\n".format(result['position'])
+    message += "  {} - Enabled\n".format(resultEmoji(result['enabled']))
+    message += "  {} - Collateral age\n".format(resultEmoji(result['collateral_age']))
+    message += "  {} - Uptime\n".format(resultEmoji(result['uptime']))
+    message += "  {} - Protocol\n\n".format(resultEmoji(result['protocol']))
+
 
     return markdown(message,messenger)
 
