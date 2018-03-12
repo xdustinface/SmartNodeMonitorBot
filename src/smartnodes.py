@@ -355,6 +355,7 @@ class SmartNodeList(object):
         else:
 
             if 'error' in rawTx or not "blockhash" in rawTx:
+                logger.error("getCollateralAge {}".rawTx)
                 return -1
 
             blockHash = rawTx['blockhash']
@@ -483,6 +484,7 @@ class SmartNodeList(object):
             if "blocks" in info:
                 self.lastBlock = info["blocks"]
 
+            node = None
             currentList = []
             self.lastPaidVec = []
             currentTime = int(time.time())
@@ -534,21 +536,20 @@ class SmartNodeList(object):
                         if self.nodeChangeCB != None:
                             self.nodeChangeCB(update, node)
 
+                #####
+                ## Check if the collateral height is already detemined
+                ## if not try it!
+                #####
 
-            #####
-            ## Check if the collateral height is already detemined
-            ## if not try it!
-            #####
+                if collateral.block <= 0:
+                    logger.info("Collateral block missing {}".format(str(collateral)))
 
-            if collateral.block <= 0:
-                logger.info("Collateral block missing {}".format(str(collateral)))
+                    collateral.updateBlock(self.getCollateralAge(collateral.hash))
 
-                collateral.updateBlock(self.getCollateralAge(collateral.hash))
-
-                if collateral.block > 0:
-                    self.db.updateNode(collateral,node)
-                else:
-                    logger.warning("Could not fetch collateral block {}".format(str(collateral)))
+                    if collateral.block > 0:
+                        self.db.updateNode(collateral,node)
+                    else:
+                        logger.warning("Could not fetch collateral block {}".format(str(collateral)))
 
 
             #####
