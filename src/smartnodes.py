@@ -522,6 +522,7 @@ class SmartNodeList(object):
                 else:
 
                     node = self.nodeList[collateral]
+                    collateral = node.collateral
                     update = node.update(data)
 
                     if update['status']\
