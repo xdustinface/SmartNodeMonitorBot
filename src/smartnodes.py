@@ -540,13 +540,16 @@ class SmartNodeList(object):
             ## if not try it!
             #####
 
-            if not collateral.block:
+            if collateral.block <= 0:
                 logger.info("Collateral block missing {}".format(str(collateral)))
 
                 collateral.updateBlock(self.getCollateralAge(collateral.hash))
 
-                if collateral.block:
+                if collateral.block > 0:
                     self.db.updateNode(collateral,node)
+                else:
+                    logger.warning("Could not fetch collateral block {}".format(str(collateral)))
+
 
             #####
             ## Invoke the callback if we have new nodes
