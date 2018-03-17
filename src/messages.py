@@ -147,6 +147,7 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
                    " SmartNode rewards is <b>{}<b>\n\n").format(initialWaitString)
     message += ("Once your node has reached the minimum uptime requirement it may"
                 " join the payout queue if the other requirements are met.\n\n")
+
     ####
     # Check if the network is in upgrade mode.
     #
@@ -174,7 +175,7 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
     message += "<b>Reaching the payout zone<b> should currently take roughly <b>{}<b> days\n\n".format(int(qualifiedNormal / 1570))
 
     message += "<u><b>Warning<b><u>\n\n"
-    message += "The positions of your nodes and the calculations above should be quite accurate but <b>please don't realy 100% on them until the wallet version 1.2.0 is released<b> which should fix the current issues".format(int(qualifiedNormal / 1570))
+    message += "The positions of your nodes and the calculations above should be quite accurate but <b>please keep in mind that they may be inaccurate in special cases until the wallet version 1.2.0 is released<b> which should fix the current issues".format(int(qualifiedNormal / 1570))
 
     return markdown(message,messenger)
 
