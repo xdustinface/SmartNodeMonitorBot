@@ -661,9 +661,10 @@ class SmartNodeList(object):
 
             logger.info("calculatePositions done")
 
-            logger.info("calculateUpgradeModeDuration start")
-            self.remainingUpgradeModeDuration = self.calculateUpgradeModeDuration()
-            logger.info("calculateUpgradeModeDuration done {}".format("Success" if self.remainingUpgradeModeDuration else "Error?"))
+            if self.qualifiedUpgrade != -1:
+                logger.info("calculateUpgradeModeDuration start")
+                self.remainingUpgradeModeDuration = self.calculateUpgradeModeDuration()
+                logger.info("calculateUpgradeModeDuration done {}".format("Success" if self.remainingUpgradeModeDuration else "Error?"))
 
             self.release()
 
@@ -753,7 +754,8 @@ class SmartNodeList(object):
         currentCheckTime = max(list(map(lambda x: x.activeSeconds if x.protocol == 90025 and x.status == 'ENABLED' else 0, self.nodeList.values())))
         logger.debug("Maximum uptime {}".format(currentCheckTime))
         # Start value
-        currentCheckTime -= currentCheckTime * 0.5
+        step = currentCheckTime * 0.5
+        currentCheckTime -= step
 
         # Start time for accuracy descrease if needed
         start = int(time.time())
@@ -762,6 +764,8 @@ class SmartNodeList(object):
         calcCount = None
 
         while accuracy < 1000:
+
+            step *= 0.5
 
             calcCount = len(list(filter(lambda x: x.protocol == self.protocolRequirement() and\
                                                   x.status == 'ENABLED' and\
@@ -784,9 +788,9 @@ class SmartNodeList(object):
                 logger.info("CalcTime: {}, Rounds: {}".format( int(time.time()) - start,rounds))
                 return self.minimumUptime() - currentCheckTime
             elif calcCount > requiredNodes:
-                currentCheckTime += currentCheckTime * 0.5 + (int(time.time()) % 60)
+                currentCheckTime += step
             else:
-                currentCheckTime -= currentCheckTime * 0.5 + (int(time.time()) % 60)
+                currentCheckTime -= step
 
         logger.warning("Could not determine duration?!")
         logger.warning("Final accuracy {}".format(accuracy))
