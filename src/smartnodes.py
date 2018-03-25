@@ -280,7 +280,7 @@ class SmartNodeList(object):
         self.lastPaidVec = []
         self.nodeList = {}
 
-        self.firstSync = None
+        self.syncedTime = -1
         self.chainSynced = False
         self.nodeListSynced = False
         self.winnersListSynced = False
@@ -403,7 +403,7 @@ class SmartNodeList(object):
                 logging.error('Error at %s', 'isSynced', exc_info=e)
 
                 self.pushAdmin("Exception at isSynced")
-                self.firstSync = None
+                self.syncedTime = -2
 
                 raise RuntimeError("Could not fetch synced status.")
         else:
@@ -454,13 +454,14 @@ class SmartNodeList(object):
                 self.startTimer()
                 return
 
-        if not self.firstSync:
-            self.firstSync = time.time()
+        if self.syncedTime == -2:
+            self.syncedTime = time.time()
             logger.info("Synced now! Wait 5 minutes and then start through...")
             return
         # Wait 5 minutes here to prevent timeout notifications. Past showed that
         # the lastseen times are not good instantly after sync.
-        elif (time.time() - self.firstSync) < 300:
+        elif self.syncedTime > -1 and (time.time() - self.syncedTime) < 300:
+            logger.info("After sync wait {}".format(util.secondsToText(time.time() - self.syncedTime)))
             return
 
         newNodes = []
