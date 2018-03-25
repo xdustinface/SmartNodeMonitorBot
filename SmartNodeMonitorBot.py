@@ -60,7 +60,7 @@ def main(argv):
        sys.exit("Invalid environment.\n 1 - development\n 2 - production\n")
 
     if environment == 1: # development
-        logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'.format(config.get('bot', 'app')),
+        logging.basicConfig(format='%(asctime)s - monitor_{} - %(name)s - %(levelname)s - %(message)s'.format(config.get('bot', 'app')),
                         level=level*10)
     else:# production
         logging.basicConfig(format='monitor_{} %(name)s - %(levelname)s - %(message)s'.format(config.get('bot', 'app')),
