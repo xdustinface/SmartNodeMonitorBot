@@ -865,6 +865,7 @@ class SmartNodeList(object):
             result['protocol_string'] = "{}".format(node.protocol)
 
             result['collateral'] = (self.lastBlock - node.collateral.block) >= self.enabledWithMinProtocol()
+            
             result['collateral_string'] = "{}".format((self.lastBlock - node.collateral.block))
 
             result['upgrade_mode'] = self.qualifiedUpgrade != -1

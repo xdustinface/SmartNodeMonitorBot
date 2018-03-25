@@ -396,40 +396,44 @@ def lookup(bot, userId, args):
 
     response = messages.markdown("<u><b>Node lookup<b><u>\n\n",bot.messenger)
 
-    if not len(args):
-        response += messages.lookupArgumentRequiredError(bot.messenger)
-    else:
+    if bot.nodeList.synced() and bot.nodeList.lastBlock:
 
-        errors = []
-        lookups = []
+        if not len(args):
+            response += messages.lookupArgumentRequiredError(bot.messenger)
+        else:
 
-        for arg in args:
+            errors = []
+            lookups = []
 
-            ip = util.validateIp( arg )
+            for arg in args:
 
-            if not ip:
-                errors.append(messages.invalidIpError(bot.messenger,arg))
-            else:
+                ip = util.validateIp( arg )
 
-                dbNode = bot.nodeList.getNodeByIp(ip)
-
-                if dbNode:
-
-                    result = bot.nodeList.lookup(dbNode['collateral'])
-
-                    if result:
-                        lookups.append(messages.lookupResult(bot.messenger,result))
-                    else:
-                        errors.append(messages.lookupError(bot.messenger,ip))
-
+                if not ip:
+                    errors.append(messages.invalidIpError(bot.messenger,arg))
                 else:
-                    errors.append(messages.nodeNotInListError(bot.messenger,ip))
 
-        for e in errors:
-            response += e
+                    dbNode = bot.nodeList.getNodeByIp(ip)
 
-        for l in lookups:
-            response += l
+                    if dbNode:
+
+                        result = bot.nodeList.lookup(dbNode['collateral'])
+
+                        if result:
+                            lookups.append(messages.lookupResult(bot.messenger,result))
+                        else:
+                            errors.append(messages.lookupError(bot.messenger,ip))
+
+                    else:
+                        errors.append(messages.nodeNotInListError(bot.messenger,ip))
+
+            for e in errors:
+                response += e
+
+            for l in lookups:
+                response += l
+    else:
+        response += "*Sorry, the bot is currently not synced with the network. Try it again in few minutes...*"
 
     return response
 
