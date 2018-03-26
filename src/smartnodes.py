@@ -509,6 +509,7 @@ class SmartNodeList(object):
             if dbCount and len(nodes) and ( dbCount / len(nodes) ) > 1.25:
                 self.pushAdmin("Node count differs too much!")
                 logger.warning("Node count differs too much! - DB {}, CLI {}".format(dbCount,len(nodes)))
+                self.startTimer()
                 return
 
             # Prevent reading during the calculations
