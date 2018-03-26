@@ -502,6 +502,15 @@ class SmartNodeList(object):
             currentTime = int(time.time())
             protocolRequirement = self.protocolRequirement()
 
+            dbCount = self.db.getNodeCount()
+
+            # Prevent mass deletion of nodes if something is wrong
+            # with the fetched nodelist.
+            if dbCount and len(nodes) and ( dbCount / len(nodes) ) > 1.25:
+                self.pushAdmin("Node count differs too much!")
+                logger.warning("Node count differs too much! - DB {}, CLI {}".format(dbCount,len(nodes)))
+                return
+
             # Prevent reading during the calculations
             self.acquire()
 
@@ -865,7 +874,7 @@ class SmartNodeList(object):
             result['protocol_string'] = "{}".format(node.protocol)
 
             result['collateral'] = (self.lastBlock - node.collateral.block) >= self.enabledWithMinProtocol()
-            
+
             result['collateral_string'] = "{}".format((self.lastBlock - node.collateral.block))
 
             result['upgrade_mode'] = self.qualifiedUpgrade != -1
