@@ -451,17 +451,28 @@ class SmartNodeList(object):
 
             if not self.chainSynced or not self.nodeListSynced or not self.winnersListSynced:
                 logger.error("Not synced! C {}, N {} W {}".format(self.chainSynced, self.nodeListSynced, self.winnersListSynced))
+
+                # If nodelist or winnerslist was out of sync
+                # wait 5 minutes after sync is done
+                # to prevent false positive timeout notifications
+                if not self.nodeListSynced or not self.winnersListSynced:
+                    self.syncedTime = -2
+
                 self.startTimer()
+
                 return
 
         if self.syncedTime == -2:
             self.syncedTime = time.time()
             logger.info("Synced now! Wait 5 minutes and then start through...")
+            self.startTimer()
             return
+
         # Wait 5 minutes here to prevent timeout notifications. Past showed that
         # the lastseen times are not good instantly after sync.
         elif self.syncedTime > -1 and (time.time() - self.syncedTime) < 300:
             logger.info("After sync wait {}".format(util.secondsToText(time.time() - self.syncedTime)))
+            self.startTimer()
             return
 
         newNodes = []
