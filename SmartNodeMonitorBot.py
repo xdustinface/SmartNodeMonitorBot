@@ -11,7 +11,7 @@ from src import discord
 from src import util
 from src.smartnodes import SmartNodeList
 
-__version__ = "1.1"
+__version__ = "1.1.1"
 
 def checkConfig(config,category, name):
     try:

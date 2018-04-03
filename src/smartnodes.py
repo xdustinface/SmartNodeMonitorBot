@@ -280,6 +280,7 @@ class SmartNodeList(object):
         self.lastPaidVec = []
         self.nodeList = {}
 
+        self.syncedTime = -1
         self.chainSynced = False
         self.nodeListSynced = False
         self.winnersListSynced = False
@@ -402,6 +403,7 @@ class SmartNodeList(object):
                 logging.error('Error at %s', 'isSynced', exc_info=e)
 
                 self.pushAdmin("Exception at isSynced")
+                self.syncedTime = -2
 
                 raise RuntimeError("Could not fetch synced status.")
         else:
@@ -449,8 +451,29 @@ class SmartNodeList(object):
 
             if not self.chainSynced or not self.nodeListSynced or not self.winnersListSynced:
                 logger.error("Not synced! C {}, N {} W {}".format(self.chainSynced, self.nodeListSynced, self.winnersListSynced))
+
+                # If nodelist or winnerslist was out of sync
+                # wait 5 minutes after sync is done
+                # to prevent false positive timeout notifications
+                if not self.nodeListSynced or not self.winnersListSynced:
+                    self.syncedTime = -2
+
                 self.startTimer()
+
                 return
+
+        if self.syncedTime == -2:
+            self.syncedTime = time.time()
+            logger.info("Synced now! Wait 5 minutes and then start through...")
+            self.startTimer()
+            return
+
+        # Wait 5 minutes here to prevent timeout notifications. Past showed that
+        # the lastseen times are not good instantly after sync.
+        elif self.syncedTime > -1 and (time.time() - self.syncedTime) < 300:
+            logger.info("After sync wait {}".format(util.secondsToText(time.time() - self.syncedTime)))
+            self.startTimer()
+            return
 
         newNodes = []
 
@@ -489,6 +512,16 @@ class SmartNodeList(object):
             self.lastPaidVec = []
             currentTime = int(time.time())
             protocolRequirement = self.protocolRequirement()
+
+            dbCount = self.db.getNodeCount()
+
+            # Prevent mass deletion of nodes if something is wrong
+            # with the fetched nodelist.
+            if dbCount and len(nodes) and ( dbCount / len(nodes) ) > 1.25:
+                self.pushAdmin("Node count differs too much!")
+                logger.warning("Node count differs too much! - DB {}, CLI {}".format(dbCount,len(nodes)))
+                self.startTimer()
+                return
 
             # Prevent reading during the calculations
             self.acquire()
@@ -661,9 +694,10 @@ class SmartNodeList(object):
 
             logger.info("calculatePositions done")
 
-            logger.info("calculateUpgradeModeDuration start")
-            self.remainingUpgradeModeDuration = self.calculateUpgradeModeDuration()
-            logger.info("calculateUpgradeModeDuration done {}".format("Success" if self.remainingUpgradeModeDuration else "Error?"))
+            if self.qualifiedUpgrade != -1:
+                logger.info("calculateUpgradeModeDuration start")
+                self.remainingUpgradeModeDuration = self.calculateUpgradeModeDuration()
+                logger.info("calculateUpgradeModeDuration done {}".format("Success" if self.remainingUpgradeModeDuration else "Error?"))
 
             self.release()
 
@@ -753,7 +787,8 @@ class SmartNodeList(object):
         currentCheckTime = max(list(map(lambda x: x.activeSeconds if x.protocol == 90025 and x.status == 'ENABLED' else 0, self.nodeList.values())))
         logger.debug("Maximum uptime {}".format(currentCheckTime))
         # Start value
-        currentCheckTime -= currentCheckTime * 0.5
+        step = currentCheckTime * 0.5
+        currentCheckTime -= step
 
         # Start time for accuracy descrease if needed
         start = int(time.time())
@@ -762,6 +797,8 @@ class SmartNodeList(object):
         calcCount = None
 
         while accuracy < 1000:
+
+            step *= 0.5
 
             calcCount = len(list(filter(lambda x: x.protocol == self.protocolRequirement() and\
                                                   x.status == 'ENABLED' and\
@@ -784,9 +821,9 @@ class SmartNodeList(object):
                 logger.info("CalcTime: {}, Rounds: {}".format( int(time.time()) - start,rounds))
                 return self.minimumUptime() - currentCheckTime
             elif calcCount > requiredNodes:
-                currentCheckTime += currentCheckTime * 0.5 + (int(time.time()) % 60)
+                currentCheckTime += step
             else:
-                currentCheckTime -= currentCheckTime * 0.5 + (int(time.time()) % 60)
+                currentCheckTime -= step
 
         logger.warning("Could not determine duration?!")
         logger.warning("Final accuracy {}".format(accuracy))
@@ -849,6 +886,7 @@ class SmartNodeList(object):
             result['protocol_string'] = "{}".format(node.protocol)
 
             result['collateral'] = (self.lastBlock - node.collateral.block) >= self.enabledWithMinProtocol()
+
             result['collateral_string'] = "{}".format((self.lastBlock - node.collateral.block))
 
             result['upgrade_mode'] = self.qualifiedUpgrade != -1
