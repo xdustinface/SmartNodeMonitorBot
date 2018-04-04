@@ -11,6 +11,8 @@ from src import discord
 from src import util
 from src.smartnodes import SmartNodeList
 
+from smartcash.rpc import RPCConfig
+
 __version__ = "1.1.1"
 
 def checkConfig(config,category, name):
@@ -39,7 +41,11 @@ def main(argv):
     checkConfig(config, 'general','githubuser')
     checkConfig(config, 'general','githubpassword')
     checkConfig(config, 'general','environment')
-
+    checkConfig(config, 'rpc','url')
+    checkConfig(config, 'rpc','port')
+    checkConfig(config, 'rpc','username')
+    checkConfig(config, 'rpc','password')
+    checkConfig(config, 'rpc','timeout')
 
     if config.get('bot', 'app') != 'telegram' and\
        config.get('bot', 'app') != 'discord':
@@ -66,6 +72,15 @@ def main(argv):
         logging.basicConfig(format='monitor_{} %(name)s - %(levelname)s - %(message)s'.format(config.get('bot', 'app')),
                         level=level*10)
 
+
+    rpcUrl = config.get('rpc','url')
+    rpcPort = config.get('rpc','port')
+    rpcUser = config.get('rpc','username')
+    rpcPassword = config.get('rpc','password')
+    rpcTimeout = int(config.get('rpc','timeout'))
+
+    rpcConfig = RPCConfig(rpcUser, rpcPassword, rpcUrl, rpcPort, rpcTimeout)
+
     # Load the user database
     botdb = database.BotDatabase(directory + '/bot.db')
 
@@ -77,7 +92,7 @@ def main(argv):
     githubUser = config.get('general','githubuser')
     githubPassword = config.get('general','githubpassword')
 
-    nodeList = SmartNodeList(nodedb)
+    nodeList = SmartNodeList(nodedb, rpcConfig)
 
     nodeBot = None
 

@@ -262,6 +262,7 @@ def detail(bot, update):
 
     user = bot.database.getUser(userId)
     userNodes = bot.database.getAllNodes(userId)
+    minimumUptime = bot.nodeList.minimumUptime()
 
     if user == None or userNodes == None or len(userNodes) == 0:
 
@@ -275,7 +276,7 @@ def detail(bot, update):
 
             response += messages.markdown(("<b>" + userNode['name'] + " - " + smartnode.ip + "<b>")  ,bot.messenger)
             response += "\n  `Status` " + smartnode.status
-            response += "\n  `Position` " + smartnode.positionString()
+            response += "\n  `Position` " + smartnode.positionString(minimumUptime)
             response += "\n  `Payee` " + smartnode.payee
             response += "\n  `Active since` " + util.secondsToText(smartnode.activeSeconds)
             response += "\n  `Last seen` " + util.secondsToText( int(time.time()) - smartnode.lastSeen)
@@ -320,6 +321,7 @@ def nodes(bot, update):
 
         collaterals = list(map(lambda x: x['collateral'],userNodes))
         nodes = bot.nodeList.getNodes(collaterals)
+        minimumUptime = bot.nodeList.minimumUptime()
 
         for smartnode in sorted(nodes, key=lambda x: x.position):
 
@@ -327,7 +329,7 @@ def nodes(bot, update):
 
             payoutText = util.secondsToText(smartnode.lastPaidTime)
             response += messages.markdown("<b>" + userNode['name'] + "<b> - `" + smartnode.status + "`",bot.messenger)
-            response += "\nPosition " + smartnode.positionString()
+            response += "\nPosition " + smartnode.positionString(minimumUptime)
             response += "\nLast seen " + util.secondsToText( int(time.time()) - smartnode.lastSeen)
             response += "\nLast payout " + smartnode.payoutTimeString()
             response += "\n" + messages.link(bot.messenger, 'https://explorer3.smartcash.cc/address/{}'.format(smartnode.payee),'Open the explorer!')

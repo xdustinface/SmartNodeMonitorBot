@@ -9,6 +9,8 @@ import logging
 import threading
 import re
 
+from smartcash.rpc import *
+
 # Index assignment of the "smartnodelist full"
 STATUS_INDEX = 0
 PROTOCOL_INDEX = 1
@@ -25,7 +27,6 @@ POS_CALCULATING = -2
 POS_UPDATE_REQUIRED = -3
 POS_TOO_NEW = -4
 POS_COLLATERAL_AGE = -5
-
 
 logger = logging.getLogger("smartnodes")
 
@@ -234,14 +235,15 @@ class SmartNode(object):
 
         return "No payout yet."
 
-    def positionString(self):
+    def positionString(self, minimumUptime):
 
         if self.position == POS_CALCULATING:
             return "Calculating..."
         elif self.position == POS_UPDATE_REQUIRED:
             return "Node update required!"
         elif self.position == POS_TOO_NEW:
-            return "Initial wait time!"
+            leftMessage = util.secondsToText(minimumUptime - self.activeSeconds)
+            return "Initial wait time! <b>{}<b> left".format(leftMessage)
         elif self.position == POS_COLLATERAL_AGE:
             return "Collateral too new!"
         elif self.position == POS_NOT_QUALIFIED:
@@ -266,7 +268,7 @@ class SmartNode(object):
 
 class SmartNodeList(object):
 
-    def __init__(self, db):
+    def __init__(self, db, rpcConfig):
 
         self.nodeListSem = threading.Lock()
         self.lastBlock = 0
@@ -286,6 +288,7 @@ class SmartNodeList(object):
         self.winnersListSynced = False
 
         self.db = db
+        self.rpc = SmartCashRPC(rpcConfig)
 
         self.nodeChangeCB = None
         self.networkCB = None
@@ -309,7 +312,7 @@ class SmartNodeList(object):
             self.adminCB(message)
 
     def startTimer(self, timeout = 30):
-        self.timer = threading.Timer(timeout, self.updateList)
+        self.timer = threading.Timer(timeout, self.update)
         self.timer.start()
 
     def load(self):
@@ -320,426 +323,329 @@ class SmartNodeList(object):
                 node = SmartNode.fromDb(entry)
                 self.nodeList[node.collateral] = node
 
-    def validateAddress(self, address):
-
-        cleanAddress = re.sub('[^A-Za-z0-9]+', '', address)
-
-        validate = None
-
-        try:
-
-            result = subprocess.check_output(['smartcash-cli', 'validateaddress',cleanAddress])
-            validate = json.loads(result.decode('utf-8'))
-
-        except Exception as e:
-
-            logging.error('Error at %s', 'json parse', exc_info=e)
-
-        else:
-
-            if "isvalid" in validate and validate["isvalid"] == True:
-                return True
-
-        return False
-
-    def getCollateralAge(self, txhash):
-
-        try:
-
-            result = subprocess.check_output(['smartcash-cli', 'getrawtransaction',txhash, '1'])
-            rawTx = json.loads(result.decode('utf-8'))
-
-        except Exception as e:
-
-            logging.error('Could not fetch raw transaction', exc_info=e)
-            return -1
-        else:
-
-            if 'error' in rawTx or not "blockhash" in rawTx:
-                logger.error("getCollateralAge {}".rawTx)
-                return -1
-
-            blockHash = rawTx['blockhash']
-
-            try:
-
-                result = subprocess.check_output(['smartcash-cli', 'getblock',blockHash])
-                block = json.loads(result.decode('utf-8'))
-
-            except Exception as e:
-                logging.error('Could not fetch block', exc_info=e)
-                return -1
-            else:
-
-                if 'error' in block or not 'height' in block:
-                    return -1
-
-                return block['height']
-
-
-    def isValidDeamonResponse(self,json):
-
-        if 'error' in json:
-            logger.warning("could not update list {}".format(json))
-            self.startTimer()
-            return False
-
-        return True
-
     def synced(self):
         return self.chainSynced and self.nodeListSynced and self.winnersListSynced
 
+    def update(self):
+
+        if self.updateSyncState():
+            logger.info("Start list update!")
+            self.updateList()
+            # Disabled rank updates due to confusion of the users
+            #self.updateRanks()
+
+        self.startTimer()
+
+    def getCollateralAge(self, txhash):
+
+        rawTx = self.rpc.getRawTransaction(txhash)
+
+        if rawTx.error:
+            logging.error('Could not fetch raw transaction: {}'.format(str(rawTx.error)))
+            return -1
+
+        if not "blockhash" in rawTx.data:
+            logger.error("getCollateralAge missing blockhash{}".format(rawTx.data))
+            return -1
+
+        block = self.rpc.getBlockByHash(rawTx.data['blockhash'])
+
+        if block.error:
+            logging.error('Could not fetch block: {}'.format(str(block.error)))
+            return -1
+
+        if not 'height' in block.data:
+            logger.error("getCollateralAge missing height: {}".format(block.data))
+            return -1
+
+        return block.data['height']
+
     def updateSyncState(self):
 
-        status = None
+        status = self.rpc.getSyncStatus()
 
-        try:
+        if status.error:
+            msg = "updateSyncState failed: {}".format(str(status.error))
+            logging.error(msg)
+            self.pushAdmin(msg)
 
-            statusResult = subprocess.check_output(['smartcash-cli', 'snsync','status'])
-            status = json.loads(statusResult.decode('utf-8'))
+            # Reset wait time for next sync
+            self.syncedTime = -2
 
-        except Exception as e:
+            return False
 
-                logging.error('Error at %s', 'isSynced', exc_info=e)
+        self.chainSynced = status.data['IsBlockchainSynced']
+        self.nodeListSynced = status.data['IsMasternodeListSynced']
+        self.winnersListSynced = status.data['IsWinnersListSynced']
 
-                self.pushAdmin("Exception at isSynced")
-                self.syncedTime = -2
-
-                raise RuntimeError("Could not fetch synced status.")
-        else:
-
-            if 'error' in status:
-                self.pushAdmin("No valid sync state")
-                raise RuntimeError("Error in sync list {}".format(statusResult))
-
-            # {
-            #   "AssetID": 999,
-            #   "AssetName": "SMARTNODE_SYNC_FINISHED",
-            #   "Attempt": 0,
-            #   "IsBlockchainSynced": true,
-            #   "IsMasternodeListSynced": true,
-            #   "IsWinnersListSynced": true,
-            #   "IsSynced": true,
-            #   "IsFailed": false
-            # }
-
-            if 'IsBlockchainSynced' in status:
-                self.chainSynced = status['IsBlockchainSynced']
-            else:
-                raise RuntimeError("IsBlockchainSynced missing.")
-
-            if  'IsMasternodeListSynced' in status:
-                self.nodeListSynced = status['IsMasternodeListSynced']
-            else:
-                raise RuntimeError("IsMasternodeListSynced missing.")
-
-            if  'IsWinnersListSynced' in status:
-                self.winnersListSynced = status['IsWinnersListSynced']
-            else:
-                raise RuntimeError("IsWinnersListSynced missing.")
+        return True
 
     def updateList(self):
 
-        try:
-            self.updateSyncState()
-        except RuntimeError as e:
-            logger.error("updateList sync exception: {}".format(e))
-            self.startTimer()
-            return
+        if not self.chainSynced or not self.nodeListSynced or not self.winnersListSynced:
+            logger.error("Not synced! C {}, N {} W {}".format(self.chainSynced, self.nodeListSynced, self.winnersListSynced))
 
-        else:
+            # If nodelist or winnerslist was out of sync
+            # wait 5 minutes after sync is done
+            # to prevent false positive timeout notifications
+            if not self.nodeListSynced or not self.winnersListSynced:
+                self.syncedTime = -2
 
-            if not self.chainSynced or not self.nodeListSynced or not self.winnersListSynced:
-                logger.error("Not synced! C {}, N {} W {}".format(self.chainSynced, self.nodeListSynced, self.winnersListSynced))
-
-                # If nodelist or winnerslist was out of sync
-                # wait 5 minutes after sync is done
-                # to prevent false positive timeout notifications
-                if not self.nodeListSynced or not self.winnersListSynced:
-                    self.syncedTime = -2
-
-                self.startTimer()
-
-                return
+            return False
 
         if self.syncedTime == -2:
             self.syncedTime = time.time()
             logger.info("Synced now! Wait 5 minutes and then start through...")
-            self.startTimer()
-            return
+            return False
 
         # Wait 5 minutes here to prevent timeout notifications. Past showed that
         # the lastseen times are not good instantly after sync.
         elif self.syncedTime > -1 and (time.time() - self.syncedTime) < 300:
             logger.info("After sync wait {}".format(util.secondsToText(time.time() - self.syncedTime)))
-            self.startTimer()
-            return
+            return False
 
         newNodes = []
 
-        nodes = None
-        info = None
+        info = self.rpc.getInfo()
+        nodes = self.rpc.getSmartNodeList('full')
 
-        try:
-
-            infoResult = subprocess.check_output(['smartcash-cli', 'getinfo'])
-            info = json.loads(infoResult.decode('utf-8'))
-
-            nodeResult = subprocess.check_output(['smartcash-cli', 'smartnodelist','full'])
-            nodes = json.loads(nodeResult.decode('utf-8'))
-
-        except Exception as e:
-
-                logging.error('Error at %s', 'update list', exc_info=e)
-
-                self.pushAdmin("Error at updateList")
-
+        if info.error:
+            msg = "updateList getInfo: {}".format(str(info.error))
+            logging.error(msg)
+            self.pushAdmin(msg)
+            return False
+        elif not "blocks" in info.data:
+            self.pushAdmin("Block info missing?!")
         else:
+            self.lastBlock = info.data["blocks"]
 
-            if not self.isValidDeamonResponse(nodes):
-                self.pushAdmin("No valid nodeList")
-                return
+        if nodes.error:
+            msg = "updateList getSmartNodeList: {}".format(str(nodes.error))
+            logging.error(msg)
+            self.pushAdmin(msg)
+            return False
 
-            if not self.isValidDeamonResponse(info):
-                self.pushAdmin("No valid network info")
-                return
+        nodes = nodes.data
+        node = None
 
-            if "blocks" in info:
-                self.lastBlock = info["blocks"]
+        currentList = []
+        self.lastPaidVec = []
+        currentTime = int(time.time())
+        protocolRequirement = self.protocolRequirement()
 
-            node = None
-            currentList = []
-            self.lastPaidVec = []
-            currentTime = int(time.time())
-            protocolRequirement = self.protocolRequirement()
+        dbCount = self.db.getNodeCount()
 
-            dbCount = self.db.getNodeCount()
+        # Prevent mass deletion of nodes if something is wrong
+        # with the fetched nodelist.
+        if dbCount and len(nodes) and ( dbCount / len(nodes) ) > 1.25:
+            self.pushAdmin("Node count differs too much!")
+            logger.warning("Node count differs too much! - DB {}, CLI {}".format(dbCount,len(nodes)))
+            return False
 
-            # Prevent mass deletion of nodes if something is wrong
-            # with the fetched nodelist.
-            if dbCount and len(nodes) and ( dbCount / len(nodes) ) > 1.25:
-                self.pushAdmin("Node count differs too much!")
-                logger.warning("Node count differs too much! - DB {}, CLI {}".format(dbCount,len(nodes)))
-                self.startTimer()
-                return
+        # Prevent reading during the calculations
+        self.acquire()
 
-            # Prevent reading during the calculations
-            self.acquire()
+        # Reset the calculation vars
+        self.qualifiedNormal = 0
 
-            # Reset the calculation vars
-            self.qualifiedNormal = 0
+        for key, data in nodes.items():
 
-            for key, data in nodes.items():
+            collateral = Transaction.fromRaw(key)
 
-                collateral = Transaction.fromRaw(key)
+            currentList.append(collateral)
 
-                currentList.append(collateral)
+            if collateral not in self.nodeList:
 
-                if collateral not in self.nodeList:
+                collateral.updateBlock(self.getCollateralAge(collateral.hash))
 
-                    collateral.updateBlock(self.getCollateralAge(collateral.hash))
+                logger.info("Add node {}".format(key))
+                insert = SmartNode.fromRaw(collateral, data)
 
-                    logger.info("Add node {}".format(key))
-                    insert = SmartNode.fromRaw(collateral, data)
+                id = self.db.addNode(collateral,insert)
 
-                    id = self.db.addNode(collateral,insert)
+                if id:
+                    self.nodeList[collateral] = insert
+                    newNodes.append(collateral)
 
-                    if id:
-                        self.nodeList[collateral] = insert
-                        newNodes.append(collateral)
-
-                        logger.debug(" => added with collateral {}".format(insert.collateral))
-                    else:
-                        logger.error("Could not add the node {}".format(key))
-
+                    logger.debug(" => added with collateral {}".format(insert.collateral))
                 else:
+                    logger.error("Could not add the node {}".format(key))
 
-                    node = self.nodeList[collateral]
-                    collateral = node.collateral
-                    update = node.update(data)
+            else:
 
-                    if update['status']\
-                    or update['protocol']\
-                    or update['payee']\
-                    or update['lastPaid']\
-                    or update['timeout']:
-                        self.db.updateNode(collateral,node)
+                node = self.nodeList[collateral]
+                collateral = node.collateral
+                update = node.update(data)
 
-                    if sum(map(lambda x: x, update.values())):
+                if update['status']\
+                or update['protocol']\
+                or update['payee']\
+                or update['lastPaid']\
+                or update['timeout']:
+                    self.db.updateNode(collateral,node)
 
-                        if self.nodeChangeCB != None:
-                            self.nodeChangeCB(update, node)
+                if sum(map(lambda x: x, update.values())):
 
-                #####
-                ## Check if the collateral height is already detemined
-                ## if not try it!
-                #####
-
-                if collateral.block <= 0:
-                    logger.info("Collateral block missing {}".format(str(collateral)))
-
-                    collateral.updateBlock(self.getCollateralAge(collateral.hash))
-
-                    if collateral.block > 0:
-                        self.db.updateNode(collateral,node)
-                    else:
-                        logger.warning("Could not fetch collateral block {}".format(str(collateral)))
-
+                    if self.nodeChangeCB != None:
+                        self.nodeChangeCB(update, node)
 
             #####
-            ## Invoke the callback if we have new nodes
+            ## Check if the collateral height is already detemined
+            ## if not try it!
             #####
 
-            if len(newNodes) and self.networkCB:
+            if collateral.block <= 0:
+                logger.info("Collateral block missing {}".format(str(collateral)))
 
-                self.networkCB(newNodes, True)
+                collateral.updateBlock(self.getCollateralAge(collateral.hash))
 
-                logger.info("Created: {}".format(len(nodes.values())))
-                logger.info("Enabled: {}\n".format(sum(map(lambda x: x.split()[STATUS_INDEX]  == "ENABLED", list(nodes.values())))))
-
-            #####
-            ## Remove nodes from the DB that are not longer in the global list
-            #####
-
-            dbCount = self.db.getNodeCount()
-
-            if dbCount > len(nodes):
-
-                removedNodes = []
-
-                logger.warning("Unequal node count - DB {}, CLI {}".format(dbCount,len(nodes)))
-
-                dbNodes = self.db.getNodes(['collateral'])
-
-                for dbNode in dbNodes:
-
-                    collateral = Transaction.fromString(dbNode['collateral'])
-
-                    if not collateral in currentList:
-                        logger.info("Remove node {}".format(dbNode))
-                        removedNodes.append(dbNode['collateral'])
-                        self.db.deleteNode(collateral)
-                        self.nodeList.pop(collateral,None)
-
-                if len(removedNodes) != (dbCount - len(nodes)):
-                    logger.warning("Remove nodes - something messed up.")
-
-                if self.networkCB:
-                    self.networkCB(removedNodes, False)
-
-            logger.info("calculatePositions start")
-
-            #####
-            ## Update vars for calculations
-            #
-            ####
-
-            nodes90024 = list(filter(lambda x: x.protocol == 90024, self.nodeList.values()))
-            nodes90025 = list(filter(lambda x: x.protocol == 90025, self.nodeList.values()))
-
-            self.protocol_90024 = len(nodes90024)
-            self.protocol_90025 = len(nodes90025)
-
-            self.enabled_90024 = len(list(filter(lambda x: x.status == "ENABLED", nodes90024)))
-            self.enabled_90025 = len(list(filter(lambda x: x.status == "ENABLED", nodes90025)))
-
-            #####
-            ## Update the the position indicator of the node
-            #
-            # CURRENTL MISSING:
-            #   https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L554
-            #####
-
-            def calculatePositions(upgradeMode):
-
-                self.lastPaidVec = []
-
-                for collateral, node in self.nodeList.items():
-
-                    if not upgradeMode and node.activeSeconds < self.minimumUptime():# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L561
-                        node.updatePosition(POS_TOO_NEW)
-                    elif node.protocol < protocolRequirement:# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L545
-                        node.updatePosition(POS_UPDATE_REQUIRED)
-                    elif (self.lastBlock - node.collateral.block) < self.enabledWithMinProtocol():
-                        node.updatePosition(POS_COLLATERAL_AGE)
-                    elif node.status == 'ENABLED': #https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L539
-                        self.lastPaidVec.append(LastPaid(node.lastPaidBlock, collateral))
-                    else:
-                        node.updatePosition(POS_NOT_QUALIFIED)
-
-                if not upgradeMode and len(self.lastPaidVec) < (self.enabledWithMinProtocol() / 3):
-                    self.qualifiedUpgrade = len(self.lastPaidVec)
-                    logger.info("Start upgradeMode calculation: {}".format(self.qualifiedUpgrade))
-                    calculatePositions(True)
-                    return
-
-                if not upgradeMode:
-                    self.qualifiedUpgrade = -1
-
-                self.qualifiedNormal = len(self.lastPaidVec)
-
-            calculatePositions(False)
-
-
-            #####
-            ## Update positions
-            #####
-
-            self.lastPaidVec.sort()
-
-            value = 0
-            for lastPaid in self.lastPaidVec:
-                value +=1
-                self.nodeList[lastPaid.transaction].updatePosition(value)
-
-            logger.info("calculatePositions done")
-
-            if self.qualifiedUpgrade != -1:
-                logger.info("calculateUpgradeModeDuration start")
-                self.remainingUpgradeModeDuration = self.calculateUpgradeModeDuration()
-                logger.info("calculateUpgradeModeDuration done {}".format("Success" if self.remainingUpgradeModeDuration else "Error?"))
-
-            self.release()
+                if collateral.block > 0:
+                    self.db.updateNode(collateral,node)
+                else:
+                    logger.warning("Could not fetch collateral block {}".format(str(collateral)))
 
         #####
-        # Disabled rank updates due to confusion of the users
-        #self.updateRanks()
+        ## Invoke the callback if we have new nodes
         #####
-        self.startTimer()
+
+        if len(newNodes) and self.networkCB:
+
+            self.networkCB(newNodes, True)
+
+            logger.info("Created: {}".format(len(nodes.values())))
+            logger.info("Enabled: {}\n".format(sum(map(lambda x: x.split()[STATUS_INDEX]  == "ENABLED", list(nodes.values())))))
+
+        #####
+        ## Remove nodes from the DB that are not longer in the global list
+        #####
+
+        dbCount = self.db.getNodeCount()
+
+        if dbCount > len(nodes):
+
+            removedNodes = []
+
+            logger.warning("Unequal node count - DB {}, CLI {}".format(dbCount,len(nodes)))
+
+            dbNodes = self.db.getNodes(['collateral'])
+
+            for dbNode in dbNodes:
+
+                collateral = Transaction.fromString(dbNode['collateral'])
+
+                if not collateral in currentList:
+                    logger.info("Remove node {}".format(dbNode))
+                    removedNodes.append(dbNode['collateral'])
+                    self.db.deleteNode(collateral)
+                    self.nodeList.pop(collateral,None)
+
+            if len(removedNodes) != (dbCount - len(nodes)):
+                logger.warning("Remove nodes - something messed up.")
+
+            if self.networkCB:
+                self.networkCB(removedNodes, False)
+
+        logger.info("calculatePositions start")
+
+        #####
+        ## Update vars for calculations
+        #
+        ####
+
+        nodes90024 = list(filter(lambda x: x.protocol == 90024, self.nodeList.values()))
+        nodes90025 = list(filter(lambda x: x.protocol == 90025, self.nodeList.values()))
+
+        self.protocol_90024 = len(nodes90024)
+        self.protocol_90025 = len(nodes90025)
+
+        self.enabled_90024 = len(list(filter(lambda x: x.status == "ENABLED", nodes90024)))
+        self.enabled_90025 = len(list(filter(lambda x: x.status == "ENABLED", nodes90025)))
+
+        #####
+        ## Update the the position indicator of the node
+        #
+        # CURRENTL MISSING:
+        #   https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L554
+        #####
+
+        def calculatePositions(upgradeMode):
+
+            self.lastPaidVec = []
+
+            for collateral, node in self.nodeList.items():
+
+                if not upgradeMode and node.activeSeconds < self.minimumUptime():# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L561
+                    node.updatePosition(POS_TOO_NEW)
+                elif node.protocol < protocolRequirement:# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L545
+                    node.updatePosition(POS_UPDATE_REQUIRED)
+                elif (self.lastBlock - node.collateral.block) < self.enabledWithMinProtocol():
+                    node.updatePosition(POS_COLLATERAL_AGE)
+                elif node.status == 'ENABLED': #https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L539
+                    self.lastPaidVec.append(LastPaid(node.lastPaidBlock, collateral))
+                else:
+                    node.updatePosition(POS_NOT_QUALIFIED)
+
+            if not upgradeMode and len(self.lastPaidVec) < (self.enabledWithMinProtocol() / 3):
+                self.qualifiedUpgrade = len(self.lastPaidVec)
+                logger.info("Start upgradeMode calculation: {}".format(self.qualifiedUpgrade))
+                calculatePositions(True)
+                return
+
+            if not upgradeMode:
+                self.qualifiedUpgrade = -1
+
+            self.qualifiedNormal = len(self.lastPaidVec)
+
+        calculatePositions(False)
+
+
+        #####
+        ## Update positions
+        #####
+
+        self.lastPaidVec.sort()
+
+        value = 0
+        for lastPaid in self.lastPaidVec:
+            value +=1
+            self.nodeList[lastPaid.transaction].updatePosition(value)
+
+        logger.info("calculatePositions done")
+
+        if self.qualifiedUpgrade != -1:
+            logger.info("calculateUpgradeModeDuration start")
+            self.remainingUpgradeModeDuration = self.calculateUpgradeModeDuration()
+            logger.info("calculateUpgradeModeDuration done {}".format("Success" if self.remainingUpgradeModeDuration else "Error?"))
+
+        self.release()
+
+        return True
 
     def updateRanks(self):
 
-        if not self.chainSynced or not self.nodeListSynced:
-            return
+        if not self.synced():
+            return False
 
-        ranks = None
+        ranks = self.rpc.getSmartNodeList('rank')
 
-        try:
+        if ranks.error:
+            msg = "updateRanks getSmartNodeList: {}".format(str(ranks.error))
+            logging.error(msg)
+            self.pushAdmin(msg)
+            return False
 
-            rankResult = subprocess.check_output(['smartcash-cli', 'smartnodelist','rank'])
-            rankResult = subprocess.check_output(['smartcash-cli', 'smartnodelist','rank'])
-            ranks = json.loads(rankResult.decode('utf-8'))
+        for key, data in ranks.items():
 
-        except Exception as e:
-                logging.error('Error at %s', 'update ranks', exc_info=e)
-                self.pushAdmin("Exception at ranks")
-        else:
+            rank = data
 
-            if 'error' in ranks:
-                logger.warning("could not update ranks {}".format(rankResult))
-                self.pushAdmin("No valid ranklist")
-                return
+            collateral = Transaction.fromRaw(key)
 
-            for key, data in ranks.items():
+            if collateral not in self.nodeList:
+                logger.error("Could not assign rank, node not available {}".format(key))
+            else:
+                self.nodeList[collateral].updateRank(data)
 
-                rank = data
-
-                collateral = Transaction.fromRaw(key)
-
-                if collateral not in self.nodeList:
-                    logger.error("Could not assign rank, node not available {}".format(key))
-                else:
-                    self.nodeList[collateral].updateRank(data)
+        return True
 
     def count(self, protocol = -1):
 
@@ -874,7 +780,7 @@ class SmartNodeList(object):
 
             result['ip'] = node.cleanIp()
             result['position'] = node.position < self.enabledWithMinProtocol() * 0.1 and node.position > 0
-            result['position_string'] = node.positionString()
+            result['position_string'] = node.positionString(self.minimumUptime())
 
             result['status'] = node.status == 'ENABLED'
             result['status_string'] = "{}".format(node.status)
