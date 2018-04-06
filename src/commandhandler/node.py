@@ -491,9 +491,9 @@ def handleNodeUpdate(bot, update, node):
 
     responses = {}
 
-    for userNode in self.database.getNodes(node.collateral):
+    for userNode in bot.database.getNodes(node.collateral):
 
-        dbUser = self.database.getUser(userNode['user_id'])
+        dbUser = bot.database.getUser(userNode['user_id'])
 
         if dbUser:
 
