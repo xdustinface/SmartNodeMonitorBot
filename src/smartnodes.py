@@ -738,7 +738,19 @@ class SmartNodeList(object):
         return None
 
     def getNodeByIp(self, ip):
-        return self.db.getNodeByIp(ip)
+
+        if not ':9678' in ip:
+            ip += ":9678"
+
+        nodes = list(filter(lambda x: x.ip == ip, self.nodeList.values()))
+
+        if len(nodes) == 1:
+            return nodes[0]
+
+        return None
+
+    def getNodesByPayee(self, payee):
+        return list(filter(lambda x: x.payee == payee, self.nodeList.values()))
 
     def getNodeCountForProtocol(self, protocol):
         return self.db.getNodeCount('protocol={}'.format(protocol))

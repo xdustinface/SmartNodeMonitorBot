@@ -291,6 +291,9 @@ class SmartNodeBotTelegram(object):
         self.nodeList.networkCB = self.networkCB
         self.nodeList.nodeChangeCB = self.nodeUpdateCB
         self.nodeList.adminCB = self.adminCB
+        # Store and setup the nodereward list
+        self.rewardList = rewardList
+        self.rewardList.rewardCB = self.rewardCB
         # Create the WebExplorer
         self.explorer = WebExplorer(self.balancesCB)
         self.balanceChecks = {}
@@ -598,17 +601,28 @@ class SmartNodeBotTelegram(object):
     ######
     def nodeUpdateCB(self, update, n):
 
-        for dbUser in self.database.getUsers():
+        responses = node.handleNodeUpdate(self, update, n)
 
-            userNode = self.database.getNodes(str(n.collateral), dbUser['id'])
+        for userId, messages in responses.items():
 
-            if not userNode:
-                continue
+            for message in messages:
+                self.sendMessage(userId, message)
+    ######
+    # Callback for evaluating if someone in the database has won the reward
+    # and send messages to all chats with activated notifications
+    #
+    # Called by: SNRewardList from python-smartcash
+    #
+    ######
+    def rewardCB(self, reward, synced):
 
-            logger.info("nodeUpdateCB {}".format(n.payee))
+        responses = node.handleReward(self, reward, synced)
 
-            for response in node.nodeUpdated(self, update, dbUser, userNode, n):
-                self.sendMessage(dbUser['id'], response)
+        for userId, messages in responses.items():
+
+            for message in messages:
+                self.sendMessage(userId, message)
+
 
     ######
     # Callback for evaluating if someone has enabled network notifications

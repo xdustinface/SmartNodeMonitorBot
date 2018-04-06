@@ -8,6 +8,8 @@ from src import messages
 import telegram
 import discord
 
+from smartcash.rewardlist import SNReward
+
 logger = logging.getLogger("node")
 
 ######
@@ -74,7 +76,7 @@ def nodeAdd(bot, update, args):
                     response += messages.nodeNotInListError(bot.messenger,ip)
                 else:
 
-                    if bot.database.addNode( node['collateral'], name, userId,userName):
+                    if bot.database.addNode( node.collateral, name, userId,userName):
 
                         response += "Added node {}!\n".format(ip)
 
@@ -155,13 +157,13 @@ def nodeUpdate(bot, update, args):
                     response += messages.nodeNotInListError(bot.messenger, ip)
                 else:
 
-                    userNode = bot.database.getNodes(node['collateral'],userId)
+                    userNode = bot.database.getNodes(node.collateral,userId)
 
                     if userNode == None:
                         response += messages.nodeNotExistsError(bot.messenger, ip)
                     else:
 
-                        bot.database.updateNode(node['collateral'],user['id'], name)
+                        bot.database.updateNode(node.collateral,user['id'], name)
 
                         response += "Node successfully updated. {}\n".format(ip)
 
@@ -230,12 +232,12 @@ def nodeRemove(bot, update, args):
                         response += messages.nodeNotInListError(bot.messenger, ip)
                     else:
 
-                        userNode = bot.database.getNodes(node['collateral'],userId)
+                        userNode = bot.database.getNodes(node.collateral,userId)
 
                         if userNode == None:
                             response += messages.nodeNotExistsError(bot.messenger, ip)
                         else:
-                            bot.database.deleteNode(node['collateral'],user['id'])
+                            bot.database.deleteNode(node.collateral,user['id'])
                             response += messages.markdown("Node successfully removed. <b>{}<b>\n".format(ip),bot.messenger)
 
     return response
@@ -337,6 +339,51 @@ def nodes(bot, update):
 
     return response
 
+######
+# Command handler for printing a history of payouts for each node
+# of the user
+#
+# Command: history
+#
+# Only called by the bot instance
+######
+def history(bot, update):
+
+    response = messages.markdown("<u><b>History<b><u>\n\n",bot.messenger)
+
+    userInfo = util.crossMessengerSplit(update)
+    userId = userInfo['user'] if 'user' in userInfo else None
+    userName = userInfo['name'] if 'name' in userInfo else None
+
+    logger.debug("nodes - user: {}".format(userId))
+
+    nodesFound = False
+
+    user = bot.database.getUser(userId)
+    userNodes = bot.database.getAllNodes(userId)
+
+    if user == None or userNodes == None or len(userNodes) == 0:
+
+       response +=  messages.nodesRequired(bot.messenger)
+
+    else:
+
+        collaterals = list(map(lambda x: x['collateral'],userNodes))
+        nodes = bot.nodeList.getNodes(collaterals)
+
+        for smartnode in nodes:
+
+            userNode = bot.database.getNodes(smartnode.collateral, user['id'])
+            rewards = bot.rewardList.getRewardsForPayee(smartnode.payee)
+            profit = sum(map(lambda x: x.amount,rewards))
+
+            response += messages.markdown("<b>" + userNode['name'] + "<b>",bot.messenger)
+            response += "\nPayouts {}".format(len(rewards))
+            response += "\nProfit {} SMART".format(profit)
+            response += "\n\n"
+
+    return response
+
 
 ######
 # Command handler for printing the balances for all nodes
@@ -415,11 +462,11 @@ def lookup(bot, userId, args):
                     errors.append(messages.invalidIpError(bot.messenger,arg))
                 else:
 
-                    dbNode = bot.nodeList.getNodeByIp(ip)
+                    node = bot.nodeList.getNodeByIp(ip)
 
-                    if dbNode:
+                    if node:
 
-                        result = bot.nodeList.lookup(dbNode['collateral'])
+                        result = bot.nodeList.lookup(node.collateral)
 
                         if result:
                             lookups.append(messages.lookupResult(bot.messenger,result))
@@ -435,39 +482,88 @@ def lookup(bot, userId, args):
             for l in lookups:
                 response += l
     else:
-        response += "*Sorry, the bot is currently not synced with the network. Try it again in few minutes...*"
+        response += "<b>Sorry, the bot is currently not synced with the network. Try it again in few minutes...<b>"
 
     return response
 
 
-def nodeUpdated(bot, update, user, userNode, node):
+def handleNodeUpdate(bot, update, node):
 
-    responses = []
+    responses = {}
 
-    nodeName = userNode['name']
+    for userNode in self.database.getNodes(node.collateral):
 
-    if update['status'] and user['status_n']:
+        dbUser = self.database.getUser(userNode['user_id'])
 
-        response = messages.statusNotification(bot.messenger,nodeName, node.status)
-        responses.append(response)
+        if dbUser:
 
-    if update['timeout'] and user['timeout_n']:
+            if not dbUser['id'] in responses:
+                responses[dbUser['id']] = []
 
-        if node.timeout != -1:
-            timeString = util.secondsToText( int(time.time()) - node.lastSeen)
-            response = messages.panicNotification(bot.messenger, nodeName, timeString)
-        else:
-            response = messages.relaxNotification(bot.messenger, nodeName)
+            nodeName = userNode['name']
 
-        responses.append(response)
+            if update['status'] and dbUser['status_n']:
 
-    if update['lastPaid'] and user['reward_n']:
+                response = messages.statusNotification(bot.messenger,nodeName, node.status)
+                responses[dbUser['id']].append(response)
 
-        # Prevent zero division if for any reason lastPaid is 0
-        calcBlock = node.lastPaidBlock if node.lastPaidBlock != 0 else bot.nodeList.lastBlock
-        reward = 5000 * ( 143500 / calcBlock ) * 0.1
+            if update['timeout'] and dbUser['timeout_n']:
 
-        response = messages.rewardNotification(bot.messenger, nodeName, calcBlock, reward)
-        responses.append(response)
+                if node.timeout != -1:
+                    timeString = util.secondsToText( int(time.time()) - node.lastSeen)
+                    response = messages.panicNotification(bot.messenger, nodeName, timeString)
+                else:
+                    response = messages.relaxNotification(bot.messenger, nodeName)
+
+                responses[dbUser['id']].append(response)
+
+            if update['lastPaid']:
+
+                # Update the source of the reward in the nodelist to be able to track the
+                # number of missing blocks in the nodelist
+                reward = SNReward(node.lastPaidBlock, node.lastPaidTime, node.payee)
+                bot.rewardList.updateSource(reward, 1)
 
     return responses
+
+def handleReward(bot, reward, synced):
+
+        responses = {}
+        nodes = bot.nodeList.getNodesByPayee(reward.payee)
+
+        if not nodes or not len(nodes):
+            # Payee not found for whatever reason?!
+            logger.error("Could not find payee in list. Reward: {}".format(str(reward)))
+
+            # Mark it in the database!
+            reward.meta = 1
+            updated = bot.rewardList.updateMeta(reward)
+            logger.info("Updated meta {}".format(updated))
+
+        elif synced:
+        # Dont notify until the list is up to date.
+
+            # When there are multiple nodes with that payee warn the user
+            count = len(nodes)
+
+            logger.info("rewardCB {} - nodes: {}".format(str(reward),count))
+
+            for n in nodes:
+
+                for dbNode in bot.database.getNodes(n.collateral):
+
+                    dbUser = bot.database.getUser(dbNode['user_id'])
+
+                    if dbUser and dbUser['reward_n']:
+
+                        if not dbUser['id'] in responses:
+                            responses[dbUser['id']] = []
+
+                        response = messages.rewardNotification(bot.messenger, userNode['name'], reward.block, reward.amount)
+
+                        if count > 1:
+                            response += messages.multiplePayeeWarning(bot.messenger, reward.payee, count)
+
+                        responses[dbUser['id']].append(response)
+
+        return responses

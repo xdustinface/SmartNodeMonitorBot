@@ -256,6 +256,21 @@ def nodeRemovedNotification(messenger, nodeName):
                       "from the global nodelist.").format(nodeName), messenger)
 
 ############################################################
+#                     Warning messages                     #
+############################################################
+
+def multiplePayeeWarning(messenger, payee, count):
+
+    response = ("\n\n<u><b>Warning!<b><u>\n\n"
+                "Your payee <b>{}<b> is used for <b>{}<b> nodes.\n"
+                "This will disqualify all your nodes for the current cycle "
+                "once one of them receives a payout.\n\n"
+                "<u><b>You should use a unique payee address for each node!<b><u>").format(payee, count)
+
+    return markdown(response, messenger)
+
+
+############################################################
 #                     Error messages                       #
 ############################################################
 

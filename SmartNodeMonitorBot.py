@@ -12,8 +12,9 @@ from src import util
 from src.smartnodes import SmartNodeList
 
 from smartcash.rpc import RPCConfig
+from smartcash.rewardlist import SNRewardList
 
-__version__ = "1.1.1"
+__version__ = "2.0"
 
 def checkConfig(config,category, name):
     try:
@@ -92,14 +93,21 @@ def main(argv):
     githubUser = config.get('general','githubuser')
     githubPassword = config.get('general','githubpassword')
 
+    # Create the smartnode list
     nodeList = SmartNodeList(nodedb, rpcConfig)
+
+    # Create the smartnode reward list
+    rewardList = SNRewardList('sqlite:////' + directory + '/rewards.db', rpcConfig)
+
+    # Start its task and leave it
+    rewardList.start()
 
     nodeBot = None
 
     if config.get('bot', 'app') == 'telegram':
-        nodeBot = telegram.SmartNodeBotTelegram(config.get('bot','token'), admin, password, botdb, nodeList)
+        nodeBot = telegram.SmartNodeBotTelegram(config.get('bot','token'), admin, password, botdb, nodeList, rewardList)
     elif config.get('bot', 'app') == 'discord':
-        nodeBot = discord.SmartNodeBotDiscord(config.get('bot','token'), admin, password, botdb, nodeList)
+        nodeBot = discord.SmartNodeBotDiscord(config.get('bot','token'), admin, password, botdb, nodeList, rewardList)
     else:
         sys.exit("You need to set 'telegram' or 'discord' as 'app' in the configfile.")
 

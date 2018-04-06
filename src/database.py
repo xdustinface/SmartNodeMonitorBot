@@ -60,6 +60,8 @@ class BotDatabase(object):
 
     def addNode(self, collateral,name,userId,userName):
 
+        collateral = str(collateral)
+
         user = self.addUser(userId, userName)
         node = self.getNodes(collateral, user)
 
@@ -119,6 +121,8 @@ class BotDatabase(object):
 
         nodes = None
 
+        collateral = str(collateral)
+
         with self.connection as db:
 
             if userId:
@@ -137,6 +141,8 @@ class BotDatabase(object):
             db.cursor.execute("UPDATE users SET name=? WHERE id=?",(name,userId))
 
     def updateNode(self, collateral, userId, name):
+
+        collateral = str(collateral)
 
         with self.connection as db:
 
@@ -185,6 +191,8 @@ class BotDatabase(object):
 
     def deleteNodesWithId(self, collateral):
 
+        collateral = str(collateral)
+        
         with self.connection as db:
             db.cursor.execute("DELETE FROM nodes WHERE collateral=?",[str(collateral)])
 
@@ -332,6 +340,18 @@ class NodeDatabase(object):
             node = db.cursor.fetchone()
 
         return node
+
+    def getNodesByPayee(self, payee):
+
+        nodes = None
+
+        with self.connection as db:
+
+            db.cursor.execute("SELECT * FROM nodes WHERE payee=?",[payee])
+
+            nodes = db.cursor.fetchall()
+
+        return nodes if nodes else []
 
     def updateNode(self, collateral, node):
 

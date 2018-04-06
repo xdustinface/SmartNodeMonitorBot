@@ -20,7 +20,7 @@ logger = logging.getLogger("bot")
 
 class SmartNodeBotDiscord(object):
 
-    def __init__(self, botToken, admin, password, db, nodeList):
+    def __init__(self, botToken, admin, password, db, nodeList, rewardList):
 
         # Currently only used for markdown
         self.messenger = "discord"
@@ -37,6 +37,9 @@ class SmartNodeBotDiscord(object):
         self.nodeList.networkCB = self.networkCB
         self.nodeList.nodeChangeCB = self.nodeUpdateCB
         self.nodeList.adminCB = self.adminCB
+        # Store and setup the nodereward list
+        self.rewardList = rewardList
+        self.rewardList.rewardCB = self.rewardCB
         # Create the WebExplorer
         self.explorer = WebExplorer(self.balancesCB)
         self.balanceChecks = {}
@@ -149,7 +152,7 @@ class SmartNodeBotDiscord(object):
                     # User commmands
                     'me':1,'status':1,'reward':1,'network':1, 'timeout':1,
                     # Node commands
-                    'add':1,'update':1,'remove':1,'nodes':1, 'detail':1, 'balance':1, 'lookup':0,
+                    'add':1,'update':1,'remove':1,'nodes':1, 'detail':1,'history':1, 'balance':1, 'lookup':0,
                     # Admin commands
                     'stats':2, 'broadcast':2
         }
@@ -214,6 +217,9 @@ class SmartNodeBotDiscord(object):
             await self.sendMessage(receiver, response)
         elif command == 'detail':
             response = node.detail(self,message)
+            await self.sendMessage(receiver, response)
+        elif command == 'history':
+            response = node.history(self,message)
             await self.sendMessage(receiver, response)
         elif command == 'balance':
 
@@ -339,20 +345,36 @@ class SmartNodeBotDiscord(object):
     ######
     def nodeUpdateCB(self, update, n):
 
-        for dbUser in self.database.getUsers():
+        responses = node.handleNodeUpdate(self, update, n)
 
-            userNode = self.database.getNodes(str(n.collateral), dbUser['id'])
+        for userId, messages in responses.items():
 
-            if userNode == None:
-                continue
-
-            logger.info("nodeChangeCB {}".format(n.payee))
-
-            member = self.findMember(dbUser['id'])
+            member = self.findMember(userId)
 
             if member:
-                for response in node.nodeUpdated(self, update, dbUser, userNode, n):
-                    asyncio.run_coroutine_threadsafe(self.sendMessage(member, response), loop=self.client.loop)
+
+                for message in messages:
+                        asyncio.run_coroutine_threadsafe(self.sendMessage(member, message), loop=self.client.loop)
+
+    ######
+    # Callback for evaluating if someone in the database has won the reward
+    # and send messages to all chats with activated notifications
+    #
+    # Called by: SNRewardList from python-smartcash
+    #
+    ######
+    def rewardCB(self, reward, synced):
+
+        responses = node.handleReward(self, reward, synced)
+
+        for userId, messages in responses.items():
+
+            member = self.findMember(userId)
+
+            if member:
+
+                for message in messages:
+                        asyncio.run_coroutine_threadsafe(self.sendMessage(member, message), loop=self.client.loop)
 
     #####
     # Callback for evaluating if someone has enabled network notifications
