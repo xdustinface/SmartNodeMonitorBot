@@ -521,8 +521,8 @@ def handleNodeUpdate(bot, update, node):
 
                 # Update the source of the reward in the nodelist to be able to track the
                 # number of missing blocks in the nodelist
-                reward = SNReward(node.lastPaidBlock, node.lastPaidTime, node.payee)
-                bot.rewardList.updateSource(reward, 1)
+                reward = SNReward(block=node.lastPaidBlock, txtime=node.lastPaidTime, payee=node.payee, source=1)
+                bot.rewardList.updateSource(reward)
 
     return responses
 
@@ -550,9 +550,9 @@ def handleReward(bot, reward, synced):
 
             for n in nodes:
 
-                for dbNode in bot.database.getNodes(n.collateral):
+                for userNode in bot.database.getNodes(n.collateral):
 
-                    dbUser = bot.database.getUser(dbNode['user_id'])
+                    dbUser = bot.database.getUser(userNode['user_id'])
 
                     if dbUser and dbUser['reward_n']:
 
