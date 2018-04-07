@@ -462,16 +462,12 @@ def lookup(bot, userId, args):
                     errors.append(messages.invalidIpError(bot.messenger,arg))
                 else:
 
-                    node = bot.nodeList.getNodeByIp(ip)
+                    result = bot.nodeList.lookup(ip)
 
-                    if node:
-
-                        result = bot.nodeList.lookup(node.collateral)
-
-                        if result:
-                            lookups.append(messages.lookupResult(bot.messenger,result))
-                        else:
-                            errors.append(messages.lookupError(bot.messenger,ip))
+                    if result:
+                        lookups.append(messages.lookupResult(bot.messenger,result))
+                    else:
+                        errors.append(messages.lookupError(bot.messenger,ip))
 
                     else:
                         errors.append(messages.nodeNotInListError(bot.messenger,ip))

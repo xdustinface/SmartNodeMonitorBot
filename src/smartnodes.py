@@ -774,14 +774,17 @@ class SmartNodeList(object):
 
         return nodes
 
-    def lookup(self, collateral):
+    def lookup(self, ip):
 
         result = None
-        node = self.getNodes([collateral])
 
-        if len(node) == 1:
+        node = self.getNodeByIp(ip)
+
+        logger.info("lookup {} - found {}".format(ip, node != None))
+
+        if node:
+
             result = {}
-            node = node[0]
 
             uptimeString = None
 
