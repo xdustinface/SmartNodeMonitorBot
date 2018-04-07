@@ -467,9 +467,6 @@ def lookup(bot, userId, args):
                     if result:
                         lookups.append(messages.lookupResult(bot.messenger,result))
                     else:
-                        errors.append(messages.lookupError(bot.messenger,ip))
-
-                    else:
                         errors.append(messages.nodeNotInListError(bot.messenger,ip))
 
             for e in errors:
