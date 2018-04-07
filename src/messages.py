@@ -318,7 +318,7 @@ def notificationArgumentInvalidError(messenger):
     return markdown("<b>ERROR<b>: Invalid argument value: 0 (Disable), 1 (Enable)\n",messenger)
 
 def notAvailableInGroups(messenger):
-    return markdown("<b>Sorry, this command is not available in groups.<b>",messenger)
+    return markdown("<b>Sorry, this command is not available in groups.<b>\n\nClick here @SmartNodeMonitorBot",messenger)
 
 def nodesRequired(messenger):
     return markdown(("You need to add nodes first. "

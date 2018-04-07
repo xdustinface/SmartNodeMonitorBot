@@ -448,8 +448,9 @@ class SmartNodeBotTelegram(object):
 
     def lookup(self, bot, update, args):
 
-        response = node.lookup(self, update, args)
-        self.sendMessage(update.message.chat_id, response)
+        if not self.isGroup(update):
+            response = messages.markdown(node.lookup(self, update, args),self.messenger)
+            self.sendMessage(update.message.chat_id, response)
 
     ############################################################
     #                 User handler calls                     #

@@ -278,7 +278,7 @@ def detail(bot, update):
 
             response += messages.markdown(("<b>" + userNode['name'] + " - " + smartnode.ip + "<b>")  ,bot.messenger)
             response += "\n  `Status` " + smartnode.status
-            response += "\n  `Position` " + smartnode.positionString(minimumUptime)
+            response += "\n  `Position` " + messages.markdown(smartnode.positionString(minimumUptime),bot.messenger)
             response += "\n  `Payee` " + smartnode.payee
             response += "\n  `Active since` " + util.secondsToText(smartnode.activeSeconds)
             response += "\n  `Last seen` " + util.secondsToText( int(time.time()) - smartnode.lastSeen)
@@ -331,7 +331,7 @@ def nodes(bot, update):
 
             payoutText = util.secondsToText(smartnode.lastPaidTime)
             response += messages.markdown("<b>" + userNode['name'] + "<b> - `" + smartnode.status + "`",bot.messenger)
-            response += "\nPosition " + smartnode.positionString(minimumUptime)
+            response += "\nPosition " + messages.markdown(smartnode.positionString(minimumUptime),bot.messenger)
             response += "\nLast seen " + util.secondsToText( int(time.time()) - smartnode.lastSeen)
             response += "\nLast payout " + smartnode.payoutTimeString()
             response += "\n" + messages.link(bot.messenger, 'https://explorer3.smartcash.cc/address/{}'.format(smartnode.payee),'Open the explorer!')
@@ -521,7 +521,7 @@ def handleNodeUpdate(bot, update, node):
 
                 # Update the source of the reward in the nodelist to be able to track the
                 # number of missing blocks in the nodelist
-                reward = SNReward(block=node.lastPaidBlock, txtime=node.lastPaidTime, payee=node.payee, source=1)
+                reward = SNReward(block=node.lastPaidBlock, txtime=node.lastPaidTime, payee=node.payee, source=1, meta=2)
                 bot.rewardList.updateSource(reward)
 
     return responses

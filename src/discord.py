@@ -152,7 +152,7 @@ class SmartNodeBotDiscord(object):
                     # User commmands
                     'me':1,'status':1,'reward':1,'network':1, 'timeout':1,
                     # Node commands
-                    'add':1,'update':1,'remove':1,'nodes':1, 'detail':1,'history':1, 'balance':1, 'lookup':0,
+                    'add':1,'update':1,'remove':1,'nodes':1, 'detail':1,'history':1, 'balance':1, 'lookup':1,
                     # Admin commands
                     'stats':2, 'broadcast':2
         }
@@ -171,7 +171,8 @@ class SmartNodeBotDiscord(object):
             if isinstance(message.author, discord.Member):
              await self.client.send_message(message.channel,\
              message.author.mention + ', the command `{}` is only available in private chat with me!'.format(command))
-             await self.client.send_message(message.author,'Try it here!')
+             await self.client.send_message(message.author,messages.markdown('Try it here!', self.messenger))
+             await self.client.send_message(messages.help(self.messenger))
              return
 
         else:
@@ -259,8 +260,9 @@ class SmartNodeBotDiscord(object):
 
             if failed:
                 self.balancesCB(failed,None)
+
         elif command == 'lookup':
-            response = node.lookup(self,message, args)
+            response = messages.markdown(node.lookup(self,message, args),self.messenger)
             await self.sendMessage(receiver, response)
         ### User command handler ###
         elif command == 'me':
