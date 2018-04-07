@@ -481,6 +481,7 @@ class SmartNodeList(object):
                 or update['protocol']\
                 or update['payee']\
                 or update['lastPaid']\
+                or update['ip']\
                 or update['timeout']:
                     self.db.updateNode(collateral,node)
 
