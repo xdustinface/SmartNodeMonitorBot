@@ -340,7 +340,6 @@ class SmartNodeBotTelegram(object):
         dp.add_handler(MessageHandler(Filters.command, self.unknown))
         dp.add_error_handler(self.error)
 
-        self.sendMessage(self.admin, "*Bot Started*")
 
     ######
     # Starts the bot and block until the programm will be stopped.
@@ -348,6 +347,12 @@ class SmartNodeBotTelegram(object):
     def start(self):
         logger.info("Start!")
         self.updater.start_polling()
+
+        # Start its task and leave it
+        self.rewardList.start()
+
+        self.sendMessage(self.admin, "*Bot Started*")
+
         self.updater.idle()
 
     def isGroup(self, update):

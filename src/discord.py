@@ -90,6 +90,9 @@ class SmartNodeBotDiscord(object):
         # Advise the admin about the start.
         self.adminCB("**Bot started**")
 
+        # Start its task and leave it
+        self.rewardList.start()
+
     ######
     # Discord api coroutine which gets called when a new message has been
     # received in one of the channels or in a private chat with the bot.

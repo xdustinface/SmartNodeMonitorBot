@@ -99,9 +99,6 @@ def main(argv):
     # Create the smartnode reward list
     rewardList = SNRewardList('sqlite:////' + directory + '/rewards.db', rpcConfig)
 
-    # Start its task and leave it
-    rewardList.start()
-
     nodeBot = None
 
     if config.get('bot', 'app') == 'telegram':

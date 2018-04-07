@@ -489,6 +489,23 @@ def lookup(bot, userId, args):
 
 def handleNodeUpdate(bot, update, node):
 
+    # If there is a new block available form the nodelist
+    if update['lastPaid']:
+
+        # Update the source of the reward in the rewardlist to be able to track the
+        # number of missing blocks in the nodelist
+        # If the reward was not available yet it gets added
+        reward = SNReward(block=node.lastPaidBlock,
+                          txtime=node.lastPaidTime,
+                          payee=node.payee,
+                          source=1,
+                          meta=2)
+
+        bot.rewardList.updateSource(reward)
+
+
+    # Create notification response messages!
+
     responses = {}
 
     for userNode in bot.database.getNodes(node.collateral):
@@ -517,12 +534,6 @@ def handleNodeUpdate(bot, update, node):
 
                 responses[dbUser['id']].append(response)
 
-            if update['lastPaid']:
-
-                # Update the source of the reward in the nodelist to be able to track the
-                # number of missing blocks in the nodelist
-                reward = SNReward(block=node.lastPaidBlock, txtime=node.lastPaidTime, payee=node.payee, source=1, meta=2)
-                bot.rewardList.updateSource(reward)
 
     return responses
 
