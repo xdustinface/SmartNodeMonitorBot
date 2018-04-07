@@ -174,8 +174,8 @@ class SmartNodeBotDiscord(object):
             if isinstance(message.author, discord.Member):
              await self.client.send_message(message.channel,\
              message.author.mention + ', the command `{}` is only available in private chat with me!'.format(command))
-             await self.client.send_message(message.author,messages.markdown('Try it here!', self.messenger))
-             await self.client.send_message(messages.help(self.messenger))
+             await self.client.send_message(message.author, messages.markdown('<b>Try it here!<b>\n', self.messenger))
+             await self.client.send_message(message.author, messages.help(self.messenger))
              return
 
         else:
