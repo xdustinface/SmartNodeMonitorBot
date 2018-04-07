@@ -139,12 +139,12 @@ def nodeUpdate(bot, update, args):
 
                 if not ip:
 
-                    response += messages.invalidIpError(bot.messenger, ip)
+                    response += messages.invalidIpError(bot.messenger, nodeEdit[0])
                     valid = False
 
                 if not name:
 
-                    response += messages.invalidNameError(bot.messenger, name)
+                    response += messages.invalidNameError(bot.messenger, nodeEdit[1])
                     valid = False
 
             if valid:
@@ -219,7 +219,7 @@ def nodeRemove(bot, update, args):
 
                 if not ip:
 
-                    response += messages.invalidIpError(bot.messenger, ip)
+                    response += messages.invalidIpError(bot.messenger, arg)
                     valid = False
 
                 else:
