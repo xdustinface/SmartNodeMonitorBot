@@ -386,8 +386,8 @@ def history(bot, update):
             response += "\nROI (SMART) {}%".format(round((profit/10000.0)*100.0,1))
             response += "\n\n"
 
-        response += "<b>Total profit<b> {}<b>".format(totalProfit)
-        response += "<b>Total ROI (SMART): {}<b>".format(totalProfit / totalInvest)
+        response += messages.markdown("<b>Total profit<b> {}<b>".format(round(totalProfit,1)),bot.messenger)
+        response += messages.markdown("<b>Total ROI (SMART): {}<b>".format(round((totalProfit / totalInvest)*100,1),bot.messenger)
 
     return response
 
