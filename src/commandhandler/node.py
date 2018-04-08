@@ -371,17 +371,23 @@ def history(bot, update):
         collaterals = list(map(lambda x: x['collateral'],userNodes))
         nodes = bot.nodeList.getNodes(collaterals)
 
+        totalInvest = len(nodes) * 10000
+        totalProfit = 0
+
         for smartnode in nodes:
 
             userNode = bot.database.getNodes(smartnode.collateral, user['id'])
             rewards = bot.rewardList.getRewardsForPayee(smartnode.payee)
             profit = sum(map(lambda x: x.amount,rewards))
-
+            totalProfit += profit
             response += messages.markdown("<b>" + userNode['name'] + "<b>",bot.messenger)
             response += "\nPayouts {}".format(len(rewards))
             response += "\nProfit {} SMART".format(profit)
             response += "\nROI (SMART) {}%".format(round((profit/10000.0)*100.0,1))
             response += "\n\n"
+
+        response += "<b>Total profit<b> {}<b>".format(totalProfit)
+        response += "<b>Total ROI (SMART): {}<b>".format(totalProfit / totalInvest)
 
     return response
 

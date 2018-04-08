@@ -102,7 +102,8 @@ def help(messenger):
                 "<cb>remove<ca> <b>:ip<b> - Remove one of your nodes with its IP-Address\n"
                 "<cb>balance<ca> - List the SMART balances of your SmartNodes\n"
                 "<cb>detail<ca> - List all details of your SmartNodes\n"
-                "<cb>nodes<ca> - List only the status and last payments of your nodes\n\n")
+                "<cb>nodes<ca> - List only the status and last payments of your nodes\n"
+                "<cb>history<ca> - List all past payouts of your SmartNodes\n\n")
 
     if messenger == 'discord':
         helpMsg = helpMsg.replace("<cb>username<ca> <b>:newname<b> - Change your username to :newname\n\n",'\n\n')
