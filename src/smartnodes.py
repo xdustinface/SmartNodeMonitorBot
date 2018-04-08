@@ -270,6 +270,7 @@ class SmartNodeList(object):
 
     def __init__(self, db, rpcConfig):
 
+        self.running = False
         self.nodeListSem = threading.Lock()
         self.lastBlock = 0
         self.remainingUpgradeModeDuration = None
@@ -296,15 +297,41 @@ class SmartNodeList(object):
 
         self.load()
 
+        self.running = True
+
         self.startTimer(5)
 
     def acquire(self):
+
+        if not self.running:
+            logger.info("acquire - canceled")
+            return False
+
         logger.info("SmartNodeList acquire")
         self.nodeListSem.acquire()
 
+        return True
+
     def release(self):
+
+        if not self.running:
+            logger.info("release - canceled")
+            return False
+
         logger.info("SmartNodeList release")
         self.nodeListSem.release()
+
+        return True
+
+    def stop(self):
+        # Lock the list
+        self.acquire()
+        # Inidicate the end
+        self.running = False
+        # Stop the timer
+        self.timer.cancel()
+        # Then leave it locked..
+        logger.info("Stopped!")
 
     def pushAdmin(self, message):
 
@@ -312,8 +339,11 @@ class SmartNodeList(object):
             self.adminCB(message)
 
     def startTimer(self, timeout = 30):
-        self.timer = threading.Timer(timeout, self.update)
-        self.timer.start()
+
+        if self.running:
+            self.timer = threading.Timer(timeout, self.update)
+            self.timer.daemon = True
+            self.timer.start()
 
     def load(self):
 
@@ -443,7 +473,9 @@ class SmartNodeList(object):
             return False
 
         # Prevent reading during the calculations
-        self.acquire()
+        if not self.acquire():
+            logger.warning("Cancel list update..")
+            return
 
         # Reset the calculation vars
         self.qualifiedNormal = 0

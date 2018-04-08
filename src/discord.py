@@ -2,6 +2,7 @@
 
 import logging
 import threading
+import time
 import json
 import discord
 import asyncio
@@ -50,12 +51,34 @@ class SmartNodeBotDiscord(object):
         # Semphore to lock the balance check list.
         self.balanceSem = threading.Lock()
 
+    def runClient(self):
+
+        loop = asyncio.get_event_loop()
+
+        while True:
+
+            try:
+                loop.run_until_complete(self.client.start(self.token))
+            except KeyboardInterrupt:
+                logger.warning("Terminate!")
+                self.stop()
+                return
+            except Exception as e:
+                logger.error("Bot crashed?! ", e)
+
+            time.sleep(600)
+
     ######
     # Starts the bot and block until the programm gets stopped.
     ######
     def start(self):
         logger.info("Start!")
-        self.client.run(self.token)
+        self.runClient()
+
+    def stop(self):
+
+        self.rewardList.stop()
+        self.nodeList.stop()
 
     ######
     # Send a message :text to a specific user :user
@@ -76,12 +99,15 @@ class SmartNodeBotDiscord(object):
             self.database.deleteNodesForUser(user.id)
             self.database.deleteUser(user.id)
 
+        except discord.errors.HTTPException as e:
+            logging.error('HTTPException', exc_info=e)
         except Exception as e:
             logging.error('sendMessage', exc_info=e)
         else:
             logger.info("sendMessage - OK!")
 
     async def on_ready(self):
+
         logger.info('Logged in as')
         logger.info(self.client.user.name)
         logger.info(self.client.user.id)
@@ -111,10 +137,21 @@ class SmartNodeBotDiscord(object):
 
         # If the first mention in the message is the bot itself
         # and there is a possible command in the message
-        if len(message.mentions) and message.mentions[0] == self.client.user\
+        if len(message.mentions) == 1 and message.mentions[0] == self.client.user\
             and len(parts) > 1:
             command = parts[1]
             args = parts[2:]
+        # If there are multiple mentions send each one (excluded the bot itself)
+        # the help message.
+        # Like: hey @dustinface and @whoever check out the @SmartNodeMonitorBot
+        # The above would send @dustinface and @whoever the help message of the bot.
+        elif len(message.mentions) > 1 and self.client.user in message.mentions:
+
+            for mention in message.mentions:
+                if not mention == self.client.user:
+                    await self.sendMessage(mention, messages.help(self.messenger))
+
+            return
         # If there are no mentions and we are in a private chat
         elif len(message.mentions) == 0 and not isinstance(message.author, discord.Member):
             command = parts[0]

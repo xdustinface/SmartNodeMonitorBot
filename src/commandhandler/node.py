@@ -380,6 +380,7 @@ def history(bot, update):
             response += messages.markdown("<b>" + userNode['name'] + "<b>",bot.messenger)
             response += "\nPayouts {}".format(len(rewards))
             response += "\nProfit {} SMART".format(profit)
+            response += "\nROI (SMART) {}%".format(round((profit/10000.0)*100.0,1))
             response += "\n\n"
 
     return response
