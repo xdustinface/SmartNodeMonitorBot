@@ -5,6 +5,7 @@ from src import messages
 from src import util
 import requests
 import json
+import time
 
 import telegram
 import discord
@@ -99,6 +100,53 @@ def stats(bot):
     response += "90025: {}\n".format(bot.nodeList.getNodeCountForProtocol(90025))
 
     return response
+
+def payouts(bot, args):
+
+    logger.info("payouts")
+
+    response = messages.markdown("<u><b>Payout statistics<b><u>\n\n",bot.messenger)
+
+    if not bot.rewardList.running:
+        response += "Not initialized yet. Wait a bit..."
+        return response
+
+    hours = 12
+
+    if len(args):
+        try:
+            hours = float(args[0])
+        except:
+            pass
+
+    start = time.time() - (hours * 3600)
+
+    firstReward = bot.rewardList.getNextReward(start)
+    lastReward = bot.rewardList.getLastReward()
+
+    if not firstReward:
+        response += "Could not fetch the rewards in the given time range!\n"
+        response += "The last available is at block {} from {} ago.".format(lastReward.block, util.secondsToText(time.time() - lastReward.txtime))
+        return response
+
+    total = bot.rewardList.getRewardCount(start = start)
+    vChain = bot.rewardList.getRewardCount(start = start, source=0, meta=0)
+    iChain = bot.rewardList.getRewardCount(start = start, meta=1)
+    nList = bot.rewardList.getRewardCount(start = start, source=1)
+    err = bot.rewardList.getRewardCount(start = start, meta=-1)
+
+    response += "Blocks: {}\n".format(lastReward.block - firstReward.block)
+    response += "RT: {}\n".format(util.secondsToText(lastReward.txtime - firstReward.txtime))
+    response += "P: {}\n".format(total)
+    response += "V: {}\n".format(vChain)
+    response += "I: {}\n".format(iChain)
+    response += "NL: {}\n".format(nList)
+    response += "ERR: {}\n".format(err)
+    response += "E: {}%".format(round( (1 - (nList/total))*100, 1))
+
+    return response
+
+
 
 
 ######

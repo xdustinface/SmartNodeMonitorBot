@@ -194,7 +194,7 @@ class SmartNodeBotDiscord(object):
                     # Node commands
                     'add':1,'update':1,'remove':1,'nodes':1, 'detail':1,'history':1, 'balance':1, 'lookup':1,
                     # Admin commands
-                    'stats':2, 'broadcast':2
+                    'stats':2, 'broadcast':2, 'payouts':2
         }
 
         choices = fuzzy.extract(command,commands.keys(),limit=2)
@@ -324,6 +324,9 @@ class SmartNodeBotDiscord(object):
         ### Admin command handler ###
         elif command == 'stats':
             response = common.stats(self)
+            await self.sendMessage(receiver, response)
+        elif command == 'payouts':
+            response = common.payouts(self,args[1:])
             await self.sendMessage(receiver, response)
         elif command == 'broadcast':
 

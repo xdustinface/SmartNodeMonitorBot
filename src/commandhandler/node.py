@@ -374,20 +374,39 @@ def history(bot, update):
         totalInvest = len(nodes) * 10000
         totalProfit = 0
 
+        intervalSum = 0
+
+
         for smartnode in nodes:
 
             userNode = bot.database.getNodes(smartnode.collateral, user['id'])
             rewards = bot.rewardList.getRewardsForPayee(smartnode.payee)
+
             profit = sum(map(lambda x: x.amount,rewards))
-            totalProfit += profit
+            totalProfit += round(profit,1)
+            avgInterval = 0
+
+            if len(rewards) > 1:
+                payoutTimes = list(map(lambda x: x.txtime,rewards))
+
+                first = min(payoutTimes)
+                last = max(payoutTimes)
+
+                avgInterval = (last - first) / len(rewards)
+                logger.info("F {} L {} C {}".format(first, last, len(rewards)))
+
             response += messages.markdown("<b>" + userNode['name'] + "<b>",bot.messenger)
             response += "\nPayouts {}".format(len(rewards))
+
+            if avgInterval:
+                response += "\nAvg. payout interval " + util.secondsToText(avgInterval)
+
             response += "\nProfit {} SMART".format(profit)
             response += "\nROI (SMART) {}%".format(round((profit/10000.0)*100.0,1))
             response += "\n\n"
 
-        response += messages.markdown("<b>Total profit<b> {}<b>".format(round(totalProfit,1)),bot.messenger)
-        response += messages.markdown("<b>Total ROI (SMART): {}<b>".format(round((totalProfit / totalInvest)*100,1)),bot.messenger)
+        response += messages.markdown("<b>Total profit<b> {}\n".format(round(totalProfit,1)),bot.messenger)
+        response += messages.markdown("<b>Total ROI (SMART)<b> {}%".format(round((totalProfit / totalInvest)*100,1)),bot.messenger)
 
     return response
 
