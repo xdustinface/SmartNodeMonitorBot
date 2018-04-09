@@ -17,6 +17,8 @@ from src.commandhandler import user
 from src.commandhandler import common
 from src.smartexplorer import WebExplorer
 
+from smartcash.rewardlist import SNReward
+
 logger = logging.getLogger("bot")
 
 class SmartNodeBotDiscord(object):
@@ -118,6 +120,35 @@ class SmartNodeBotDiscord(object):
 
         # Start its task and leave it
         self.rewardList.start()
+
+        while not self.rewardList.running:
+            time.sleep(1)
+            logger.info("Init: RewardList")
+
+        logger.info("Ready: RewardList")
+
+        while not self.nodeList.running:
+            time.sleep(1)
+            logger.info("Init: NodeList")
+
+        logger.info("Ready: NodeList")
+
+        for node in self.nodeList.nodeList.values():
+
+            reward = self.rewardList.getReward(node.lastPaidBlock)
+            if not reward:
+                continue
+
+            if reward.source == 1:
+                continue
+
+            if node.lastPaidBlock > 0:
+                reward = SNReward(block=node.lastPaidBlock,
+                                  payee = node.payee,
+                                  txtime=node.lastPaidTime,
+                                  source=1)
+
+                self.rewardList.updateSource(reward)
 
     ######
     # Discord api coroutine which gets called when a new message has been
