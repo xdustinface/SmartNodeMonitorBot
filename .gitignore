@@ -105,3 +105,4 @@ bot.db
 nodes.db
 .last
 misc/*.db
+rewards.db
