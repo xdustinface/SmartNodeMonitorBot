@@ -371,12 +371,13 @@ def history(bot, update):
         collaterals = list(map(lambda x: x['collateral'],userNodes))
         nodes = bot.nodeList.getNodes(collaterals)
 
+        time30Days = time.time() - (2592000) # now - 30d * 24h * 60m * 60s
         totalInvest = len(nodes) * 10000
         totalProfit = 0
         totalAvgInterval = 0
         totalFirst = 0
-        totalLast = 0
         countMultiplePayouts = 0
+        totalProfit30Days = 0
 
         for smartnode in nodes:
 
@@ -384,6 +385,9 @@ def history(bot, update):
             rewards = bot.rewardList.getRewardsForPayee(smartnode.payee)
 
             profit = sum(map(lambda x: x.amount,rewards))
+            profit30Days = sum(map(lambda x: x.amount if x.txtime > time30Days else 0,rewards))
+            totalProfit30Days += profit30Days
+
             totalProfit += round(profit,1)
             avgInterval = 0
             smartPerDay = 0
@@ -403,7 +407,7 @@ def history(bot, update):
                 first = min(payoutTimes)
                 last = max(payoutTimes)
 
-            if not totalFirst or totalFirst > first:
+            if not totalFirst or first and totalFirst > first:
                 totalFirst = first
 
             if last:
@@ -413,28 +417,33 @@ def history(bot, update):
 
                 smartPerDay = round( profit / ( (time.time() - first) / 86400 ),1)
 
-            response += "<b>" + userNode['name'] + "<b>"
-            response += "\nPayouts {}".format(len(rewards))
-            response += "\nProfit {:,} SMART".format(profit)
-            response += "\nROI (SMART) {}%".format(round((profit/10000.0)*100.0,1))
+            response += "<u><b>Node - " + userNode['name'] + "<b><u>\n\n"
+            response += "<b>Payouts<b> {}\n".format(len(rewards))
+            response += "<b>Profit<b> {:,} SMART\n".format(round(profit,1))
+            response += "<b>Profit (30 days)<b> {:,} SMART\n".format(round(profit30Days,1))
 
             if avgInterval:
-                response += "\nPayout interval " + util.secondsToText(avgInterval)
+                response += "\n<b>Payout interval<b> " + util.secondsToText(avgInterval)
 
             if smartPerDay:
-                response += "\nSMART/day {:,} SMART".format(smartPerDay)
+                response += "\n<b>SMART/day<b> {:,} SMART".format(smartPerDay)
+
+            response += "\n<b>ROI (SMART)<b> {}%".format(round((profit/10000.0)*100.0,1))
 
             response += "\n\n"
 
+        response += "<u><b>Total stats<b><u>\n\n"
         response += "<b>First payout<b> {} ago\n\n".format(util.secondsToText( time.time() - totalFirst ) )
+
+        response += "<b>Profit (30 days)<b> {:,} SMART\n".format(round(totalProfit30Days,1))
+        response += "<b>SMART/day (30 days)<b> {:,} SMART\n\n".format(round(totalProfit30Days/30,1))
 
         if totalAvgInterval:
             totalAvgInterval = totalAvgInterval/countMultiplePayouts
             response += "<b>Total payout interval<b> {}\n".format(util.secondsToText(totalAvgInterval))
 
-        response += "<b>Total SMART/day<b> {:,}\n\n".format(round(totalProfit/( ( time.time() - totalFirst ) / 86400),1))
-
-        response += "<b>Total profit<b> {:,}\n".format(round(totalProfit,1))
+        response += "<b>Total SMART/day<b> {:,} SMART\n\n".format(round(totalProfit/( ( time.time() - totalFirst ) / 86400),1))
+        response += "<b>Total profit<b> {:,} SMART\n".format(round(totalProfit,1))
         response += "<b>Total ROI (SMART)<b> {}%\n\n".format(round((totalProfit / totalInvest)*100,1))
 
     return messages.markdown(response, bot.messenger)
@@ -470,7 +479,7 @@ def balances(bot, userId, results):
 
                         try:
                             total += round(result.data,1)
-                            response += "{} - {} SMART\n".format(node['name'], result.data)
+                            response += "{} - {:,} SMART\n".format(node['name'], result.data)
                         except:
                             logger.warning("Balance response invalid: {}".format(result.data))
                             response += "{} - Error: Could not fetch this balance.\n".format(node['name'])
@@ -579,44 +588,46 @@ def handleNodeUpdate(bot, update, node):
 
     return responses
 
-def handleReward(bot, reward, synced):
+def handleReward(bot, reward, distance):
 
-        responses = {}
-        nodes = bot.nodeList.getNodesByPayee(reward.payee)
+    logger.debug("handleReward - block distance: {}".format(distance))
 
-        if not nodes or not len(nodes):
-            # Payee not found for whatever reason?!
-            logger.error("Could not find payee in list. Reward: {}".format(str(reward)))
+    responses = {}
+    nodes = bot.nodeList.getNodesByPayee(reward.payee)
 
-            # Mark it in the database!
-            reward.meta = 1
-            updated = bot.rewardList.updateMeta(reward)
-            logger.info("Updated meta {}".format(updated))
+    if not nodes or not len(nodes):
+        # Payee not found for whatever reason?!
+        logger.error("Could not find payee in list. Reward: {}".format(str(reward)))
 
-        elif synced:
-        # Dont notify until the list is up to date.
+        # Mark it in the database!
+        reward.meta = 1
+        updated = bot.rewardList.updateMeta(reward)
+        logger.info("Updated meta {}".format(updated))
 
-            # When there are multiple nodes with that payee warn the user
-            count = len(nodes)
+    elif distance < 200:
+    # Dont notify until the list is 200 blocks behind the chain
 
-            logger.info("rewardCB {} - nodes: {}".format(str(reward),count))
+        # When there are multiple nodes with that payee warn the user
+        count = len(nodes)
 
-            for n in nodes:
+        logger.info("rewardCB {} - nodes: {}".format(str(reward),count))
 
-                for userNode in bot.database.getNodes(n.collateral):
+        for n in nodes:
 
-                    dbUser = bot.database.getUser(userNode['user_id'])
+            for userNode in bot.database.getNodes(n.collateral):
 
-                    if dbUser and dbUser['reward_n']:
+                dbUser = bot.database.getUser(userNode['user_id'])
 
-                        if not dbUser['id'] in responses:
-                            responses[dbUser['id']] = []
+                if dbUser and dbUser['reward_n']:
 
-                        response = messages.rewardNotification(bot.messenger, userNode['name'], reward.block, reward.amount)
+                    if not dbUser['id'] in responses:
+                        responses[dbUser['id']] = []
 
-                        if count > 1:
-                            response += messages.multiplePayeeWarning(bot.messenger, reward.payee, count)
+                    response = messages.rewardNotification(bot.messenger, userNode['name'], reward.block, reward.amount)
 
-                        responses[dbUser['id']].append(response)
+                    if count > 1:
+                        response += messages.multiplePayeeWarning(bot.messenger, reward.payee, count)
 
-        return responses
+                    responses[dbUser['id']].append(response)
+
+    return responses

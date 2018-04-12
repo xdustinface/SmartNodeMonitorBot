@@ -43,6 +43,7 @@ class SmartNodeBotDiscord(object):
         # Store and setup the nodereward list
         self.rewardList = rewardList
         self.rewardList.rewardCB = self.rewardCB
+        self.rewardList.errorCB = self.rewardListErrorCB
         # Create the WebExplorer
         self.explorer = WebExplorer(self.balancesCB)
         self.balanceChecks = {}
@@ -52,6 +53,8 @@ class SmartNodeBotDiscord(object):
         self.admin = admin
         # Semphore to lock the balance check list.
         self.balanceSem = threading.Lock()
+
+        self.aberration = 0
 
     def runClient(self):
 
@@ -127,31 +130,35 @@ class SmartNodeBotDiscord(object):
 
         logger.info("Ready: RewardList")
 
+        # Start its task and leave it
+        self.nodeList.start()
+
         while not self.nodeList.running:
             time.sleep(1)
             logger.info("Init: NodeList")
 
         logger.info("Ready: NodeList")
 
+        # Update the sources where the blocks are assigned to the nodelist
         for node in self.nodeList.nodeList.values():
 
             if node.lastPaidBlock <= 0:
                 continue
-                
+
             reward = self.rewardList.getReward(node.lastPaidBlock)
+
             if not reward:
                 continue
 
             if reward.source == 1:
                 continue
 
-            if node.lastPaidBlock > 0:
-                reward = SNReward(block=node.lastPaidBlock,
-                                  payee = node.payee,
-                                  txtime=node.lastPaidTime,
-                                  source=1)
+            reward = SNReward(block=node.lastPaidBlock,
+                              payee = node.payee,
+                              txtime=node.lastPaidTime,
+                              source=1)
 
-                self.rewardList.updateSource(reward)
+            self.rewardList.updateSource(reward)
 
     ######
     # Discord api coroutine which gets called when a new message has been
@@ -461,9 +468,9 @@ class SmartNodeBotDiscord(object):
     # Called by: SNRewardList from python-smartcash
     #
     ######
-    def rewardCB(self, reward, synced):
+    def rewardCB(self, reward, distance):
 
-        responses = node.handleReward(self, reward, synced)
+        responses = node.handleReward(self, reward, distance)
 
         for userId, messages in responses.items():
 
@@ -473,6 +480,20 @@ class SmartNodeBotDiscord(object):
 
                 for message in messages:
                         asyncio.run_coroutine_threadsafe(self.sendMessage(member, message), loop=self.client.loop)
+
+        total = self.rewardList.getRewardCount(start = start)
+        nList = self.rewardList.getRewardCount(start = start, source=1)
+        self.aberration = 1 - ( nList / total)
+
+
+    ######
+    # Callback for SNRewardList errors
+    #
+    # Called by: SNRewardList from python-smartcash
+    #
+    ######
+    def rewardListErrorCB(self, error):
+        self.adminCB(str(error))
 
     #####
     # Callback for evaluating if someone has enabled network notifications

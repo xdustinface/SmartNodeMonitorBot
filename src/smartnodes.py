@@ -295,12 +295,6 @@ class SmartNodeList(object):
         self.networkCB = None
         self.adminCB = None
 
-        self.load()
-
-        self.running = True
-
-        self.startTimer(5)
-
     def acquire(self):
 
         if not self.running:
@@ -323,15 +317,26 @@ class SmartNodeList(object):
 
         return True
 
+    def start(self):
+
+        if not self.running:
+            self.running = True
+            self.load()
+            self.startTimer(5)
+        else:
+            raise Exception("SmartNodeList already started!")
+
     def stop(self):
-        # Lock the list
-        self.acquire()
-        # Inidicate the end
-        self.running = False
-        # Stop the timer
-        self.timer.cancel()
-        # Then leave it locked..
-        logger.info("Stopped!")
+
+        if self.running:
+            # Lock the list
+            self.acquire()
+            # Inidicate the end
+            self.running = False
+            # Stop the timer
+            self.timer.cancel()
+            # Then leave it locked..
+            logger.info("Stopped!")
 
     def pushAdmin(self, message):
 

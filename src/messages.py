@@ -139,13 +139,13 @@ def help(messenger):
 
 def networkState(messenger, last, created, enabled, qualifiedNormal,
                  qualifiedUpgrade, upgradeModeDuration, protocolRequirement,
-                 protocol90024, protocol90025, initialWaitString):
+                 protocol90024, protocol90025, initialWaitString, aberration):
 
     message = ("<b>Current block<b> {}\n\n"
                 "<b>Nodes created<b> {}\n"
                 "<b>Nodes enabled<b> {}\n").format(last,
-                                                      created,
-                                                      enabled)
+                                                   created,
+                                                   enabled)
 
     minPosition = enabled * 0.1
     minEligible = int(enabled / 3)
@@ -157,9 +157,7 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
         message += "<b>Nodes qualified<b> {}\n\n".format(qualifiedNormal)
 
     message += ("<b>Protocol requirement<b> {}\n\n"
-                "<b>Nodes with 90024<b> {}\n"
                 "<b>Nodes with 90025<b> {}\n\n").format(protocolRequirement,
-                                                        protocol90024,
                                                         protocol90025)
 
     message += "<u><b>Initial payout/Minimum uptime<b><u>\n\n"
@@ -193,7 +191,7 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
                " from now on but in the <b>worst<b> case it still might take some days.\n\n").format(int(minPosition))
 
     # Use qualifiedNormal instead of (qualifiedNormal * 0.9) to give the worst case
-    message += "<b>Reaching the payout zone<b> should currently take roughly <b>{}<b> days\n\n".format(int(qualifiedNormal / 1570))
+    message += "<b>Reaching the payout zone<b> should currently take roughly <b>{}<b> days\n\n".format(int((qualifiedNormal / 1570) * (1 + aberration)))
 
     message += "<u><b>Warning<b><u>\n\n"
     message += "The positions of your nodes and the calculations above should be quite accurate but <b>please keep in mind that they may be inaccurate in special cases until the wallet version 1.2.0 is released<b> which should fix the current issues".format(int(qualifiedNormal / 1570))

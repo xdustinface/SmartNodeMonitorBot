@@ -65,6 +65,7 @@ def info(bot, update):
         protocol90024 = bot.nodeList.count(90024)
         protocol90025 = bot.nodeList.count(90025)
         initialWait = bot.nodeList.minimumUptime()
+        aberration = bot.aberration
 
         if upgradeModeDuration:
             upgradeModeDuration = util.secondsToText(upgradeModeDuration)
@@ -81,7 +82,8 @@ def info(bot, update):
                                           protocolRequirement,
                                           protocol90024,
                                           protocol90025,
-                                          util.secondsToText(initialWait))
+                                          util.secondsToText(initialWait),
+                                          aberration)
 
     else:
         response += "*Sorry, the bot is currently not synced with the network. Try it again in few minutes...*"
@@ -121,9 +123,6 @@ def stats(bot):
 
     response += "User: {}\n".format(len(bot.database.getUsers()))
     response += "Nodes: {}\n".format(len(bot.database.getAllNodes()))
-
-    response += "90024: {}\n".format(bot.nodeList.getNodeCountForProtocol(90024))
-    response += "90025: {}\n".format(bot.nodeList.getNodeCountForProtocol(90025))
 
     return response
 
