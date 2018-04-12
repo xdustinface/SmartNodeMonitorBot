@@ -139,6 +139,9 @@ class SmartNodeBotDiscord(object):
 
         logger.info("Ready: NodeList")
 
+        # Lock the nodelist since we iterate over all nodes
+        self.nodeList.acquire()
+
         # Update the sources where the blocks are assigned to the nodelist
         for node in self.nodeList.nodeList.values():
 
@@ -159,6 +162,9 @@ class SmartNodeBotDiscord(object):
                               source=1)
 
             self.rewardList.updateSource(reward)
+
+        # And finally release it!
+        self.nodeList.release()
 
     ######
     # Discord api coroutine which gets called when a new message has been
