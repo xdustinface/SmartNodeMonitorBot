@@ -148,7 +148,7 @@ class SmartNodeBotDiscord(object):
             if node.lastPaidBlock <= 0:
                 continue
 
-            reward = self.rewardList.getReward(node.lastPaidBlock)
+            reward = self.rewardList.getReward(int(node.lastPaidBlock))
 
             if not reward:
                 continue
@@ -487,7 +487,7 @@ class SmartNodeBotDiscord(object):
                 for message in messages:
                         asyncio.run_coroutine_threadsafe(self.sendMessage(member, message), loop=self.client.loop)
 
-        start = time.time() - 43200 # 12 hours of collecting
+        start = int(time.time() - 43200) # 12 hours of collecting
         total = self.rewardList.getRewardCount(start = start)
         nList = self.rewardList.getRewardCount(start = start, source=1)
         if nList and total:
