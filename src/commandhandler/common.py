@@ -13,6 +13,32 @@ import discord
 logger = logging.getLogger("common")
 
 ######
+# Return the welcome message and add the user if its not already added
+#
+#
+# Gets only called by any command handler
+######
+def checkUser(bot, message):
+    logger.info("checkUser")
+
+    result = {'response':None, 'added':False}
+
+    userInfo = util.crossMessengerSplit(message)
+    userId = userInfo['user'] if 'user' in userInfo else None
+    userName = userInfo['name'] if 'name' in userInfo else "Unknown"
+
+    if not bot.database.getUser(userId) and bot.database.addUser(userId, userName):
+        logger.info("checkUser - new user {}".format(userName))
+
+        result['added'] = True
+
+        if bot.messenger == 'discord':
+            result['response'] += messages.welcome(bot.messenger)
+
+    return result
+
+
+######
 # Telegram command handler for printing the help text
 #
 # Command: /help

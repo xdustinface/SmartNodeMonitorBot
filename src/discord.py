@@ -180,6 +180,16 @@ class SmartNodeBotDiscord(object):
 
             for mention in message.mentions:
                 if not mention == self.client.user:
+
+                    # Check if the user is already in the databse
+                    result = common.checkUser(self, mention)
+
+                    if result['response']:
+                        await self.sendMessage(mention, result['response'])
+
+                    if result['added']:
+                        continue
+
                     await self.sendMessage(mention, messages.help(self.messenger))
 
             return
@@ -207,6 +217,15 @@ class SmartNodeBotDiscord(object):
     async def commandHandler(self, message, command, args):
 
         logger.info("commandHandler - {}, command: {}, args: {}".format(message.author, command, args))
+
+        # Check if the user is already in the databse
+        result = common.checkUser(self, message)
+
+        if result['response']:
+            await self.sendMessage(message.author, result['response'])
+
+        if result['added'] and not isinstance(message.author, discord.Member):
+            return
 
         # per default assume the message gets back from where it came
         receiver = message.author

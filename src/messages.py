@@ -77,6 +77,26 @@ def link(messenger, link, text = ''):
 
     return msg
 
+def welcome(messenger):
+    message =  ":boom: <u><b>Welcome<b><u> :boom:\n\n"
+    message += "I am a bot..you can use me to monitor your SmartNodes! This will allow you to "
+    message += "subscribe notifications about downtimes, changes of your nodes's metrics "
+    message += "or payouts your nodes received!\n\nTherefor you may want to add your"
+    message += " nodes here with the <cb>add<ca> command. To do this just send me <cb>add IP;NAME<ca>, replace "
+    message += "<c>IP<c> with the IP-Address of your node and "
+    message += "<c>NAME<c> with the name you want to give your node.\n\n"
+    message += "Example: <cb>add 212.212.212.212;Node1<ca>\n\n"
+    message += "After that you can send me some more commands to configure the "
+    message += " the notifications or check your nodes metrics.\n\n"
+    message += " Examples:\n"
+    message += "  <b>-<b> <cb>detail<ca> To get a detailed view of your nodes\n"
+    message += "  <b>-<b> <cb>balance<ca> To check your nodes SMART balances"
+    message += "  <b>-<b> <cb>history<ca> To show information about your payout history\n\n"
+    message += " To get a full list of the possible commands just send me <cb>help<ca>\n\n"
+    message += "If you want to support my creator, its @dustinface#6318 :v:\n\n"
+    message += ":coffee: & :beer: => <b>STsDhYJZZrVFCaA5FX2AYWP27noYo3RUjD<b>"
+
+    return markdown(message, messenger)
 
 def help(messenger):
 

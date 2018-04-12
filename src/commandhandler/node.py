@@ -349,7 +349,7 @@ def nodes(bot, update):
 ######
 def history(bot, update):
 
-    response = messages.markdown("<u><b>History<b><u>\n\n",bot.messenger)
+    response = "<u><b>History<b><u>\n\n"
 
     userInfo = util.crossMessengerSplit(update)
     userId = userInfo['user'] if 'user' in userInfo else None
@@ -373,9 +373,10 @@ def history(bot, update):
 
         totalInvest = len(nodes) * 10000
         totalProfit = 0
-
-        intervalSum = 0
-
+        totalAvgInterval = 0
+        totalFirst = 0
+        totalLast = 0
+        countMultiplePayouts = 0
 
         for smartnode in nodes:
 
@@ -385,30 +386,58 @@ def history(bot, update):
             profit = sum(map(lambda x: x.amount,rewards))
             totalProfit += round(profit,1)
             avgInterval = 0
+            smartPerDay = 0
+
+            first = 0
+            last = 0
+
+            if len(rewards) == 1:
+
+                first = rewards[0].txtime
 
             if len(rewards) > 1:
+                countMultiplePayouts += 1
+
                 payoutTimes = list(map(lambda x: x.txtime,rewards))
 
                 first = min(payoutTimes)
                 last = max(payoutTimes)
 
-                avgInterval = (last - first) / len(rewards)
-                logger.info("F {} L {} C {}".format(first, last, len(rewards)))
+            if not totalFirst or totalFirst > first:
+                totalFirst = first
 
-            response += messages.markdown("<b>" + userNode['name'] + "<b>",bot.messenger)
+            if last:
+
+                avgInterval = (last - first) / len(rewards)
+                totalAvgInterval += avgInterval
+
+                smartPerDay = round( profit / ( (time.time() - first) / 86400 ),1)
+
+            response += "<b>" + userNode['name'] + "<b>"
             response += "\nPayouts {}".format(len(rewards))
+            response += "\nProfit {:,} SMART".format(profit)
+            response += "\nROI (SMART) {}%".format(round((profit/10000.0)*100.0,1))
 
             if avgInterval:
-                response += "\nAvg. payout interval " + util.secondsToText(avgInterval)
+                response += "\nPayout interval " + util.secondsToText(avgInterval)
 
-            response += "\nProfit {} SMART".format(profit)
-            response += "\nROI (SMART) {}%".format(round((profit/10000.0)*100.0,1))
+            if smartPerDay:
+                response += "\nSMART/day {:,} SMART".format(smartPerDay)
+
             response += "\n\n"
 
-        response += messages.markdown("<b>Total profit<b> {}\n".format(round(totalProfit,1)),bot.messenger)
-        response += messages.markdown("<b>Total ROI (SMART)<b> {}%".format(round((totalProfit / totalInvest)*100,1)),bot.messenger)
+        response += "<b>First payout<b> {} ago\n\n".format(util.secondsToText( time.time() - totalFirst ) )
 
-    return response
+        if totalAvgInterval:
+            totalAvgInterval = round((totalAvgInterval/countMultiplePayouts),1)
+            response += "<b>Total payout interval<b> {}\n".format(util.secondsToText(totalAvgInterval))
+
+        response += "<b>Total SMART/day<b> {:,}\n\n".format(round(totalProfit/( ( time.time() - totalFirst ) / 86400),1))
+
+        response += "<b>Total profit<b> {:,}\n".format(round(totalProfit,1))
+        response += "<b>Total ROI (SMART)<b> {}%\n\n".format(round((totalProfit / totalInvest)*100,1))
+
+    return messages.markdown(response, bot.messenger)
 
 
 ######
@@ -428,7 +457,6 @@ def balances(bot, userId, results):
         userNodes = bot.database.getAllNodes(userId)
 
         total = 0
-        error = False
 
         for result in results:
             for node in userNodes:
@@ -437,22 +465,17 @@ def balances(bot, userId, results):
                     if not util.isInt(result.data) and "error" in result.data:
                         response += "{} - Error: {}\n".format(node['name'], result.data["error"])
                         logger.warning("Balance response error: {}".format(result.data))
-                        error = True
+
                     else:
 
                         try:
                             total += round(result.data,1)
                             response += "{} - {} SMART\n".format(node['name'], result.data)
                         except:
-                            error = True
                             logger.warning("Balance response invalid: {}".format(result.data))
                             response += "{} - Error: Could not fetch this balance.\n".format(node['name'])
 
-        response += messages.markdown("\nTotal: <b>{} SMART<b>".format(round(total,1)),bot.messenger)
-
-        # Only show the profit if there was no error since it would make not much sense otherwise.
-        if not error:
-            response += messages.markdown("\nProfit: <b>{} SMART<b>".format(round(total - len(userNodes) * 10000,1)),bot.messenger)
+        response += messages.markdown("\nTotal: <b>{:,} SMART<b>".format(round(total,1)),bot.messenger)
 
     else:
         response += "Sorry, could not check your balances! Looks like all explorers are down. Try it again later.\n\n"
