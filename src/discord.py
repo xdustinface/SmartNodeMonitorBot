@@ -135,6 +135,9 @@ class SmartNodeBotDiscord(object):
 
         for node in self.nodeList.nodeList.values():
 
+            if node.lastPaidBlock <= 0:
+                continue
+                
             reward = self.rewardList.getReward(node.lastPaidBlock)
             if not reward:
                 continue
