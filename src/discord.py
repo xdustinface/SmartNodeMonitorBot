@@ -481,9 +481,11 @@ class SmartNodeBotDiscord(object):
                 for message in messages:
                         asyncio.run_coroutine_threadsafe(self.sendMessage(member, message), loop=self.client.loop)
 
+        start = time.time() - 43200 # 12 hours of collecting
         total = self.rewardList.getRewardCount(start = start)
         nList = self.rewardList.getRewardCount(start = start, source=1)
-        self.aberration = 1 - ( nList / total)
+        if nList and total:
+            self.aberration = 1 - ( nList / total)
 
 
     ######
