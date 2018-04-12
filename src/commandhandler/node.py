@@ -325,7 +325,7 @@ def nodes(bot, update):
         nodes = bot.nodeList.getNodes(collaterals)
         minimumUptime = bot.nodeList.minimumUptime()
 
-        for smartnode in sorted(nodes, key=lambda x: x.position):
+        for smartnode in sorted(nodes, key=lambda x: x.position if x.position > 0 else 100000):
 
             userNode = bot.database.getNodes(smartnode.collateral, user['id'])
 
@@ -429,7 +429,7 @@ def history(bot, update):
         response += "<b>First payout<b> {} ago\n\n".format(util.secondsToText( time.time() - totalFirst ) )
 
         if totalAvgInterval:
-            totalAvgInterval = round((totalAvgInterval/countMultiplePayouts),1)
+            totalAvgInterval = totalAvgInterval/countMultiplePayouts
             response += "<b>Total payout interval<b> {}\n".format(util.secondsToText(totalAvgInterval))
 
         response += "<b>Total SMART/day<b> {:,}\n\n".format(round(totalProfit/( ( time.time() - totalFirst ) / 86400),1))

@@ -251,7 +251,7 @@ def statusNotification(messenger, nodeName, status):
                           "status to <b>{}<b>").format(nodeName,status),messenger)
 
 def panicNotification(messenger, nodeName, timeString):
-    response = ("<u><b>Panic!<b><u>\n\n"
+    response = ("⚠️ <u><b>Panic!<b><u> ⚠️\n\n"
                 "Your node <b>{}<b> has been last seen before\n").format(nodeName)
     response += timeString
 
@@ -264,7 +264,7 @@ def relaxNotification(messenger, nodeName):
 
 def rewardNotification(messenger, nodeName, block, reward ):
 
-    response = ("<u><b>Reward!<b><u>\n\n"
+    response = ("🎉<u><b> Reward <b><u> 🎉 \n\n"
                 "Your node <b>{}<b> received a "
                 "reward at block {}\n\n"
                 "Payout <b>~{} SMART<b>").format(nodeName, block, int(reward))
@@ -272,7 +272,7 @@ def rewardNotification(messenger, nodeName, block, reward ):
     return markdown(response, messenger)
 
 def nodeRemovedNotification(messenger, nodeName):
-    return markdown(("<u><b>Warning!<b><u>\n\n"
+    return markdown(("⚠️ <u><b>Warning!<b><u> ⚠️\n\n"
                       "Your node <b>{}<b> has been removed "
                       "from the global nodelist.").format(nodeName), messenger)
 
