@@ -97,7 +97,7 @@ def main(argv):
     nodeList = SmartNodeList(nodedb, rpcConfig)
 
     # Create the smartnode reward list
-    rewardList = SNRewardList('sqlite:////' + directory + '/rewards.db', rpcConfig)
+    rewardList = SNRewardList(directory + '/rewards.db', rpcConfig)
 
     nodeBot = None
 
