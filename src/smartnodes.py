@@ -324,9 +324,9 @@ class SmartNodeList(object):
 
         if not self.running:
             logger.info("Start SmartNodeList!")
+            self.running = True
             self.startTimer(5)
             self.release()
-            self.running = True
         else:
             raise Exception("SmartNodeList already started!")
 
@@ -436,6 +436,7 @@ class SmartNodeList(object):
             return False
 
         newNodes = []
+        removedNodes = []
 
         info = self.rpc.getInfo()
         rpcNodes = self.rpc.getSmartNodeList('full')
@@ -537,25 +538,12 @@ class SmartNodeList(object):
                     logger.warning("Could not fetch collateral block {}".format(str(collateral)))
 
         #####
-        ## Invoke the callback if we have new nodes
-        #####
-
-        if len(newNodes) and self.networkCB:
-
-            self.networkCB(newNodes, True)
-
-            logger.info("Created: {}".format(len(rpcNodes.values())))
-            logger.info("Enabled: {}\n".format(sum(map(lambda x: x.split()[STATUS_INDEX]  == "ENABLED", list(rpcNodes.values())))))
-
-        #####
         ## Remove nodes from the DB that are not longer in the global list
         #####
 
         dbCount = self.db.getNodeCount()
 
         if dbCount > len(rpcNodes):
-
-            removedNodes = []
 
             logger.warning("Unequal node count - DB {}, CLI {}".format(dbCount,len(rpcNodes)))
 
@@ -572,10 +560,9 @@ class SmartNodeList(object):
                     self.nodes.pop(collateral,None)
 
             if len(removedNodes) != (dbCount - len(rpcNodes)):
-                logger.warning("Remove nodes - something messed up.")
-
-            if self.networkCB:
-                self.networkCB(removedNodes, False)
+                err = "Remove nodes - something messed up."
+                self.pushAdmin(err)
+                logger.error(err)
 
         logger.info("calculatePositions start")
 
@@ -650,6 +637,16 @@ class SmartNodeList(object):
             logger.info("calculateUpgradeModeDuration done {}".format("Success" if self.remainingUpgradeModeDuration else "Error?"))
 
         self.release()
+
+        #####
+        ## Invoke the callback if we have new nodes or nodes left
+        #####
+
+        if len(newNodes) and self.networkCB:
+            self.networkCB(newNodes, True)
+
+        if len(removedNodes) and self.networkCB:
+            self.networkCB(removedNodes, False)
 
         return True
 

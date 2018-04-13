@@ -227,7 +227,7 @@ def nodeRemove(bot, update, args):
 
                 else:
 
-                    with nodeList as nodeList:
+                    with bot.nodeList as nodeList:
 
                         logger.info("remove - valid {}".format(ip))
 
@@ -607,44 +607,45 @@ def handleReward(bot, reward, distance):
 
     logger.debug("handleReward - block distance: {}".format(distance))
 
-    with bot.nodeList as nodeList:
+    responses = {}
+    nodes = None
 
-        responses = {}
+    with bot.nodeList as nodeList:
         nodes = nodeList.getNodesByPayee(reward.payee)
 
-        if not nodes or not len(nodes):
-            # Payee not found for whatever reason?!
-            logger.error("Could not find payee in list. Reward: {}".format(str(reward)))
+    if not nodes or not len(nodes):
+        # Payee not found for whatever reason?!
+        logger.error("Could not find payee in list. Reward: {}".format(str(reward)))
 
-            # Mark it in the database!
-            reward.meta = 1
-            updated = bot.rewardList.updateMeta(reward)
-            logger.info("Updated meta {}".format(updated))
+        # Mark it in the database!
+        reward.meta = 1
+        updated = bot.rewardList.updateMeta(reward)
+        logger.info("Updated meta {}".format(updated))
 
-        elif distance < 200:
-        # Dont notify until the list is 200 blocks behind the chain
+    elif distance < 200:
+    # Dont notify until the list is 200 blocks behind the chain
 
-            # When there are multiple nodes with that payee warn the user
-            count = len(nodes)
+        # When there are multiple nodes with that payee warn the user
+        count = len(nodes)
 
-            logger.info("rewardCB {} - nodes: {}".format(str(reward),count))
+        logger.info("rewardCB {} - nodes: {}".format(str(reward),count))
 
-            for n in nodes:
+        for n in nodes:
 
-                for userNode in bot.database.getNodes(n.collateral):
+            for userNode in bot.database.getNodes(n.collateral):
 
-                    dbUser = bot.database.getUser(userNode['user_id'])
+                dbUser = bot.database.getUser(userNode['user_id'])
 
-                    if dbUser and dbUser['reward_n']:
+                if dbUser and dbUser['reward_n']:
 
-                        if not dbUser['id'] in responses:
-                            responses[dbUser['id']] = []
+                    if not dbUser['id'] in responses:
+                        responses[dbUser['id']] = []
 
-                        response = messages.rewardNotification(bot.messenger, userNode['name'], reward.block, reward.amount)
+                    response = messages.rewardNotification(bot.messenger, userNode['name'], reward.block, reward.amount)
 
-                        if count > 1:
-                            response += messages.multiplePayeeWarning(bot.messenger, reward.payee, count)
+                    if count > 1:
+                        response += messages.multiplePayeeWarning(bot.messenger, reward.payee, count)
 
-                        responses[dbUser['id']].append(response)
+                    responses[dbUser['id']].append(response)
 
     return responses

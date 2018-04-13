@@ -146,7 +146,15 @@ class SmartNodeBotDiscord(object):
                 reward = self.rewardList.getReward(node.lastPaidBlock)
 
                 if not reward:
+
+                    reward = SNReward(block=node.lastPaidBlock,
+                                      payee = node.payee,
+                                      txtime=node.lastPaidTime,
+                                      source=1)
+                    
+                    self.rewardList.addReward(reward)
                     continue
+
 
                 if reward.source == 1:
                     continue
