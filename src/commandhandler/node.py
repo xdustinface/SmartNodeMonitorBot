@@ -42,47 +42,48 @@ def nodeAdd(bot, update, args):
         valid = False
 
     else:
+        with bot.nodeList as nodeList:
 
-        for arg in args:
+            for arg in args:
 
-            valid = True
+                valid = True
 
-            newNode = arg.split(";")
+                newNode = arg.split(";")
 
-            if len(newNode) != 2:
+                if len(newNode) != 2:
 
-                response += messages.invalidParameterError(bot.messenger,arg)
-                valid = False
-            else:
-
-                ip = util.validateIp( newNode[0] )
-                name = util.validateName( newNode[1] )
-
-                if not ip:
-
-                    response += messages.invalidIpError(bot.messenger, newNode[0])
+                    response += messages.invalidParameterError(bot.messenger,arg)
                     valid = False
-
-                if not name:
-
-                    response += messages.invalidNameError(bot.messenger, newNode[1])
-                    valid = False
-
-            if valid:
-
-                node = bot.nodeList.getNodeByIp(ip)
-
-                if node == None:
-                    response += messages.nodeNotInListError(bot.messenger,ip)
                 else:
 
-                    if bot.database.addNode( node.collateral, name, userId,userName):
+                    ip = util.validateIp( newNode[0] )
+                    name = util.validateName( newNode[1] )
 
-                        response += "Added node {}!\n".format(ip)
+                    if not ip:
 
+                        response += messages.invalidIpError(bot.messenger, newNode[0])
+                        valid = False
+
+                    if not name:
+
+                        response += messages.invalidNameError(bot.messenger, newNode[1])
+                        valid = False
+
+                if valid:
+
+                    node = nodeList.getNodeByIp(ip)
+
+                    if node == None:
+                        response += messages.nodeNotInListError(bot.messenger,ip)
                     else:
 
-                        response += messages.nodeExistsError(bot.messenger,ip)
+                        if bot.database.addNode( node.collateral, name, userId,userName):
+
+                            response += "Added node {}!\n".format(ip)
+
+                        else:
+
+                            response += messages.nodeExistsError(bot.messenger,ip)
 
     return response
 
@@ -122,50 +123,52 @@ def nodeUpdate(bot, update, args):
 
     else:
 
-        for arg in args:
+        with bot.nodeList as nodeList:
 
-            nodeEdit = arg.split(";")
+            for arg in args:
 
-            valid = True
+                nodeEdit = arg.split(";")
 
-            if len(nodeEdit) != 2:
+                valid = True
 
-                response += messages.invalidParameterError(bot.messenger,arg)
-                valid = False
-            else:
+                if len(nodeEdit) != 2:
 
-                ip = util.validateIp( nodeEdit[0] )
-                name = util.validateName( nodeEdit[1] )
-
-                if not ip:
-
-                    response += messages.invalidIpError(bot.messenger, nodeEdit[0])
+                    response += messages.invalidParameterError(bot.messenger,arg)
                     valid = False
-
-                if not name:
-
-                    response += messages.invalidNameError(bot.messenger, nodeEdit[1])
-                    valid = False
-
-            if valid:
-
-                logger.info("update - {} {}".format(ip, user['id']))
-
-                node = bot.nodeList.getNodeByIp(ip)
-
-                if node == None:
-                    response += messages.nodeNotInListError(bot.messenger, ip)
                 else:
 
-                    userNode = bot.database.getNodes(node.collateral,userId)
+                    ip = util.validateIp( nodeEdit[0] )
+                    name = util.validateName( nodeEdit[1] )
 
-                    if userNode == None:
-                        response += messages.nodeNotExistsError(bot.messenger, ip)
+                    if not ip:
+
+                        response += messages.invalidIpError(bot.messenger, nodeEdit[0])
+                        valid = False
+
+                    if not name:
+
+                        response += messages.invalidNameError(bot.messenger, nodeEdit[1])
+                        valid = False
+
+                if valid:
+
+                    logger.info("update - {} {}".format(ip, user['id']))
+
+                    node = nodeList.getNodeByIp(ip)
+
+                    if node == None:
+                        response += messages.nodeNotInListError(bot.messenger, ip)
                     else:
 
-                        bot.database.updateNode(node.collateral,user['id'], name)
+                        userNode = bot.database.getNodes(node.collateral,userId)
 
-                        response += "Node successfully updated. {}\n".format(ip)
+                        if userNode == None:
+                            response += messages.nodeNotExistsError(bot.messenger, ip)
+                        else:
+
+                            bot.database.updateNode(node.collateral,user['id'], name)
+
+                            response += "Node successfully updated. {}\n".format(ip)
 
     return response
 
@@ -224,21 +227,23 @@ def nodeRemove(bot, update, args):
 
                 else:
 
-                    logger.info("remove - valid {}".format(ip))
+                    with nodeList as nodeList:
 
-                    node = bot.nodeList.getNodeByIp(ip)
+                        logger.info("remove - valid {}".format(ip))
 
-                    if node == None:
-                        response += messages.nodeNotInListError(bot.messenger, ip)
-                    else:
+                        node = nodeList.getNodeByIp(ip)
 
-                        userNode = bot.database.getNodes(node.collateral,userId)
-
-                        if userNode == None:
-                            response += messages.nodeNotExistsError(bot.messenger, ip)
+                        if node == None:
+                            response += messages.nodeNotInListError(bot.messenger, ip)
                         else:
-                            bot.database.deleteNode(node.collateral,user['id'])
-                            response += messages.markdown("Node successfully removed. <b>{}<b>\n".format(ip),bot.messenger)
+
+                            userNode = bot.database.getNodes(node.collateral,userId)
+
+                            if userNode == None:
+                                response += messages.nodeNotExistsError(bot.messenger, ip)
+                            else:
+                                bot.database.deleteNode(node.collateral,user['id'])
+                                response += messages.markdown("Node successfully removed. <b>{}<b>\n".format(ip),bot.messenger)
 
     return response
 
@@ -262,9 +267,9 @@ def detail(bot, update):
 
     nodesFound = False
 
+
     user = bot.database.getUser(userId)
     userNodes = bot.database.getAllNodes(userId)
-    minimumUptime = bot.nodeList.minimumUptime()
 
     if user == None or userNodes == None or len(userNodes) == 0:
 
@@ -272,22 +277,26 @@ def detail(bot, update):
 
     else:
 
-        for userNode in userNodes:
+        with bot.nodeList as nodeList:
 
-            smartnode = bot.nodeList.getNodes([userNode['collateral']])[0]
+            minimumUptime = nodeList.minimumUptime()
 
-            response += messages.markdown(("<b>" + userNode['name'] + " - " + smartnode.ip + "<b>")  ,bot.messenger)
-            response += "\n  `Status` " + smartnode.status
-            response += "\n  `Position` " + messages.markdown(smartnode.positionString(minimumUptime),bot.messenger)
-            response += "\n  `Payee` " + smartnode.payee
-            response += "\n  `Active since` " + util.secondsToText(smartnode.activeSeconds)
-            response += "\n  `Last seen` " + util.secondsToText( int(time.time()) - smartnode.lastSeen)
-            response += "\n  `Last payout (Block)` " + smartnode.payoutBlockString()
-            response += "\n  `Last payout (Time)` " + smartnode.payoutTimeString()
-            response += "\n  `Protocol` {}".format(smartnode.protocol)
-            #response += "\n  `Rank` {}".format(smartnode.rank)
-            response += "\n  " + messages.link(bot.messenger, 'https://explorer3.smartcash.cc/address/{}'.format(smartnode.payee),'Open the explorer!')
-            response += "\n\n"
+            for userNode in userNodes:
+
+                smartnode = nodeList.getNodes([userNode['collateral']])[0]
+
+                response += messages.markdown(("<b>" + userNode['name'] + " - " + smartnode.ip + "<b>")  ,bot.messenger)
+                response += "\n  `Status` " + smartnode.status
+                response += "\n  `Position` " + messages.markdown(smartnode.positionString(minimumUptime),bot.messenger)
+                response += "\n  `Payee` " + smartnode.payee
+                response += "\n  `Active since` " + util.secondsToText(smartnode.activeSeconds)
+                response += "\n  `Last seen` " + util.secondsToText( int(time.time()) - smartnode.lastSeen)
+                response += "\n  `Last payout (Block)` " + smartnode.payoutBlockString()
+                response += "\n  `Last payout (Time)` " + smartnode.payoutTimeString()
+                response += "\n  `Protocol` {}".format(smartnode.protocol)
+                #response += "\n  `Rank` {}".format(smartnode.rank)
+                response += "\n  " + messages.link(bot.messenger, 'https://explorer3.smartcash.cc/address/{}'.format(smartnode.payee),'Open the explorer!')
+                response += "\n\n"
 
     return response
 
@@ -321,21 +330,23 @@ def nodes(bot, update):
 
     else:
 
-        collaterals = list(map(lambda x: x['collateral'],userNodes))
-        nodes = bot.nodeList.getNodes(collaterals)
-        minimumUptime = bot.nodeList.minimumUptime()
+        with bot.nodeList as nodeList:
 
-        for smartnode in sorted(nodes, key=lambda x: x.position if x.position > 0 else 100000):
+            collaterals = list(map(lambda x: x['collateral'],userNodes))
+            nodes = nodeList.getNodes(collaterals)
+            minimumUptime = nodeList.minimumUptime()
 
-            userNode = bot.database.getNodes(smartnode.collateral, user['id'])
+            for smartnode in sorted(nodes, key=lambda x: x.position if x.position > 0 else 100000):
 
-            payoutText = util.secondsToText(smartnode.lastPaidTime)
-            response += messages.markdown("<b>" + userNode['name'] + "<b> - `" + smartnode.status + "`",bot.messenger)
-            response += "\nPosition " + messages.markdown(smartnode.positionString(minimumUptime),bot.messenger)
-            response += "\nLast seen " + util.secondsToText( int(time.time()) - smartnode.lastSeen)
-            response += "\nLast payout " + smartnode.payoutTimeString()
-            response += "\n" + messages.link(bot.messenger, 'https://explorer3.smartcash.cc/address/{}'.format(smartnode.payee),'Open the explorer!')
-            response += "\n\n"
+                userNode = bot.database.getNodes(smartnode.collateral, user['id'])
+
+                payoutText = util.secondsToText(smartnode.lastPaidTime)
+                response += messages.markdown("<b>" + userNode['name'] + "<b> - `" + smartnode.status + "`",bot.messenger)
+                response += "\nPosition " + messages.markdown(smartnode.positionString(minimumUptime),bot.messenger)
+                response += "\nLast seen " + util.secondsToText( int(time.time()) - smartnode.lastSeen)
+                response += "\nLast payout " + smartnode.payoutTimeString()
+                response += "\n" + messages.link(bot.messenger, 'https://explorer3.smartcash.cc/address/{}'.format(smartnode.payee),'Open the explorer!')
+                response += "\n\n"
 
     return response
 
@@ -368,83 +379,85 @@ def history(bot, update):
 
     else:
 
-        collaterals = list(map(lambda x: x['collateral'],userNodes))
-        nodes = bot.nodeList.getNodes(collaterals)
+        with bot.nodeList as nodeList:
 
-        time30Days = time.time() - (2592000) # now - 30d * 24h * 60m * 60s
-        totalInvest = len(nodes) * 10000
-        totalProfit = 0
-        totalAvgInterval = 0
-        totalFirst = 0
-        countMultiplePayouts = 0
-        totalProfit30Days = 0
+            collaterals = list(map(lambda x: x['collateral'],userNodes))
+            nodes = nodeList.getNodes(collaterals)
 
-        for smartnode in nodes:
+            time30Days = time.time() - (2592000) # now - 30d * 24h * 60m * 60s
+            totalInvest = len(nodes) * 10000
+            totalProfit = 0
+            totalAvgInterval = 0
+            totalFirst = 0
+            countMultiplePayouts = 0
+            totalProfit30Days = 0
 
-            userNode = bot.database.getNodes(smartnode.collateral, user['id'])
-            rewards = bot.rewardList.getRewardsForPayee(smartnode.payee)
+            for smartnode in nodes:
 
-            profit = sum(map(lambda x: x.amount,rewards))
-            profit30Days = sum(map(lambda x: x.amount if x.txtime > time30Days else 0,rewards))
-            totalProfit30Days += profit30Days
+                userNode = bot.database.getNodes(smartnode.collateral, user['id'])
+                rewards = bot.rewardList.getRewardsForPayee(smartnode.payee)
 
-            totalProfit += round(profit,1)
-            avgInterval = 0
-            smartPerDay = 0
+                profit = sum(map(lambda x: x.amount,rewards))
+                profit30Days = sum(map(lambda x: x.amount if x.txtime > time30Days else 0,rewards))
+                totalProfit30Days += profit30Days
 
-            first = 0
-            last = 0
+                totalProfit += round(profit,1)
+                avgInterval = 0
+                smartPerDay = 0
 
-            if len(rewards) == 1:
+                first = 0
+                last = 0
 
-                first = rewards[0].txtime
+                if len(rewards) == 1:
 
-            if len(rewards) > 1:
-                countMultiplePayouts += 1
+                    first = rewards[0].txtime
 
-                payoutTimes = list(map(lambda x: x.txtime,rewards))
+                if len(rewards) > 1:
+                    countMultiplePayouts += 1
 
-                first = min(payoutTimes)
-                last = max(payoutTimes)
+                    payoutTimes = list(map(lambda x: x.txtime,rewards))
 
-            if not totalFirst or first and totalFirst > first:
-                totalFirst = first
+                    first = min(payoutTimes)
+                    last = max(payoutTimes)
 
-            if last:
+                if not totalFirst or first and totalFirst > first:
+                    totalFirst = first
 
-                avgInterval = (last - first) / len(rewards)
-                totalAvgInterval += avgInterval
+                if last:
 
-                smartPerDay = round( profit / ( (time.time() - first) / 86400 ),1)
+                    avgInterval = (last - first) / len(rewards)
+                    totalAvgInterval += avgInterval
 
-            response += "<u><b>Node - " + userNode['name'] + "<b><u>\n\n"
-            response += "<b>Payouts<b> {}\n".format(len(rewards))
-            response += "<b>Profit<b> {:,} SMART\n".format(round(profit,1))
-            response += "<b>Profit (30 days)<b> {:,} SMART\n".format(round(profit30Days,1))
+                    smartPerDay = round( profit / ( (time.time() - first) / 86400 ),1)
 
-            if avgInterval:
-                response += "\n<b>Payout interval<b> " + util.secondsToText(avgInterval)
+                response += "<u><b>Node - " + userNode['name'] + "<b><u>\n\n"
+                response += "<b>Payouts<b> {}\n".format(len(rewards))
+                response += "<b>Profit<b> {:,} SMART\n".format(round(profit,1))
+                response += "<b>Profit (30 days)<b> {:,} SMART\n".format(round(profit30Days,1))
 
-            if smartPerDay:
-                response += "\n<b>SMART/day<b> {:,} SMART".format(smartPerDay)
+                if avgInterval:
+                    response += "\n<b>Payout interval<b> " + util.secondsToText(avgInterval)
 
-            response += "\n<b>ROI (SMART)<b> {}%".format(round((profit/10000.0)*100.0,1))
+                if smartPerDay:
+                    response += "\n<b>SMART/day<b> {:,} SMART".format(smartPerDay)
 
-            response += "\n\n"
+                response += "\n<b>ROI (SMART)<b> {}%".format(round((profit/10000.0)*100.0,1))
 
-        response += "<u><b>Total stats<b><u>\n\n"
-        response += "<b>First payout<b> {} ago\n\n".format(util.secondsToText( time.time() - totalFirst ) )
+                response += "\n\n"
 
-        response += "<b>Profit (30 days)<b> {:,} SMART\n".format(round(totalProfit30Days,1))
-        response += "<b>SMART/day (30 days)<b> {:,} SMART\n\n".format(round(totalProfit30Days/30,1))
+            response += "<u><b>Total stats<b><u>\n\n"
+            response += "<b>First payout<b> {} ago\n\n".format(util.secondsToText( time.time() - totalFirst ) )
 
-        if totalAvgInterval:
-            totalAvgInterval = totalAvgInterval/countMultiplePayouts
-            response += "<b>Total payout interval<b> {}\n".format(util.secondsToText(totalAvgInterval))
+            response += "<b>Profit (30 days)<b> {:,} SMART\n".format(round(totalProfit30Days,1))
+            response += "<b>SMART/day (30 days)<b> {:,} SMART\n\n".format(round(totalProfit30Days/30,1))
 
-        response += "<b>Total SMART/day<b> {:,} SMART\n\n".format(round(totalProfit/( ( time.time() - totalFirst ) / 86400),1))
-        response += "<b>Total profit<b> {:,} SMART\n".format(round(totalProfit,1))
-        response += "<b>Total ROI (SMART)<b> {}%\n\n".format(round((totalProfit / totalInvest)*100,1))
+            if totalAvgInterval:
+                totalAvgInterval = totalAvgInterval/countMultiplePayouts
+                response += "<b>Total payout interval<b> {}\n".format(util.secondsToText(totalAvgInterval))
+
+            response += "<b>Total SMART/day<b> {:,} SMART\n\n".format(round(totalProfit/( ( time.time() - totalFirst ) / 86400),1))
+            response += "<b>Total profit<b> {:,} SMART\n".format(round(totalProfit,1))
+            response += "<b>Total ROI (SMART)<b> {}%\n\n".format(round((totalProfit / totalInvest)*100,1))
 
     return messages.markdown(response, bot.messenger)
 
@@ -503,37 +516,39 @@ def lookup(bot, userId, args):
 
     response = messages.markdown("<u><b>Node lookup<b><u>\n\n",bot.messenger)
 
-    if bot.nodeList.synced() and bot.nodeList.lastBlock:
+    with bot.nodeList as nodeList:
 
-        if not len(args):
-            response += messages.lookupArgumentRequiredError(bot.messenger)
-        else:
+        if nodeList.synced() and nodeList.lastBlock:
 
-            errors = []
-            lookups = []
+            if not len(args):
+                response += messages.lookupArgumentRequiredError(bot.messenger)
+            else:
 
-            for arg in args:
+                errors = []
+                lookups = []
 
-                ip = util.validateIp( arg )
+                for arg in args:
 
-                if not ip:
-                    errors.append(messages.invalidIpError(bot.messenger,arg))
-                else:
+                    ip = util.validateIp( arg )
 
-                    result = bot.nodeList.lookup(ip)
-
-                    if result:
-                        lookups.append(messages.lookupResult(bot.messenger,result))
+                    if not ip:
+                        errors.append(messages.invalidIpError(bot.messenger,arg))
                     else:
-                        errors.append(messages.nodeNotInListError(bot.messenger,ip))
 
-            for e in errors:
-                response += e
+                        result = nodeList.lookup(ip)
 
-            for l in lookups:
-                response += l
-    else:
-        response += "<b>Sorry, the bot is currently not synced with the network. Try it again in few minutes...<b>"
+                        if result:
+                            lookups.append(messages.lookupResult(bot.messenger,result))
+                        else:
+                            errors.append(messages.nodeNotInListError(bot.messenger,ip))
+
+                for e in errors:
+                    response += e
+
+                for l in lookups:
+                    response += l
+        else:
+            response += "<b>Sorry, the bot is currently not synced with the network. Try it again in few minutes...<b>"
 
     return response
 
@@ -592,42 +607,44 @@ def handleReward(bot, reward, distance):
 
     logger.debug("handleReward - block distance: {}".format(distance))
 
-    responses = {}
-    nodes = bot.nodeList.getNodesByPayee(reward.payee)
+    with bot.nodeList as nodeList:
 
-    if not nodes or not len(nodes):
-        # Payee not found for whatever reason?!
-        logger.error("Could not find payee in list. Reward: {}".format(str(reward)))
+        responses = {}
+        nodes = nodeList.getNodesByPayee(reward.payee)
 
-        # Mark it in the database!
-        reward.meta = 1
-        updated = bot.rewardList.updateMeta(reward)
-        logger.info("Updated meta {}".format(updated))
+        if not nodes or not len(nodes):
+            # Payee not found for whatever reason?!
+            logger.error("Could not find payee in list. Reward: {}".format(str(reward)))
 
-    elif distance < 200:
-    # Dont notify until the list is 200 blocks behind the chain
+            # Mark it in the database!
+            reward.meta = 1
+            updated = bot.rewardList.updateMeta(reward)
+            logger.info("Updated meta {}".format(updated))
 
-        # When there are multiple nodes with that payee warn the user
-        count = len(nodes)
+        elif distance < 200:
+        # Dont notify until the list is 200 blocks behind the chain
 
-        logger.info("rewardCB {} - nodes: {}".format(str(reward),count))
+            # When there are multiple nodes with that payee warn the user
+            count = len(nodes)
 
-        for n in nodes:
+            logger.info("rewardCB {} - nodes: {}".format(str(reward),count))
 
-            for userNode in bot.database.getNodes(n.collateral):
+            for n in nodes:
 
-                dbUser = bot.database.getUser(userNode['user_id'])
+                for userNode in bot.database.getNodes(n.collateral):
 
-                if dbUser and dbUser['reward_n']:
+                    dbUser = bot.database.getUser(userNode['user_id'])
 
-                    if not dbUser['id'] in responses:
-                        responses[dbUser['id']] = []
+                    if dbUser and dbUser['reward_n']:
 
-                    response = messages.rewardNotification(bot.messenger, userNode['name'], reward.block, reward.amount)
+                        if not dbUser['id'] in responses:
+                            responses[dbUser['id']] = []
 
-                    if count > 1:
-                        response += messages.multiplePayeeWarning(bot.messenger, reward.payee, count)
+                        response = messages.rewardNotification(bot.messenger, userNode['name'], reward.block, reward.amount)
 
-                    responses[dbUser['id']].append(response)
+                        if count > 1:
+                            response += messages.multiplePayeeWarning(bot.messenger, reward.payee, count)
+
+                        responses[dbUser['id']].append(response)
 
     return responses

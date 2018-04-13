@@ -272,6 +272,7 @@ class SmartNodeList(object):
 
         self.running = False
         self.nodeListSem = threading.Lock()
+        self.nodeListSem.acquire()
         self.lastBlock = 0
         self.remainingUpgradeModeDuration = None
         self.qualifiedUpgrade = -1
@@ -281,7 +282,7 @@ class SmartNodeList(object):
         self.enabled_90024 = 0
         self.enabled_90025 = 0
         self.lastPaidVec = []
-        self.nodeList = {}
+        self.nodes = {}
 
         self.syncedTime = -1
         self.chainSynced = False
@@ -295,34 +296,37 @@ class SmartNodeList(object):
         self.networkCB = None
         self.adminCB = None
 
+        dbList = self.db.getNodes()
+
+        for entry in dbList:
+                node = SmartNode.fromDb(entry)
+                self.nodes[node.collateral] = node
+
+    def __enter__(self):
+        logger.debug("Wait for enter")
+        self.acquire()
+        logger.debug("Entered")
+        return self
+
+    def __exit__(self, type, value, traceback):
+        logger.debug("Exit")
+        self.release()
+
     def acquire(self):
-
-        if not self.running:
-            logger.info("acquire - canceled")
-            return False
-
         logger.info("SmartNodeList acquire")
         self.nodeListSem.acquire()
 
-        return True
-
     def release(self):
-
-        if not self.running:
-            logger.info("release - canceled")
-            return False
-
         logger.info("SmartNodeList release")
         self.nodeListSem.release()
-
-        return True
 
     def start(self):
 
         if not self.running:
-            self.running = True
-            self.load()
+            logger.info("Start SmartNodeList!")
             self.startTimer(5)
+            self.release()
+            self.running = True
         else:
             raise Exception("SmartNodeList already started!")
 
@@ -349,14 +353,6 @@ class SmartNodeList(object):
             self.timer = threading.Timer(timeout, self.update)
             self.timer.daemon = True
             self.timer.start()
-
-    def load(self):
-
-        dbList = self.db.getNodes()
-
-        for entry in dbList:
-                node = SmartNode.fromDb(entry)
-                self.nodeList[node.collateral] = node
 
     def synced(self):
         return self.chainSynced and self.nodeListSynced and self.winnersListSynced
@@ -442,7 +438,7 @@ class SmartNodeList(object):
         newNodes = []
 
         info = self.rpc.getInfo()
-        nodes = self.rpc.getSmartNodeList('full')
+        rpcNodes = self.rpc.getSmartNodeList('full')
 
         if info.error:
             msg = "updateList getInfo: {}".format(str(info.error))
@@ -454,13 +450,13 @@ class SmartNodeList(object):
         else:
             self.lastBlock = info.data["blocks"]
 
-        if nodes.error:
-            msg = "updateList getSmartNodeList: {}".format(str(nodes.error))
+        if rpcNodes.error:
+            msg = "updateList getSmartNodeList: {}".format(str(rpcNodes.error))
             logging.error(msg)
             self.pushAdmin(msg)
             return False
 
-        nodes = nodes.data
+        rpcNodes = rpcNodes.data
         node = None
 
         currentList = []
@@ -472,26 +468,24 @@ class SmartNodeList(object):
 
         # Prevent mass deletion of nodes if something is wrong
         # with the fetched nodelist.
-        if dbCount and len(nodes) and ( dbCount / len(nodes) ) > 1.25:
+        if dbCount and len(rpcNodes) and ( dbCount / len(rpcNodes) ) > 1.25:
             self.pushAdmin("Node count differs too much!")
-            logger.warning("Node count differs too much! - DB {}, CLI {}".format(dbCount,len(nodes)))
+            logger.warning("Node count differs too much! - DB {}, CLI {}".format(dbCount,len(rpcNodes)))
             return False
 
         # Prevent reading during the calculations
-        if not self.acquire():
-            logger.warning("Cancel list update..")
-            return
+        self.acquire()
 
         # Reset the calculation vars
         self.qualifiedNormal = 0
 
-        for key, data in nodes.items():
+        for key, data in rpcNodes.items():
 
             collateral = Transaction.fromRaw(key)
 
             currentList.append(collateral)
 
-            if collateral not in self.nodeList:
+            if collateral not in self.nodes:
 
                 collateral.updateBlock(self.getCollateralAge(collateral.hash))
 
@@ -501,7 +495,7 @@ class SmartNodeList(object):
                 id = self.db.addNode(collateral,insert)
 
                 if id:
-                    self.nodeList[collateral] = insert
+                    self.nodes[collateral] = insert
                     newNodes.append(collateral)
 
                     logger.debug(" => added with collateral {}".format(insert.collateral))
@@ -510,7 +504,7 @@ class SmartNodeList(object):
 
             else:
 
-                node = self.nodeList[collateral]
+                node = self.nodes[collateral]
                 collateral = node.collateral
                 update = node.update(data)
 
@@ -550,8 +544,8 @@ class SmartNodeList(object):
 
             self.networkCB(newNodes, True)
 
-            logger.info("Created: {}".format(len(nodes.values())))
-            logger.info("Enabled: {}\n".format(sum(map(lambda x: x.split()[STATUS_INDEX]  == "ENABLED", list(nodes.values())))))
+            logger.info("Created: {}".format(len(rpcNodes.values())))
+            logger.info("Enabled: {}\n".format(sum(map(lambda x: x.split()[STATUS_INDEX]  == "ENABLED", list(rpcNodes.values())))))
 
         #####
         ## Remove nodes from the DB that are not longer in the global list
@@ -559,11 +553,11 @@ class SmartNodeList(object):
 
         dbCount = self.db.getNodeCount()
 
-        if dbCount > len(nodes):
+        if dbCount > len(rpcNodes):
 
             removedNodes = []
 
-            logger.warning("Unequal node count - DB {}, CLI {}".format(dbCount,len(nodes)))
+            logger.warning("Unequal node count - DB {}, CLI {}".format(dbCount,len(rpcNodes)))
 
             dbNodes = self.db.getNodes(['collateral'])
 
@@ -575,9 +569,9 @@ class SmartNodeList(object):
                     logger.info("Remove node {}".format(dbNode))
                     removedNodes.append(dbNode['collateral'])
                     self.db.deleteNode(collateral)
-                    self.nodeList.pop(collateral,None)
+                    self.nodes.pop(collateral,None)
 
-            if len(removedNodes) != (dbCount - len(nodes)):
+            if len(removedNodes) != (dbCount - len(rpcNodes)):
                 logger.warning("Remove nodes - something messed up.")
 
             if self.networkCB:
@@ -590,8 +584,8 @@ class SmartNodeList(object):
         #
         ####
 
-        nodes90024 = list(filter(lambda x: x.protocol == 90024, self.nodeList.values()))
-        nodes90025 = list(filter(lambda x: x.protocol == 90025, self.nodeList.values()))
+        nodes90024 = list(filter(lambda x: x.protocol == 90024, self.nodes.values()))
+        nodes90025 = list(filter(lambda x: x.protocol == 90025, self.nodes.values()))
 
         self.protocol_90024 = len(nodes90024)
         self.protocol_90025 = len(nodes90025)
@@ -610,7 +604,7 @@ class SmartNodeList(object):
 
             self.lastPaidVec = []
 
-            for collateral, node in self.nodeList.items():
+            for collateral, node in self.nodes.items():
 
                 if not upgradeMode and node.activeSeconds < self.minimumUptime():# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L561
                     node.updatePosition(POS_TOO_NEW)
@@ -646,7 +640,7 @@ class SmartNodeList(object):
         value = 0
         for lastPaid in self.lastPaidVec:
             value +=1
-            self.nodeList[lastPaid.transaction].updatePosition(value)
+            self.nodes[lastPaid.transaction].updatePosition(value)
 
         logger.info("calculatePositions done")
 
@@ -678,10 +672,10 @@ class SmartNodeList(object):
 
             collateral = Transaction.fromRaw(key)
 
-            if collateral not in self.nodeList:
+            if collateral not in self.nodes:
                 logger.error("Could not assign rank, node not available {}".format(key))
             else:
-                self.nodeList[collateral].updateRank(data)
+                self.nodes[collateral].updateRank(data)
 
         return True
 
@@ -692,7 +686,7 @@ class SmartNodeList(object):
         elif protocol == 90025:
             return self.protocol_90025
         else:
-            return len(self.nodeList)
+            return len(self.nodes)
 
     def protocolRequirement(self):
 
@@ -728,7 +722,7 @@ class SmartNodeList(object):
         # Minimum required nodes to continue with normal mode
         requiredNodes = int(self.enabledWithMinProtocol() / 3)
         # Get the max active seconds to determine a start point
-        currentCheckTime = max(list(map(lambda x: x.activeSeconds if x.protocol == 90025 and x.status == 'ENABLED' else 0, self.nodeList.values())))
+        currentCheckTime = max(list(map(lambda x: x.activeSeconds if x.protocol == 90025 and x.status == 'ENABLED' else 0, self.nodes.values())))
         logger.debug("Maximum uptime {}".format(currentCheckTime))
         # Start value
         step = currentCheckTime * 0.5
@@ -747,7 +741,7 @@ class SmartNodeList(object):
             calcCount = len(list(filter(lambda x: x.protocol == self.protocolRequirement() and\
                                                   x.status == 'ENABLED' and\
                                                   (self.lastBlock - x.collateral.block) >= self.enabledWithMinProtocol() and\
-                                                  x.activeSeconds > currentCheckTime, self.nodeList.values() )))
+                                                  x.activeSeconds > currentCheckTime, self.nodes.values() )))
 
             logger.debug("Current count: {}".format(calcCount))
             logger.debug("Current time: {}".format(currentCheckTime))
@@ -780,22 +774,22 @@ class SmartNodeList(object):
         if not ':9678' in ip:
             ip += ":9678"
 
-        nodes = list(filter(lambda x: x.ip == ip, self.nodeList.values()))
+        filtered = list(filter(lambda x: x.ip == ip, self.nodes.values()))
 
-        if len(nodes) == 1:
-            return nodes[0]
+        if len(filtered) == 1:
+            return filtered[0]
 
         return None
 
     def getNodesByPayee(self, payee):
-        return list(filter(lambda x: x.payee == payee, self.nodeList.values()))
+        return list(filter(lambda x: x.payee == payee, self.nodes.values()))
 
     def getNodeCountForProtocol(self, protocol):
         return self.db.getNodeCount('protocol={}'.format(protocol))
 
     def getNodes(self, collaterals):
 
-        nodes = []
+        filtered = []
 
         for c in collaterals:
 
@@ -807,10 +801,10 @@ class SmartNodeList(object):
                 collateral = Transaction.fromString(c)
                 logger.debug("collateral from string ")
 
-            if collateral in self.nodeList:
-                nodes.append(self.nodeList[collateral])
+            if collateral in self.nodes:
+                filtered.append(self.nodes[collateral])
 
-        return nodes
+        return filtered
 
     def lookup(self, ip):
 

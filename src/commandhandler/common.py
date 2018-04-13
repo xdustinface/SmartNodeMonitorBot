@@ -51,42 +51,40 @@ def info(bot, update):
 
     response = messages.markdown("<u><b>SmartNode Network<b><u>\n\n",bot.messenger)
 
-    if bot.nodeList.synced() and bot.nodeList.lastBlock:
+    with bot.nodeList as nodeList:
 
-        bot.nodeList.acquire()
+        if nodeList.synced() and nodeList.lastBlock:
 
-        lastBlock = bot.nodeList.lastBlock
-        created = bot.nodeList.count()
-        enabled = bot.nodeList.enabled()
-        qualifiedNormal = bot.nodeList.qualifiedNormal
-        qualifiedUpgrade = bot.nodeList.qualifiedUpgrade
-        upgradeModeDuration = bot.nodeList.remainingUpgradeModeDuration
-        protocolRequirement = bot.nodeList.protocolRequirement()
-        protocol90024 = bot.nodeList.count(90024)
-        protocol90025 = bot.nodeList.count(90025)
-        initialWait = bot.nodeList.minimumUptime()
-        aberration = bot.aberration
+            lastBlock = nodeList.lastBlock
+            created = nodeList.count()
+            enabled = nodeList.enabled()
+            qualifiedNormal = nodeList.qualifiedNormal
+            qualifiedUpgrade = nodeList.qualifiedUpgrade
+            upgradeModeDuration = nodeList.remainingUpgradeModeDuration
+            protocolRequirement = nodeList.protocolRequirement()
+            protocol90024 = nodeList.count(90024)
+            protocol90025 = nodeList.count(90025)
+            initialWait = nodeList.minimumUptime()
+            aberration = bot.aberration
 
-        if upgradeModeDuration:
-            upgradeModeDuration = util.secondsToText(upgradeModeDuration)
+            if upgradeModeDuration:
+                upgradeModeDuration = util.secondsToText(upgradeModeDuration)
 
-        bot.nodeList.release()
+            response += messages.networkState(bot.messenger,
+                                              lastBlock,
+                                              created,
+                                              enabled,
+                                              qualifiedNormal,
+                                              qualifiedUpgrade,
+                                              upgradeModeDuration,
+                                              protocolRequirement,
+                                              protocol90024,
+                                              protocol90025,
+                                              util.secondsToText(initialWait),
+                                              aberration)
 
-        response += messages.networkState(bot.messenger,
-                                          lastBlock,
-                                          created,
-                                          enabled,
-                                          qualifiedNormal,
-                                          qualifiedUpgrade,
-                                          upgradeModeDuration,
-                                          protocolRequirement,
-                                          protocol90024,
-                                          protocol90025,
-                                          util.secondsToText(initialWait),
-                                          aberration)
-
-    else:
-        response += "*Sorry, the bot is currently not synced with the network. Try it again in few minutes...*"
+        else:
+            response += "*Sorry, the bot is currently not synced with the network. Try it again in few minutes...*"
 
     return response
 
@@ -103,8 +101,10 @@ def networkUpdate(bot, ids, added):
     else:
         response += "{} node{} left us!\n\n".format(abs(count),"s" if count < 1 else "")
 
-    response += messages.markdown("We have <b>{}<b> created nodes now!\n\n".format(bot.nodeList.count()),bot.messenger)
-    response += messages.markdown("<b>{}<b> of them are enabled.".format(bot.nodeList.enabled()), bot.messenger)
+    with bot.nodeList as nodeList:
+
+        response += messages.markdown("We have <b>{}<b> created nodes now!\n\n".format(nodeList.count()),bot.messenger)
+        response += messages.markdown("<b>{}<b> of them are enabled.".format(nodeList.enabled()), bot.messenger)
 
     return response
 

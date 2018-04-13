@@ -133,38 +133,30 @@ class SmartNodeBotDiscord(object):
         # Start its task and leave it
         self.nodeList.start()
 
-        while not self.nodeList.running:
-            time.sleep(1)
-            logger.info("Init: NodeList")
-
         logger.info("Ready: NodeList")
 
-        # Lock the nodelist since we iterate over all nodes
-        self.nodeList.acquire()
+        with self.nodeList as nodeList:
 
-        # Update the sources where the blocks are assigned to the nodelist
-        for node in self.nodeList.nodeList.values():
+            # Update the sources where the blocks are assigned to the nodelist
+            for node in nodeList.nodes.values():
 
-            if node.lastPaidBlock <= 0:
-                continue
+                if node.lastPaidBlock <= 0:
+                    continue
 
-            reward = self.rewardList.getReward(node.lastPaidBlock)
+                reward = self.rewardList.getReward(node.lastPaidBlock)
 
-            if not reward:
-                continue
+                if not reward:
+                    continue
 
-            if reward.source == 1:
-                continue
+                if reward.source == 1:
+                    continue
 
-            reward = SNReward(block=node.lastPaidBlock,
-                              payee = node.payee,
-                              txtime=node.lastPaidTime,
-                              source=1)
+                reward = SNReward(block=node.lastPaidBlock,
+                                  payee = node.payee,
+                                  txtime=node.lastPaidTime,
+                                  source=1)
 
-            self.rewardList.updateSource(reward)
-
-        # And finally release it!
-        self.nodeList.release()
+                self.rewardList.updateSource(reward)
 
     ######
     # Discord api coroutine which gets called when a new message has been
