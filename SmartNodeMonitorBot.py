@@ -37,8 +37,6 @@ def main(argv):
     checkConfig(config, 'bot','token')
     checkConfig(config, 'bot','app')
     checkConfig(config, 'general','loglevel')
-    checkConfig(config, 'general','admin')
-    checkConfig(config, 'general','password')
     checkConfig(config, 'general','githubuser')
     checkConfig(config, 'general','githubpassword')
     checkConfig(config, 'general','environment')
@@ -88,8 +86,19 @@ def main(argv):
     # Load the smartnodes database
     nodedb = database.NodeDatabase(directory + '/nodes.db')
 
-    admin = config.get('general','admin')
-    password = config.get('general','password')
+    admins = []
+    password = None
+
+    try:
+        admins = config.get('optional','admins').split(',')
+    except:
+        pass
+
+    try:
+        password = config.get('optional','password')
+    except:
+        pass
+
     githubUser = config.get('general','githubuser')
     githubPassword = config.get('general','githubpassword')
 
@@ -102,9 +111,9 @@ def main(argv):
     nodeBot = None
 
     if config.get('bot', 'app') == 'telegram':
-        nodeBot = telegram.SmartNodeBotTelegram(config.get('bot','token'), admin, password, botdb, nodeList, rewardList)
+        nodeBot = telegram.SmartNodeBotTelegram(config.get('bot','token'), admins, password, botdb, nodeList, rewardList)
     elif config.get('bot', 'app') == 'discord':
-        nodeBot = discord.SmartNodeBotDiscord(config.get('bot','token'), admin, password, botdb, nodeList, rewardList)
+        nodeBot = discord.SmartNodeBotDiscord(config.get('bot','token'), admins, password, botdb, nodeList, rewardList)
     else:
         sys.exit("You need to set 'telegram' or 'discord' as 'app' in the configfile.")
 

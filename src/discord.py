@@ -23,7 +23,7 @@ logger = logging.getLogger("bot")
 
 class SmartNodeBotDiscord(object):
 
-    def __init__(self, botToken, admin, password, db, nodeList, rewardList):
+    def __init__(self, botToken, admins, password, db, nodeList, rewardList):
 
         # Currently only used for markdown
         self.messenger = "discord"
@@ -50,7 +50,7 @@ class SmartNodeBotDiscord(object):
         # Store the admin password
         self.password = password
         # Store the admin user
-        self.admin = admin
+        self.admins = admins
         # Semphore to lock the balance check list.
         self.balanceSem = threading.Lock()
 
@@ -289,20 +289,31 @@ class SmartNodeBotDiscord(object):
             # Admin command got fired in a public chat
             if isinstance(message.author, discord.Member):
                 # Just send the unknown command message and jump out
-                await self.sendMessage(receiver, (message.author.mention + ", " + common.unknown(self)))
+                await self.sendMessage(receiver, (message.author.mention + ", " + commandhandler.unknown(self)))
                 logger.info("Admin only, public")
                 return
 
+            def tryAdmin(message, args):
+
+                if message.author.id in self.admins:
+
+                    if self.password:
+                        if len(args) >= 1 and args[0] == self.password:
+                            return True
+                    else:
+                        return True
+
+                return False
+
             # Admin command got fired from an unauthorized user
-            if int(message.author.id) == int(self.admin) and\
-                len(args) >= 1 and args[0] == self.password:
+            if tryAdmin(message, args):
                 receiver = message.author
             else:
                 logger.info("Admin only, other")
-
                 # Just send the unknown command message and jump out
                 await self.sendMessage(receiver, (message.author.mention + ", " + common.unknown(self)))
                 return
+
 
         ### Common command handler ###
         if command == 'info':
@@ -581,7 +592,10 @@ class SmartNodeBotDiscord(object):
     ######
     def adminCB(self, message):
 
-        admin = self.findMember(self.admin)
+        if not len(self.admins):
+            return
+
+        admin = self.findMember(self.admins[0])
 
         if admin:
             asyncio.run_coroutine_threadsafe(self.sendMessage(admin, message), loop=self.client.loop)

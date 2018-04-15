@@ -124,9 +124,8 @@ def help(messenger):
                 "<cb>balance<ca> - List the SMART balances of your SmartNodes\n"
                 "<cb>detail<ca> - List all details of your SmartNodes\n"
                 "<cb>nodes<ca> - List only the status and last payments of your nodes\n"
-                "<cb>top<ca> <b>:filter<b> - List only the eligible nodes in the payout zone (Top 10% of the queue) per default. You can use the optional <b>:filter<b> argument to list other ranges (10 - 100).\n"
-                "  <b>Examples<b>: <cb>top 20<ca> Will show you all your nodes in the top 20% of the queue - \n"
-                "                  <cb>top 40<ca> Will show you all your nodes in the top 40% of the queue - \n"
+                "<cb>top<ca> <b>:filter<b> - List only the eligible nodes in the payout zone (Top 10% of the queue) per default. You can use the optional <b>:filter<b> argument to list other ranges (10 - 100)."
+                " <b>Examples<b>: <cb>top 20<ca> For the top 20% of the queue, <cb>top 40<ca> For the top 40%.\n"
                 "<cb>history<ca> - List information about past payouts of your SmartNodes\n\n")
 
     if messenger == 'discord':
