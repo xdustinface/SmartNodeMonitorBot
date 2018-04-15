@@ -115,15 +115,16 @@ def help(messenger):
                 "<cb>network<ca> <b>:enabled<b> - Set :enabled to 0 to disable or to 1 to enable network notifications\n\n"
                 "<cb>me<ca> - List your user info and notification states\n"
                 "<cb>username<ca> <b>:newname<b> - Change your username to :newname\n\n"
-                "<b>Node commands<b>\n\n"
+                "<b>Node configuration<b>\n\n"
                 "<cb>add<ca> <b>ip0;name0 ip1;name1 ... ipN;nameN<b> - Add one or multiple nodes. Use a list of ip;name pairs as arguments.\n"
                 "  <b>Example<b>: add 23.123.213.11;Node1 22.122.212.12;Node2\n"
                 "<cb>update<ca> <b>:ip :newname<b> - Change the name of a node with its IP-Address\n"
                 "<cb>remove<ca> <b>:ip<b> - Remove one of your nodes with its IP-Address\n"
+                "<b>Node review<b>\n\n"
                 "<cb>balance<ca> - List the SMART balances of your SmartNodes\n"
                 "<cb>detail<ca> - List all details of your SmartNodes\n"
                 "<cb>nodes<ca> - List only the status and last payments of your nodes\n"
-                "<cb>top<ca> <b>:filter<b> - List only the eligible nodes in the payout zone (Top 10% of the queue) per default. You can use the optional <b>:filter<b> argument to list other ranges (0 - 100).\n"
+                "<cb>top<ca> <b>:filter<b> - List only the eligible nodes in the payout zone (Top 10% of the queue) per default. You can use the optional <b>:filter<b> argument to list other ranges (10 - 100).\n"
                 "  <b>Examples<b>: <cb>top 20<ca> Will show you all your nodes in the top 20% of the queue - \n"
                 "                  <cb>top 40<ca> Will show you all your nodes in the top 40% of the queue - \n"
                 "<cb>history<ca> - List information about past payouts of your SmartNodes\n\n")
@@ -291,7 +292,6 @@ def multiplePayeeWarning(messenger, payee, count):
 
     return markdown(response, messenger)
 
-
 ############################################################
 #                     Error messages                       #
 ############################################################
@@ -352,3 +352,14 @@ def lookupArgumentRequiredError(messenger):
 
 def lookupError(messenger, ip):
     return markdown("<b>ERROR<b>: Could not check ip {}\n".format(ip),messenger)
+
+############################################################
+#                      FAQ messages                        #
+############################################################
+def faqPosition(messenger):
+
+    return ""
+
+def faqInitialWait(messenger):
+
+    return ""

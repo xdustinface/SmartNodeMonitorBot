@@ -46,19 +46,24 @@ def secondsToText(secs):
 
 def crossMessengerSplit(obj):
 
-    result = {'user': None, 'name': None, 'chat':None}
+    result = {'user': None, 'name': None, 'chat':None, 'public':False}
 
     if isinstance(obj, telegram.update.Update):
         #Telegram
         result['user'] = obj.message.from_user.id
         result['name'] = obj.message.from_user.name
         result['chat'] = obj.message.chat_id
+    elif isinstance(obj, discord.Member) or \
+         isinstance(obj, discord.User):
+        result['user'] = obj.id
+        result['name'] = obj.name
     elif isinstance(obj.author, discord.Member) or \
          isinstance(obj.author, discord.User):
         #Discord public/private message
         result['user'] = obj.author.id
         result['name'] = obj.author.name
         result['chat'] = obj.channel.id
+        result['public'] = isinstance(obj.author, discord.Member)
 
     return result
 
