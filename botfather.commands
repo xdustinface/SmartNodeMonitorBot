@@ -1,8 +1,12 @@
 help - Print help text
 info - Print the current status of the SmartNode network
+faq - Print the frequently asked question
 detail - List all details of your nodes
 nodes - List the status and last payments of your nodes
 balance - Print the SMART balances of your SmartNodes
+history - Print the past payouts of your SmartNodes
+top - Print the top X percent of your nodes in terms of position
+lookup - Check the payout requirements of one or multiple nodes by their IP's
 status - Enable/Disable node status update notifications
 reward - Enable/Disable node reward notifications
 timeout - Enable/Disable node timeout notifications

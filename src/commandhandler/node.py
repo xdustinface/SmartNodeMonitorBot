@@ -1,4 +1,26 @@
-#!/usr/bin/env python3
+##
+# Part of `SmartNodeMonitorBot`
+#
+# Copyright 2018 dustinface
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+##
 
 import logging
 import time
@@ -368,7 +390,7 @@ def history(bot, update):
     userId = userInfo['user'] if 'user' in userInfo else None
     userName = userInfo['name'] if 'name' in userInfo else None
 
-    logger.debug("nodes - user: {}".format(userId))
+    logger.debug("history - user: {}".format(userId))
 
     nodesFound = False
 
@@ -448,7 +470,9 @@ def history(bot, update):
                 response += "\n\n"
 
             response += "<u><b>Total stats<b><u>\n\n"
-            response += "<b>First payout<b> {} ago\n\n".format(util.secondsToText( time.time() - totalFirst ) )
+
+            if totalFirst:
+                response += "<b>First payout<b> {} ago\n\n".format(util.secondsToText( time.time() - totalFirst ) )
 
             response += "<b>Profit (30 days)<b> {:,} SMART\n".format(round(totalProfit30Days,1))
             response += "<b>SMART/day (30 days)<b> {:,} SMART\n\n".format(round(totalProfit30Days/30,1))
@@ -463,6 +487,70 @@ def history(bot, update):
 
     return messages.markdown(response, bot.messenger)
 
+
+######
+# Command handler for printing a shortened list sorted by positions for all nodes
+# of the user
+#
+# Command: nodes
+#
+# Only called by the bot instance
+######
+def top(bot, update, args):
+
+    response = "<u><b>Top nodes<b><u>\n\n"
+
+    userInfo = util.crossMessengerSplit(update)
+    userId = userInfo['user'] if 'user' in userInfo else None
+    userName = userInfo['name'] if 'name' in userInfo else None
+
+    logger.debug("nodes - user: {}".format(userId))
+
+    nodesFound = False
+
+    user = bot.database.getUser(userId)
+    userNodes = bot.database.getAllNodes(userId)
+
+    if user == None or userNodes == None or len(userNodes) == 0:
+
+       response +=  messages.nodesRequired(bot.messenger)
+
+    else:
+
+        invalidFilterValueMsg = "<b>ERROR<b>: Invalid filter value: <b>{}<b>! Valid range: 10 - 100\n\n"
+        topPercent = 10
+
+        if len(args) >= 1:
+
+            if util.isInt(args[0]) and\
+               int(args[0]) >= 10 and int(args[0]) <= 100:
+                topPercent = int(args[0])
+            else:
+                response += invalidFilterValueMsg.format(messages.removeMarkdown(args[0]))
+
+        response += "<b>Filter<b> {}%\n\n".format(topPercent)
+
+        with bot.nodeList as nodeList:
+
+            topX = nodeList.enabledWithMinProtocol() * (topPercent/100)
+            collaterals = list(map(lambda x: x['collateral'],userNodes))
+            nodes = nodeList.getNodes(collaterals)
+            topNodes = list(filter(lambda x: x.position <= topX and x.position > 0, nodes))
+            minimumUptime = nodeList.minimumUptime()
+
+            if len(topNodes):
+                for smartnode in sorted(topNodes, key=lambda x: x.position if x.position > 0 else 100000):
+
+                    userNode = bot.database.getNodes(smartnode.collateral, user['id'])
+
+                    response += "<b>" + userNode['name'] + "<b>"
+                    response += "\nPosition " + messages.markdown(smartnode.positionString(minimumUptime),bot.messenger)
+                    response += "\n" + messages.link(bot.messenger, 'https://explorer3.smartcash.cc/address/{}'.format(smartnode.payee),'Open the explorer!')
+                    response += "\n\n"
+            else:
+                response += "<b>You have currently no nodes in the top {}% of the queue.<b>\n\n".format(topPercent)
+
+    return messages.markdown(response, bot.messenger)
 
 ######
 # Command handler for printing the balances for all nodes
@@ -550,7 +638,7 @@ def lookup(bot, userId, args):
                 for l in lookups:
                     response += l
         else:
-            response += "<b>Sorry, the bot is currently not synced with the network. Try it again in few minutes...<b>"
+            response += messages.notSynced(bot.messenger)
 
     return response
 

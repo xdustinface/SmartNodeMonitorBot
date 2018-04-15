@@ -1,5 +1,26 @@
-#!/usr/bin/env python3
-
+##
+# Part of `SmartNodeMonitorBot`
+#
+# Copyright 2018 dustinface
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+##
 import logging
 import threading
 import time
@@ -12,6 +33,8 @@ from fuzzywuzzy import process as fuzzy
 
 from src import util
 from src import messages
+from src import faq
+
 from src.commandhandler import node
 from src.commandhandler import user
 from src.commandhandler import common
@@ -27,6 +50,7 @@ class SmartNodeBotDiscord(object):
 
         # Currently only used for markdown
         self.messenger = "discord"
+        self.running = False
 
         self.client = discord.Client()
         self.client.on_ready = self.on_ready
@@ -53,7 +77,7 @@ class SmartNodeBotDiscord(object):
         self.admins = admins
         # Semphore to lock the balance check list.
         self.balanceSem = threading.Lock()
-
+        # Reward aberration
         self.aberration = 0
 
     def runClient(self):
@@ -70,8 +94,11 @@ class SmartNodeBotDiscord(object):
                 return
             except Exception as e:
                 logger.error("Bot crashed?! ", e)
+                self.adminCB("**Bot crashed** {}".format(str(e)))
 
-            time.sleep(600)
+            asyncio.run_coroutine_threadsafe(self.client.close(), loop=loop)
+
+            time.sleep(10)
 
     ######
     # Starts the bot and block until the programm gets stopped.
@@ -81,6 +108,8 @@ class SmartNodeBotDiscord(object):
         self.runClient()
 
     def stop(self):
+
+        asyncio.run_coroutine_threadsafe(self.client.close(), loop=self.client.loop)
 
         self.rewardList.stop()
         self.nodeList.stop()
@@ -118,53 +147,57 @@ class SmartNodeBotDiscord(object):
         logger.info(self.client.user.id)
         logger.info('------')
 
-        # Advise the admin about the start.
-        self.adminCB("**Bot started**")
+        if not self.running:
+            self.running = True
 
-        # Start its task and leave it
-        self.rewardList.start()
+            # Advise the admin about the start.
+            self.adminCB("**Bot started**")
 
-        while not self.rewardList.running:
-            time.sleep(1)
-            logger.info("Init: RewardList")
+            with self.nodeList as nodeList:
 
-        logger.info("Ready: RewardList")
+                # Update the sources where the blocks are assigned to the nodelist
+                for node in nodeList.nodes.values():
 
-        # Start its task and leave it
-        self.nodeList.start()
+                    if node.lastPaidBlock <= 0:
+                        continue
 
-        logger.info("Ready: NodeList")
+                    reward = self.rewardList.getReward(node.lastPaidBlock)
 
-        with self.nodeList as nodeList:
+                    if not reward:
 
-            # Update the sources where the blocks are assigned to the nodelist
-            for node in nodeList.nodes.values():
+                        reward = SNReward(block=node.lastPaidBlock,
+                                          payee = node.payee,
+                                          txtime=node.lastPaidTime,
+                                          source=1)
 
-                if node.lastPaidBlock <= 0:
-                    continue
+                        self.rewardList.addReward(reward)
+                        continue
 
-                reward = self.rewardList.getReward(node.lastPaidBlock)
 
-                if not reward:
+                    if reward.source == 1:
+                        continue
 
                     reward = SNReward(block=node.lastPaidBlock,
                                       payee = node.payee,
                                       txtime=node.lastPaidTime,
                                       source=1)
 
-                    self.rewardList.addReward(reward)
-                    continue
+                    self.rewardList.updateSource(reward)
 
+                start = int(time.time() - 43200) # 12 hours of collecting
+                total = self.rewardList.getRewardCount(start = start)
+                nList = self.rewardList.getRewardCount(start = start, source=1)
+                if nList and total:
+                    self.aberration = 1 - ( nList / total)
 
-                if reward.source == 1:
-                    continue
+                # Start the rewardlist updates
+                self.rewardList.start()
+                # Start the nodelist updates
+                nodeList.start()
 
-                reward = SNReward(block=node.lastPaidBlock,
-                                  payee = node.payee,
-                                  txtime=node.lastPaidTime,
-                                  source=1)
-
-                self.rewardList.updateSource(reward)
+        else:
+            # Advise the admin about the reconnect
+            self.adminCB("**Bot reconnected**")
 
     ######
     # Discord api coroutine which gets called when a new message has been
@@ -254,11 +287,11 @@ class SmartNodeBotDiscord(object):
         ####
         commands = {
                     # Common commands
-                    'help':0, 'info':0,
+                    'help':0, 'info':0, 'faq':0,
                     # User commmands
                     'me':1,'status':1,'reward':1,'network':1, 'timeout':1,
                     # Node commands
-                    'add':1,'update':1,'remove':1,'nodes':1, 'detail':1,'history':1, 'balance':1, 'lookup':1,
+                    'add':1,'update':1,'remove':1,'nodes':1, 'detail':1,'history':1, 'balance':1, 'lookup':1, 'top':1,
                     # Admin commands
                     'stats':2, 'broadcast':2, 'payouts':2
         }
@@ -319,6 +352,9 @@ class SmartNodeBotDiscord(object):
         if command == 'info':
             response = common.info(self,message)
             await self.sendMessage(receiver, response)
+        elif command == 'faq':
+            response = faq.parse(self, args)
+            await self.sendMessage(receiver, response)
         ### Node command handler ###
         elif command == 'add':
             response = node.nodeAdd(self,message,args)
@@ -337,6 +373,9 @@ class SmartNodeBotDiscord(object):
             await self.sendMessage(receiver, response)
         elif command == 'history':
             response = node.history(self,message)
+            await self.sendMessage(receiver, response)
+        elif command == 'top':
+            response = node.top(self,message, args)
             await self.sendMessage(receiver, response)
         elif command == 'balance':
 

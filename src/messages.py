@@ -1,4 +1,26 @@
-#!/usr/bin/env python3
+##
+# Part of `SmartNodeMonitorBot`
+#
+# Copyright 2018 dustinface
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+##
 
 def splitMessage(text, split, maximum):
 
@@ -57,7 +79,6 @@ def markdown(text,messenger):
         msg = msg.replace('<u>','')
         msg = msg.replace('<cb>','/')
         msg = msg.replace('<ca>','')
-        msg = msg.replace('<c>','`')
     elif messenger == 'discord':
         msg = msg.replace('<u>','__')
         msg = msg.replace('<b>','**')
@@ -106,8 +127,8 @@ def help(messenger):
                 "occured event!\n\n"
                 "<b>Common commands<b>\n\n"
                 "<cb>help<ca> - Print this help\n"
-                "<cb>info<ca> - Print the current status of the SmartNode network\n\n"
-                "<cb>lookup<ca> <b>ip0 .. ipN<b> - Check the payout requirements of one or multiple nodes\n\n"
+                "<cb>info<ca> - Print the current status of the SmartNode network\n"
+                "<cb>faq<ca> - Print the frequently asked question\n\n"
                 "<b>User commands<b>\n\n"
                 "<cb>status<ca> <b>:enabled<b> - Set :enabled to 0 to disable or to 1 to receive a notification when one of your node's status changed.\n"
                 "<cb>reward<ca> <b>:enabled<b> - Set :enabled to 0 to disable or to 1 to receive a notification each time one of your nodes received a reward.\n"
@@ -119,8 +140,9 @@ def help(messenger):
                 "<cb>add<ca> <b>ip0;name0 ip1;name1 ... ipN;nameN<b> - Add one or multiple nodes. Use a list of ip;name pairs as arguments.\n"
                 "  <b>Example<b>: add 23.123.213.11;Node1 22.122.212.12;Node2\n"
                 "<cb>update<ca> <b>:ip :newname<b> - Change the name of a node with its IP-Address\n"
-                "<cb>remove<ca> <b>:ip<b> - Remove one of your nodes with its IP-Address\n"
+                "<cb>remove<ca> <b>:ip<b> - Remove one of your nodes with its IP-Address\n\n"
                 "<b>Node review<b>\n\n"
+                "<cb>lookup<ca> <b>ip0 .. ipN<b> - Check the payout requirements of one or multiple nodes\n"
                 "<cb>balance<ca> - List the SMART balances of your SmartNodes\n"
                 "<cb>detail<ca> - List all details of your SmartNodes\n"
                 "<cb>nodes<ca> - List only the status and last payments of your nodes\n"
@@ -290,6 +312,9 @@ def multiplePayeeWarning(messenger, payee, count):
                 "<u><b>You should use a unique payee address for each node!<b><u>").format(payee, count)
 
     return markdown(response, messenger)
+
+def notSynced(messenger):
+    return markdown("<b>Sorry, the bot is currently not synced with the network. Try it again later...<b>",messenger)
 
 ############################################################
 #                     Error messages                       #
