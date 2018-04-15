@@ -235,7 +235,7 @@ class SmartNode(object):
 
         return "No payout yet."
 
-    def positionString(self, minimumUptime):
+    def positionString(self, minimumUptime, top10 = None):
 
         if self.position == POS_CALCULATING:
             return "Calculating..."
@@ -248,6 +248,8 @@ class SmartNode(object):
             return "Collateral too new!"
         elif self.position == POS_NOT_QUALIFIED:
             return "Not qualified!"
+        elif top10 and self.position <= top10:
+            return str(self.position) + " - <b>Payout zone<b>"
         else:
             return str(self.position)
 
@@ -593,16 +595,16 @@ class SmartNodeList(object):
 
             for collateral, node in self.nodes.items():
 
-                if not upgradeMode and node.activeSeconds < self.minimumUptime():# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L561
-                    node.updatePosition(POS_TOO_NEW)
+                if (self.lastBlock - node.collateral.block) < self.enabledWithMinProtocol():
+                    node.updatePosition(POS_COLLATERAL_AGE)
                 elif node.protocol < protocolRequirement:# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L545
                     node.updatePosition(POS_UPDATE_REQUIRED)
-                elif (self.lastBlock - node.collateral.block) < self.enabledWithMinProtocol():
-                    node.updatePosition(POS_COLLATERAL_AGE)
-                elif node.status == 'ENABLED': #https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L539
-                    self.lastPaidVec.append(LastPaid(node.lastPaidBlock, collateral))
-                else:
+                elif not upgradeMode and node.activeSeconds < self.minimumUptime():# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L561
+                    node.updatePosition(POS_TOO_NEW)
+                elif node.status != 'ENABLED': #https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L539
                     node.updatePosition(POS_NOT_QUALIFIED)
+                else:
+                    self.lastPaidVec.append(LastPaid(node.lastPaidBlock, collateral))
 
             if not upgradeMode and len(self.lastPaidVec) < (self.enabledWithMinProtocol() / 3):
                 self.qualifiedUpgrade = len(self.lastPaidVec)
