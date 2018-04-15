@@ -33,7 +33,7 @@ def checkUser(bot, message):
         result['added'] = True
 
         if bot.messenger == 'discord':
-            result['response'] += messages.welcome(bot.messenger)
+            result['response'] = messages.welcome(bot.messenger)
 
     return result
 
