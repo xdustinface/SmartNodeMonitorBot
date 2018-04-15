@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import logging
-from src import util
+from smartcash.util import ThreadedSQLite
 import threading
 import sqlite3 as sql
 
@@ -18,7 +18,7 @@ class BotDatabase(object):
 
     def __init__(self, dburi):
 
-        self.connection = util.ThreadedSQLite(dburi)
+        self.connection = ThreadedSQLite(dburi)
 
         if self.isEmpty():
             self.reset()
@@ -192,7 +192,7 @@ class BotDatabase(object):
     def deleteNodesWithId(self, collateral):
 
         collateral = str(collateral)
-        
+
         with self.connection as db:
             db.cursor.execute("DELETE FROM nodes WHERE collateral=?",[str(collateral)])
 
@@ -234,7 +234,7 @@ class NodeDatabase(object):
 
     def __init__(self, dburi):
 
-        self.connection = util.ThreadedSQLite(dburi)
+        self.connection = ThreadedSQLite(dburi)
 
         if self.isEmpty():
             self.reset()

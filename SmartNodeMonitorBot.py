@@ -8,7 +8,7 @@ import json
 from src import database
 from src import telegram
 from src import discord
-from src import util
+
 from src.smartnodes import SmartNodeList
 
 from smartcash.rpc import RPCConfig

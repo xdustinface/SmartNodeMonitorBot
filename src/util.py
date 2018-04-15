@@ -8,46 +8,6 @@ import re
 import telegram
 import discord
 
-class ThreadedSQLite(object):
-    def __init__(self, dburi):
-        self.lock = threading.Lock()
-        self.connection = sql.connect(dburi, check_same_thread=False)
-        self.connection.row_factory = sql.Row
-        self.cursor = None
-    def __enter__(self):
-        self.lock.acquire()
-        self.cursor = self.connection.cursor()
-        return self
-    def __exit__(self, type, value, traceback):
-        self.connection.commit()
-        if self.cursor is not None:
-            self.cursor.close()
-            self.cursor = None
-            
-        self.lock.release()
-
-class RepeatingTimer(object):
-
-    def __init__(self, interval, f, *args, **kwargs):
-        self.interval = interval
-        self.f = f
-        self.args = args
-        self.kwargs = kwargs
-
-        self.timer = None
-
-    def callback(self):
-        self.f(*self.args, **self.kwargs)
-        self.start()
-
-    def cancel(self):
-        if self.timer != None:
-            self.timer.cancel()
-
-    def start(self):
-        self.timer = threading.Timer(self.interval, self.callback)
-        self.timer.start()
-
 def validateName( name ):
 
     if re.match('^[a-zA-Z0-9.,#-]{1,20}$',name):

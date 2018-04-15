@@ -567,8 +567,18 @@ def handleNodeUpdate(bot, update, node):
                           source=1,
                           meta=2)
 
-        bot.rewardList.updateSource(reward)
+        dbReward = bot.rewardList.getReward(node.lastPaidBlock)
 
+        if not dbReward:
+
+            reward = SNReward(block=node.lastPaidBlock,
+                              payee = node.payee,
+                              txtime=node.lastPaidTime,
+                              source=1)
+
+            bot.rewardList.addReward(reward)
+        else:
+            bot.rewardList.updateSource(reward)
 
     # Create notification response messages!
 
