@@ -36,10 +36,14 @@ from telegram.ext import Updater
 
 from src import util
 from src import messages
+from src import faq as questions
+
 from src.commandhandler import node
 from src.commandhandler import user
 from src.commandhandler import common
 from src.smartexplorer import WebExplorer
+
+from smartcash.rewardlist import SNReward
 
 logger = logging.getLogger("bot")
 
@@ -297,7 +301,7 @@ class MessagingMachine(object):
 
 class SmartNodeBotTelegram(object):
 
-    def __init__(self, botToken, admin, password, db, nodeList):
+    def __init__(self, botToken, admins, password, db, nodeList, rewardList):
 
         # Currently only used for markdown
         self.messenger = "telegram"
@@ -316,11 +320,12 @@ class SmartNodeBotTelegram(object):
         # Store and setup the nodereward list
         self.rewardList = rewardList
         self.rewardList.rewardCB = self.rewardCB
+        self.rewardList.errorCB = self.rewardListErrorCB
         # Create the WebExplorer
         self.explorer = WebExplorer(self.balancesCB)
         self.balanceChecks = {}
         # Store the admins id
-        self.admin = admin
+        self.admins = admins
         # Store the admin password
         self.password = password
         # Create the message queue
@@ -339,6 +344,8 @@ class SmartNodeBotTelegram(object):
         dp.add_handler(CommandHandler('nodes', self.nodes))
         dp.add_handler(CommandHandler('balance', self.balance))
         dp.add_handler(CommandHandler('lookup', self.lookup, pass_args=True))
+        dp.add_handler(CommandHandler('history', self.history))
+        dp.add_handler(CommandHandler('top', self.top, pass_args=True))
 
         #### Setup user related handler ####
         dp.add_handler(CommandHandler('username', self.username, pass_args=True))
@@ -352,10 +359,12 @@ class SmartNodeBotTelegram(object):
         dp.add_handler(CommandHandler('start', self.started))
         dp.add_handler(CommandHandler('help', self.help))
         dp.add_handler(CommandHandler('info', self.info))
+        dp.add_handler(CommandHandler('faq', self.faq, pass_args=True))
 
         #### Setup admin handler, Not public ####
         dp.add_handler(CommandHandler('broadcast', self.broadcast, pass_args=True))
         dp.add_handler(CommandHandler('stats', self.stats, pass_args=True))
+        dp.add_handler(CommandHandler('payout', self.payout, pass_args=True))
         dp.add_handler(CommandHandler('loglevel', self.loglevel, pass_args=True))
         dp.add_handler(CommandHandler('settings', self.settings, pass_args=True))
 
@@ -368,13 +377,51 @@ class SmartNodeBotTelegram(object):
     ######
     def start(self):
         logger.info("Start!")
+
+        with self.nodeList as nodeList:
+
+            # Update the sources where the blocks are assigned to the nodelist
+            for node in nodeList.nodes.values():
+
+                if node.lastPaidBlock <= 0:
+                    continue
+
+                reward = self.rewardList.getReward(node.lastPaidBlock)
+
+                if not reward:
+
+                    reward = SNReward(block=node.lastPaidBlock,
+                                      payee = node.payee,
+                                      txtime=node.lastPaidTime,
+                                      source=1)
+
+                    self.rewardList.addReward(reward)
+                    continue
+
+
+                if reward.source == 1:
+                    continue
+
+                reward = SNReward(block=node.lastPaidBlock,
+                                  payee = node.payee,
+                                  txtime=node.lastPaidTime,
+                                  source=1)
+
+                self.rewardList.updateSource(reward)
+
+            start = int(time.time() - 43200) # 12 hours of collecting
+            total = self.rewardList.getRewardCount(start = start)
+            nList = self.rewardList.getRewardCount(start = start, source=1)
+            if nList and total:
+                self.aberration = 1 - ( nList / total)
+
+            # Start the rewardlist updates
+            self.rewardList.start()
+            # Start the nodelist updates
+            nodeList.start()
+
+        self.adminCB("*Bot Started*")
         self.updater.start_polling()
-
-        # Start its task and leave it
-        self.rewardList.start()
-
-        self.sendMessage(self.admin, "*Bot Started*")
-
         self.updater.idle()
 
     def isGroup(self, update):
@@ -395,9 +442,7 @@ class SmartNodeBotTelegram(object):
 
 
     def adminCheck(self, chatId, password):
-        logger.warning("adminCheck - {} == {}, {} == {}".format(self.admin, chatId, self.password, password))
-        return int(self.admin) == int(chatId) and self.password == password
-
+        return str(chatId) in self.admins and self.password == password
 
     ############################################################
     #                 Node handler calls                       #
@@ -431,6 +476,18 @@ class SmartNodeBotTelegram(object):
 
         if not self.isGroup(update):
             response = node.nodes(self, update)
+            self.sendMessage(update.message.chat_id, response,'\n\n')
+
+    def history(self, bot, update):
+
+        if not self.isGroup(update):
+            response = node.history(self, update)
+            self.sendMessage(update.message.chat_id, response,'\n\n')
+
+    def top(self, bot, update, args):
+
+        if not self.isGroup(update):
+            response = node.top(self, update, args)
             self.sendMessage(update.message.chat_id, response,'\n\n')
 
     def balance(self, bot, update):
@@ -524,8 +581,8 @@ class SmartNodeBotTelegram(object):
     ############################################################
 
     def started(self, bot, update):
-
-        self.sendMessage(update.message.chat_id, '**Welcome**\n\n' + messages.help(self.messenger))
+        response = common.checkUser(self, update)
+        self.sendMessage(update.message.chat_id, response['response'])
 
     def help(self, bot, update):
 
@@ -536,10 +593,17 @@ class SmartNodeBotTelegram(object):
         response = common.info( self, update )
         self.sendMessage(update.message.chat_id, response)
 
+    def faq(self, bot, update, args):
+
+        if not self.isGroup(update):
+            response = questions.parse(self, args)
+            self.sendMessage(update.message.chat_id, response,'\n\n')
+
     def broadcast(self, bot, update, args):
 
         if len(args) >= 2 and\
-           self.adminCheck(update.message.chat_id, args[0]):
+           self.adminCheck(update.message.chat_id, args[0]) and\
+           not self.isGroup(update):
 
             logger.warning("broadcast - access granted")
 
@@ -554,13 +618,14 @@ class SmartNodeBotTelegram(object):
     def stats(self, bot, update, args):
 
         if len(args) == 1 and\
-           self.adminCheck(update.message.chat_id, args[0]):
+           self.adminCheck(update.message.chat_id, args[0]) and\
+           not self.isGroup(update):
 
             logger.warning("stats - access granted")
 
             response = common.stats(self)
 
-            self.sendMessage(self.admin, response)
+            self.sendMessage(update.message.chat_id, response)
         else:
             response = common.unknown(self)
             self.sendMessage(update.message.chat_id, response)
@@ -568,13 +633,14 @@ class SmartNodeBotTelegram(object):
     def loglevel(self, bot, update, args):
 
         if len(args) >= 2 and\
-           self.adminCheck(update.message.chat_id, args[0]):
+           self.adminCheck(update.message.chat_id, args[0]) and\
+           not self.isGroup(update):
 
             logger.warning("loglevel - access granted")
 
             response = "*Loglevel*"
 
-            self.sendMessage(self.admin, response)
+            self.sendMessage(update.message.chat_id, response)
         else:
             response = common.unknown(self)
             self.sendMessage(update.message.chat_id, response)
@@ -582,13 +648,25 @@ class SmartNodeBotTelegram(object):
     def settings(self, bot, update, args):
 
         if len(args) == 1 and\
-           self.adminCheck(update.message.chat_id, args[0]):
+           self.adminCheck(update.message.chat_id, args[0]) and\
+           not self.isGroup(update):
 
             logger.warning("settings - access granted")
 
             response = "*Settings*"
 
-            self.sendMessage(self.admin, response)
+            self.sendMessage(update.message.chat_id, response)
+        else:
+            response = common.unknown(self)
+            self.sendMessage(update.message.chat_id, response)
+
+    def payout(self, bot, update, args):
+        if len(args) >= 1 and\
+           self.adminCheck(update.message.chat_id, args[0]) and\
+           not self.isGroup(update):
+
+            response = common.payouts(self, args[1:])
+            self.sendMessage(update.message.chat_id, response,'\n\n')
         else:
             response = common.unknown(self)
             self.sendMessage(update.message.chat_id, response)
@@ -651,6 +729,36 @@ class SmartNodeBotTelegram(object):
             for message in messages:
                 self.sendMessage(userId, message)
 
+    ######
+    # Callback for evaluating if someone in the database has won the reward
+    # and send messages to all chats with activated notifications
+    #
+    # Called by: SNRewardList from python-smartcash
+    #
+    ######
+    def rewardCB(self, reward, distance):
+
+        responses = node.handleReward(self, reward, distance)
+
+        for userId, messages in responses.items():
+
+            for message in messages:
+                self.sendMessage(userId, message)
+
+        start = int(time.time() - 43200) # 12 hours of collecting
+        total = self.rewardList.getRewardCount(start = start)
+        nList = self.rewardList.getRewardCount(start = start, source=1)
+        if nList and total:
+            self.aberration = 1 - ( nList / total)
+
+    ######
+    # Callback for SNRewardList errors
+    #
+    # Called by: SNRewardList from python-smartcash
+    #
+    ######
+    def rewardListErrorCB(self, error):
+        self.adminCB(str(error))
 
     ######
     # Callback for evaluating if someone has enabled network notifications
@@ -715,4 +823,6 @@ class SmartNodeBotTelegram(object):
     #
     ######
     def adminCB(self, message):
-        self.sendMessage(self.admin, message)
+
+        if len(self.admins):
+            self.sendMessage(int(self.admins[0]), message)

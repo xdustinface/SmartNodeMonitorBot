@@ -94,7 +94,6 @@ class SmartNodeBotDiscord(object):
                 return
             except Exception as e:
                 logger.error("Bot crashed?! ", e)
-                self.adminCB("**Bot crashed** {}".format(str(e)))
 
             asyncio.run_coroutine_threadsafe(self.client.close(), loop=loop)
 

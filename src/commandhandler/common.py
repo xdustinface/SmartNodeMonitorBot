@@ -58,6 +58,9 @@ def checkUser(bot, message):
         if bot.messenger == 'discord':
             result['response'] = messages.welcome(bot.messenger)
 
+    if bot.messenger == 'telegram':
+        result['response'] = messages.welcome(bot.messenger)
+
     return result
 
 

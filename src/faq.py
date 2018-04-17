@@ -182,8 +182,8 @@ def rewards(bot):
         "At this moment our blockchain is at the height <b>{}<b> that means"
         "\n\n```5000 x 143500 / {} * 0.1 => {} SMART per block```\n\n"
         "Each block one of the the nodes receives this reward. With the current "
-        "estimated payout interval of {} days you can expect roughly"
-        " {:,} SMART per month per SmartNode. This can vary a bit upwards and downwards though.\n\n"
+        "estimated payout interval of <b>{}<b> you can expect roughly"
+        " <b>{:,} SMART<b> per month per SmartNode. This can vary a bit upwards and downwards though.\n\n"
         "Due to the constant increase of the <c>blockHeight<c> of the SmartCash blockchain"
         " the rewards will decrease a little bit every 55 seconds."
         " Also the increase of the number of qualified nodes will increase the payout interval."
@@ -205,7 +205,7 @@ def status(bot):
     "blockcount. Run <c>smartcash-cli getinfo<c> on the VPS to see your current "
     "blockHeight at <c>blocks<c>, and compare it to the current blockHeight that "
     "you can see when you send me <cb>info<ca>\n\n"
-    "<b>Broadcast ip doesn't match external ip<b>\n\n"
+    "<b>Broadcast IP doesn't match external IP<b>\n\n"
     "Most likely culprit is a duplicate IP/genkey/txhash in the "
     "config file. Verify that all node entries in the <c>smartnode.conf<c> file "
     " have a unique IP/genkey/txhash+id. If your VPS has multiple IP's, adding "
@@ -233,8 +233,7 @@ faqs = {
              initial ),
     'rewards' : FAQ("What payouts can i expect from my nodes?",
              rewards ),
-    'status' : FAQ(("What should i do when my node is expired or is showing a "
-                    "different status from <c>Smartnode succesfully started<c>?"),
+    'status' : FAQ(("What should be done when a SmartNode is <b>not<b> successfully started?"),
              status )
 }
 

@@ -99,7 +99,7 @@ def link(messenger, link, text = ''):
     return msg
 
 def welcome(messenger):
-    message =  ":boom: <u><b>Welcome<b><u> :boom:\n\n"
+    message =  "💥 <u><b>Welcome<b><u> 💥\n\n"
     message += "I am a bot..you can use me to monitor your SmartNodes! This will allow you to "
     message += "subscribe notifications about downtimes, changes of your nodes's metrics "
     message += "or payouts your nodes received!\n\nTherefor you may want to add your"
@@ -114,8 +114,8 @@ def welcome(messenger):
     message += "  <b>-<b> <cb>balance<ca> To check your nodes SMART balances\n"
     message += "  <b>-<b> <cb>history<ca> To show information about your payout history\n\n"
     message += " To get a full list of the possible commands just send me <cb>help<ca>\n\n"
-    message += "If you want to support my creator, its @dustinface#6318 :v:\n\n"
-    message += ":coffee: & :beer: => <b>STsDhYJZZrVFCaA5FX2AYWP27noYo3RUjD<b>"
+    message += "If you want to support my creator, its @dustinface ✌️\n\n"
+    message += "☕️ & 🍺 => <b>STsDhYJZZrVFCaA5FX2AYWP27noYo3RUjD<b>"
 
     return markdown(message, messenger)
 
