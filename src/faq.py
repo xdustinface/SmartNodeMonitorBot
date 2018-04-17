@@ -172,7 +172,7 @@ def rewards(bot):
 
         payoutSeconds = top10Seconds + (3 * 24 * 60 * 60)
         payoutDays = payoutSeconds / 86400.0
-        interval = util.secondsToText(payoutSeconds)
+        interval = util.secondsToText(int(payoutSeconds))
         currentReward = round(5000.0 * 143500.0 / lastBlock * 0.1,1)
         perMonth = round((30.5 / payoutDays) * currentReward,1)
 
