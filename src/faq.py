@@ -93,7 +93,7 @@ def position(bot):
         "The position of your node represents the position in the queue. Once "
         "your node has a position <b>less<b> than (currently) <b>{}<b>"
         " it is in the <b>random payout zone<b> (top 10%).\n\n"
-        "The minimum position depends on the number of enabled nodes and will change "
+        "The minimum position depends on the number of enabled nodes and will change"
         " when the number of enabled nodes changes.\n\n"
         "Right now it takes <b>{}<b> to reach the payout zone.\n\n"
         "It's normal and to be expected that your nodes moves also backwards a "
@@ -156,6 +156,8 @@ def rewards(bot):
         if not nodeList.synced() or not nodeList.enabled():
             return messages.notSynced(bot.messenger)
 
+        enabled = nodeList.enabled()
+        minPosition = int(enabled * 0.1)
         qualified = nodeList.qualifiedNormal
         lastBlock = nodeList.lastBlock
 
@@ -168,9 +170,11 @@ def rewards(bot):
         if len(topNode) and topNode[0].lastPaidTime:
             top10Seconds = time.time() - topNode[0].lastPaidTime
 
-        interval = util.secondsToText(top10Seconds + (3 * 24 * 60 * 60))
+        payoutSeconds = top10Seconds + (3 * 24 * 60 * 60)
+        payoutDays = payoutSeconds / 86400.0
+        interval = util.secondsToText(payoutSeconds)
         currentReward = round(5000.0 * 143500.0 / lastBlock * 0.1,1)
-        perMonth = round((30.5 / interval) * currentReward,1)
+        perMonth = round((30.5 / payoutDays) * currentReward,1)
 
         return (
         "The SmartNode rewards are calculated by the following formula\n\n"
@@ -182,7 +186,7 @@ def rewards(bot):
         " {:,} SMART per month per SmartNode. This can vary a bit upwards and downwards though.\n\n"
         "Due to the constant increase of the <c>blockHeight<c> of the SmartCash blockchain"
         " the rewards will decrease a little bit every 55 seconds."
-        " Also the increase of the number of qualified nodes will descrease the payout interval."
+        " Also the increase of the number of qualified nodes will increase the payout interval."
         " As result your monthly payout will slightly decrease over the time.\n\n"
         "You can look at the chart in the link below to see the reward decrease "
         "for the first 4 years after the SmartNode launch.\n\n"
