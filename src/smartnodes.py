@@ -310,6 +310,7 @@ class SmartNodeList(object):
         self.nodes = {}
 
         self.syncedTime = -1
+        self.waitAfterSync = 1800
         self.chainSynced = False
         self.nodeListSynced = False
         self.winnersListSynced = False
@@ -379,7 +380,7 @@ class SmartNodeList(object):
             self.timer.start()
 
     def synced(self):
-        return self.chainSynced and self.nodeListSynced and self.winnersListSynced
+        return self.chainSynced and self.nodeListSynced and self.winnersListSynced and self.lastBlock
 
     def update(self):
 
@@ -450,12 +451,12 @@ class SmartNodeList(object):
 
         if self.syncedTime == -2:
             self.syncedTime = time.time()
-            logger.info("Synced now! Wait 5 minutes and then start through...")
+            logger.info("Synced now! Wait {} minutes and then start through...".format(self.waitAfterSync / 60))
             return False
 
         # Wait 5 minutes here to prevent timeout notifications. Past showed that
         # the lastseen times are not good instantly after sync.
-        elif self.syncedTime > -1 and (time.time() - self.syncedTime) < 300:
+        elif self.syncedTime > -1 and (time.time() - self.syncedTime) < self.waitAfterSync:
             logger.info("After sync wait {}".format(util.secondsToText(time.time() - self.syncedTime)))
             return False
 
