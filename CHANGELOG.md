@@ -24,3 +24,4 @@
 - Restrict the lookup command to DM
 - Show remaining wait time for nodes in the initial wait phase
 - New node `top` command to show only nodes in the top X percent
+- New `faq` command to show frequently asked questions

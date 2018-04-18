@@ -79,7 +79,7 @@ def info(bot, update):
 
     with bot.nodeList as nodeList:
 
-        if nodeList.synced() and nodeList.lastBlock:
+        if nodeList.synced() and nodeList.enabled():
 
             lastBlock = nodeList.lastBlock
             created = nodeList.count()
@@ -91,7 +91,19 @@ def info(bot, update):
             protocol90024 = nodeList.count(90024)
             protocol90025 = nodeList.count(90025)
             initialWait = nodeList.minimumUptime()
+            minPosition = int(enabled * 0.1)
             aberration = bot.aberration
+
+            # Fallback if for whatever reason the top node could not filtered which
+            # should actually not happen.
+            top10Seconds = int((qualifiedNormal * 55) * (1 + bot.aberration))
+
+            topNode = list(filter(lambda x: x.position == minPosition, nodeList.nodes.values()))
+
+            if len(topNode) and topNode[0].lastPaidTime:
+                top10Seconds = time.time() - topNode[0].lastPaidTime
+
+            top10Time = util.secondsToText(top10Seconds)
 
             if upgradeModeDuration:
                 upgradeModeDuration = util.secondsToText(upgradeModeDuration)
@@ -107,6 +119,7 @@ def info(bot, update):
                                               protocol90024,
                                               protocol90025,
                                               util.secondsToText(initialWait),
+                                              top10Time,
                                               aberration)
 
         else:

@@ -4,4 +4,3 @@ websocket-client
 requests-futures
 fuzzywuzzy
 fuzzywuzzy[speedup]
-simple-settings
