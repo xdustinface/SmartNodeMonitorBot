@@ -95,9 +95,16 @@ class SmartNodeBotDiscord(object):
             except Exception as e:
                 logger.error("Bot crashed?! ", e)
 
+            self.rewardList.pause()
+
             asyncio.run_coroutine_threadsafe(self.client.close(), loop=loop)
 
             time.sleep(10)
+
+            self.client = discord.Client()
+
+            self.client.on_ready = self.on_ready
+            self.client.on_message = self.on_message
 
     ######
     # Starts the bot and block until the programm gets stopped.
@@ -195,8 +202,14 @@ class SmartNodeBotDiscord(object):
                 nodeList.start()
 
         else:
+            logger.info("Reconnect")
             # Advise the admin about the reconnect
             self.adminCB("**Bot reconnected**")
+
+            self.rewardList.resume()
+
+    async def on_resumed(self):
+        logger.info("Resumed")
 
     ######
     # Discord api coroutine which gets called when a new message has been
