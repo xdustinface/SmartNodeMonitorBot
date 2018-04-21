@@ -161,6 +161,8 @@ class SmartNodeBotDiscord(object):
 
             with self.nodeList as nodeList:
 
+                await self.client.change_presence(game=discord.Game(name='our {} SmartNodes'.format(nodeList.count()), type=3))
+
                 # Update the sources where the blocks are assigned to the nodelist
                 for node in nodeList.nodes.values():
 
@@ -572,6 +574,9 @@ class SmartNodeBotDiscord(object):
     #
     ######
     def networkCB(self, collaterals, added):
+
+        nodeCount = self.nodeList.count()
+        asyncio.run_coroutine_threadsafe(self.client.change_presence(game=discord.Game(name='our {} SmartNodes'.format(nodeCount), type=3)), loop=self.client.loop)
 
         response = common.networkUpdate(self, collaterals, added)
 

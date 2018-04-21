@@ -612,7 +612,7 @@ class SmartNodeBotTelegram(object):
             for dbUser in self.database.getUsers():
                 self.sendMessage(dbUser['id'], response)
         else:
-            response = common.unknown(self, update)
+            response = common.unknown(self)
             self.sendMessage(update.message.chat_id, response)
 
     def stats(self, bot, update, args):
