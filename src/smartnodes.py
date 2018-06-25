@@ -431,7 +431,7 @@ class SmartNodeList(object):
             return False
 
         self.chainSynced = status.data['IsBlockchainSynced']
-        self.nodeListSynced = status.data['IsMasternodeListSynced']
+        self.nodeListSynced = status.data['IsSmartnodeListSynced']
         self.winnersListSynced = status.data['IsWinnersListSynced']
 
         return True
