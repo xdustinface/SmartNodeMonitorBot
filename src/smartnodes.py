@@ -210,11 +210,11 @@ class SmartNode(object):
 
         self.lastSeen = int(data[SEEN_INDEX])
         lastSeenDiff = ( int(time.time()) - self.lastSeen )
-        if lastSeenDiff > 1800 and\
-            lastSeenDiff < 3900: # > 30min < 65min
+        if lastSeenDiff > 3600 and\
+            lastSeenDiff < 7200: # > 60min < 120min
 
             if ( self.timeout == -1 or \
-              ( int(time.time()) - self.timeout ) > 300 ) and\
+              ( int(time.time()) - self.timeout ) > 600 ) and\
               self.status == 'ENABLED':
                 self.timeout = int(time.time())
                 update['timeout'] = True
