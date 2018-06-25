@@ -164,7 +164,7 @@ def help(messenger):
 
 def networkState(messenger, last, created, enabled, qualifiedNormal,
                  qualifiedUpgrade, upgradeModeDuration, protocolRequirement,
-                 protocol90024, protocol90025, initialWaitString, top10Time, aberration):
+                 protocol90025, protocol90026, initialWaitString, top10Time, aberration):
 
     message = ("<b>Current block<b> {}\n\n"
                 "<b>Nodes created<b> {}\n"
@@ -182,8 +182,9 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
         message += "<b>Nodes qualified<b> {}\n\n".format(qualifiedNormal)
 
     message += ("<b>Protocol requirement<b> {}\n\n"
-                "<b>Nodes with 90025<b> {}\n\n").format(protocolRequirement,
-                                                        protocol90025)
+                "<b>Nodes with 90025<b> {}\n"
+                "<b>Nodes with 90026<b> {}\n\n").format(protocolRequirement,
+                                                        protocol90025,protocol90026)
 
     message += "<u><b>Initial payout/Minimum uptime<b><u>\n\n"
 

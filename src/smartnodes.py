@@ -302,10 +302,10 @@ class SmartNodeList(object):
         self.remainingUpgradeModeDuration = None
         self.qualifiedUpgrade = -1
         self.qualifiedNormal = 0
-        self.protocol_90024 = 0
         self.protocol_90025 = 0
-        self.enabled_90024 = 0
+        self.protocol_90026 = 0
         self.enabled_90025 = 0
+        self.enabled_90026 = 0
         self.lastPaidVec = []
         self.nodes = {}
 
@@ -596,14 +596,14 @@ class SmartNodeList(object):
         #
         ####
 
-        nodes90024 = list(filter(lambda x: x.protocol == 90024, self.nodes.values()))
         nodes90025 = list(filter(lambda x: x.protocol == 90025, self.nodes.values()))
+        nodes90026 = list(filter(lambda x: x.protocol == 90026, self.nodes.values()))
 
-        self.protocol_90024 = len(nodes90024)
         self.protocol_90025 = len(nodes90025)
+        self.protocol_90026 = len(nodes90026)
 
-        self.enabled_90024 = len(list(filter(lambda x: x.status == "ENABLED", nodes90024)))
         self.enabled_90025 = len(list(filter(lambda x: x.status == "ENABLED", nodes90025)))
+        self.enabled_90026 = len(list(filter(lambda x: x.status == "ENABLED", nodes90026)))
 
         #####
         ## Update the the position indicator of the node
@@ -703,25 +703,25 @@ class SmartNodeList(object):
 
     def count(self, protocol = -1):
 
-        if protocol == 90024:
-            return self.protocol_90024
-        elif protocol == 90025:
+        if protocol == 90025:
             return self.protocol_90025
+        elif protocol == 90026:
+            return self.protocol_90026
         else:
             return len(self.nodes)
 
     def protocolRequirement(self):
 
-        if int(time.time()) <= 1519824000:
-            return 90024
-        else:
+        if int(time.time()) <= 1531206000:
             return 90025
+        else:
+            return 90026
 
     def enabledWithMinProtocol(self):
-        if self.protocolRequirement() == 90024:
-            return self.enabled_90024 + self.enabled_90025
-        elif self.protocolRequirement() == 90025:
-            return self.enabled_90025
+        if self.protocolRequirement() == 90025:
+            return self.enabled_90025 + self.enabled_90026
+        elif self.protocolRequirement() == 90026:
+            return self.enabled_90026
 
     def minimumUptime(self):
         # https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L561
@@ -729,12 +729,12 @@ class SmartNodeList(object):
 
     def enabled(self, protocol = -1):
 
-        if protocol == 90024:
-            return self.enabled_90024
-        elif protocol == 90025:
+        if protocol == 90025:
             return self.enabled_90025
+        elif protocol == 90026:
+            return self.enabled_90026
         else:
-            return self.enabled_90024 + self.enabled_90025
+            return self.enabled_90025 + self.enabled_90026
 
     def calculateUpgradeModeDuration(self):
 
@@ -744,7 +744,7 @@ class SmartNodeList(object):
         # Minimum required nodes to continue with normal mode
         requiredNodes = int(self.enabledWithMinProtocol() / 3)
         # Get the max active seconds to determine a start point
-        currentCheckTime = max(list(map(lambda x: x.activeSeconds if x.protocol == 90025 and x.status == 'ENABLED' else 0, self.nodes.values())))
+        currentCheckTime = max(list(map(lambda x: x.activeSeconds if x.protocol >= 90025 and x.status == 'ENABLED' else 0, self.nodes.values())))
         logger.debug("Maximum uptime {}".format(currentCheckTime))
         # Start value
         step = currentCheckTime * 0.5
