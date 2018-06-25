@@ -29,14 +29,16 @@ environment=
 ###############
 loglevel = 2
 
-# Admins userid for the selected messenger
-admin =
-# Admin password to run admin commands
-password =
-
 # Github credentials
 githubuser =
 githubpassword =
+
+[optional]
+
+# List of admin userid for the selected messenger. Sepereated by: ,
+admins =
+# Admin password to run admin commands
+password =
 
 
 [rpc]
