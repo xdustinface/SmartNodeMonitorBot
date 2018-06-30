@@ -89,7 +89,7 @@ class WebExplorer(SmartExplorer):
         super().__init__(balancesCB)
 
         self.lastUrl = 0
-        self.urls = {'https://explorer.smartcash.cc': None,\
+        self.urls = {'https://explorer.smartcash.cc':  lockForever,\
                      'https://explorer2.smartcash.cc': lockForever,\
                      'https://explorer3.smartcash.cc': None}
 
