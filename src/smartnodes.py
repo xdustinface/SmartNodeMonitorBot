@@ -386,6 +386,7 @@ class SmartNodeList(object):
 
         if self.updateSyncState():
             logger.info("Start list update!")
+            self.updateProtocolRequirement()
             self.updateList()
             # Disabled rank updates due to confusion of the users
             #self.updateRanks()
@@ -415,6 +416,21 @@ class SmartNodeList(object):
             return -1
 
         return block.data['height']
+
+    def updateProtocolRequirement(self):
+
+        status = self.rpc.raw("spork",['active'])
+
+        if status.error:
+            msg = "updateProtocolRequirement failed: {}".format(str(status.error))
+            logging.error(msg)
+            self.pushAdmin(msg)
+            return False
+
+        self.spork10Active = status.data['SPORK_10_SMARTNODE_PAY_UPDATED_NODES']
+        logger.info("SPORK_10_SMARTNODE_PAY_UPDATED_NODES {}".format(self.spork10Active))
+
+        return True
 
     def updateSyncState(self):
 
@@ -618,13 +634,13 @@ class SmartNodeList(object):
 
             for collateral, node in self.nodes.items():
 
-                if (self.lastBlock - node.collateral.block) < self.enabledWithMinProtocol():
+                if (self.lastBlock - node.collateral.block) < self.minimumConfirmations():
                     node.updatePosition(POS_COLLATERAL_AGE)
-                elif node.protocol < protocolRequirement:# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L545
+                elif node.protocol < protocolRequirement:# https://github.com/SmartCash/Core-Smart/blob/44b5543d0e05be27405bdedcc72b4361cee8129d/src/smartnode/smartnodeman.cpp#L551
                     node.updatePosition(POS_UPDATE_REQUIRED)
-                elif not upgradeMode and node.activeSeconds < self.minimumUptime():# https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L561
+                elif not upgradeMode and node.activeSeconds < self.minimumUptime():# https://github.com/SmartCash/Core-Smart/blob/44b5543d0e05be27405bdedcc72b4361cee8129d/src/smartnode/smartnodeman.cpp#L557
                     node.updatePosition(POS_TOO_NEW)
-                elif node.status != 'ENABLED': #https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L539
+                elif node.status != 'ENABLED': # https://github.com/SmartCash/Core-Smart/blob/44b5543d0e05be27405bdedcc72b4361cee8129d/src/smartnode/smartnodeman.cpp#L548
                     node.updatePosition(POS_NOT_QUALIFIED)
                 else:
                     self.lastPaidVec.append(LastPaid(node.lastPaidBlock, collateral))
@@ -712,7 +728,7 @@ class SmartNodeList(object):
 
     def protocolRequirement(self):
 
-        if int(time.time()) <= 1531206000:
+        if not self.spork10Active:
             return 90025
         else:
             return 90026
@@ -723,9 +739,20 @@ class SmartNodeList(object):
         elif self.protocolRequirement() == 90026:
             return self.enabled_90026
 
+    def minimumRequirementsScale(self):
+
+        if self.lastBlock >= 545005:
+            return 5 # 10 nodes every other block from here
+
+        return 1
+
     def minimumUptime(self):
-        # https://github.com/SmartCash/smartcash/blob/1.1.1/src/smartnode/smartnodeman.cpp#L561
-        return self.enabledWithMinProtocol() * 156
+        #https://github.com/SmartCash/Core-Smart/blob/44b5543d0e05be27405bdedcc72b4361cee8129d/src/smartnode/smartnodeman.cpp#L557
+        return ( self.enabledWithMinProtocol() * 55 ) / self.minimumRequirementsScale()
+
+    def minimumConfirmations(self):
+        #https://github.com/SmartCash/Core-Smart/blob/44b5543d0e05be27405bdedcc72b4361cee8129d/src/smartnode/smartnodeman.cpp#L560
+        return self.enabledWithMinProtocol() / self.minimumRequirementsScale()
 
     def enabled(self, protocol = -1):
 
@@ -744,7 +771,7 @@ class SmartNodeList(object):
         # Minimum required nodes to continue with normal mode
         requiredNodes = int(self.enabledWithMinProtocol() / 3)
         # Get the max active seconds to determine a start point
-        currentCheckTime = max(list(map(lambda x: x.activeSeconds if x.protocol >= 90025 and x.status == 'ENABLED' else 0, self.nodes.values())))
+        currentCheckTime = max(list(map(lambda x: x.activeSeconds if x.protocol >= self.protocolRequirement() and x.status == 'ENABLED' else 0, self.nodes.values())))
         logger.debug("Maximum uptime {}".format(currentCheckTime))
         # Start value
         step = currentCheckTime * 0.5
@@ -762,7 +789,7 @@ class SmartNodeList(object):
 
             calcCount = len(list(filter(lambda x: x.protocol == self.protocolRequirement() and\
                                                   x.status == 'ENABLED' and\
-                                                  (self.lastBlock - x.collateral.block) >= self.enabledWithMinProtocol() and\
+                                                  (self.lastBlock - x.collateral.block) >= self.minimumConfirmations() and\
                                                   x.activeSeconds > currentCheckTime, self.nodes.values() )))
 
             logger.debug("Current count: {}".format(calcCount))

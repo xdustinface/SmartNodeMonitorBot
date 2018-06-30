@@ -219,9 +219,6 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
     # Use qualifiedNormal instead of (qualifiedNormal * 0.9) to give the worst case
     message += "<b>Reaching the payout zone<b> should currently take roughly <b>{}<b>\n\n".format(top10Time)
 
-    message += "<u><b>Warning<b><u>\n\n"
-    message += "The positions of your nodes and the calculations above should be quite accurate but <b>please keep in mind that they may be inaccurate in special cases until the wallet version 1.2.0 is released<b> which should fix the current issues".format(int(qualifiedNormal / 1570))
-
     return markdown(message,messenger)
 
 def lookupResult(messenger, result):
