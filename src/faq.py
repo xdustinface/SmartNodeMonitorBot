@@ -46,7 +46,7 @@ def qualified(bot):
         if not nodeList.synced() or not nodeList.enabled():
             return messages.notSynced(bot.messenger)
 
-        confirmations = nodeList.enabledWithMinProtocol()
+        confirmations = int(nodeList.enabledWithMinProtocol() / 5)
         initialWait = util.secondsToText(nodeList.minimumUptime())
         protocolRequirement = nodeList.protocolRequirement()
 
@@ -77,17 +77,19 @@ def position(bot):
         qualified = nodeList.qualifiedNormal
         unqualified = nodes - qualified
         minPosition = int(enabled * 0.1)
-        top10Seconds = util.secondsToText(int((qualified * 55) * (1 + bot.aberration)))
+        top10Seconds = (int((qualified * 55) / 5) * (1 + bot.aberration))
         topNode = list(filter(lambda x: x.position == minPosition, nodeList.nodes.values()))
 
         if len(topNode) and topNode[0].lastPaidTime:
-            top10Seconds = time.time() - topNode[0].lastPaidTime
+            top10FromList = time.time() - topNode[0].lastPaidTime
+            if top10top10FromList < 1.2 * top10Seconds:
+                top10top10Seconds = top10top10FromList
 
         top10Time = util.secondsToText(top10Seconds)
 
         return (
         "We have currenty <b>{}<b> qualified SmartNodes. All those are in a "
-        "virtual payout queue. Each mined block (55seconds) one "
+        "virtual payout queue. Every other mined block (55seconds) 10 "
         "of the nodes in the top 10% of that queue gets picked perchance and"
         " receives a payout. After that it moves back to the end of the queue.\n\n"
         "The position of your node represents the position in the queue. Once "
@@ -116,7 +118,7 @@ def collateral(bot):
         if not nodeList.synced() or not nodeList.enabled():
             return messages.notSynced(bot.messenger)
 
-        confirmations = nodeList.enabledWithMinProtocol()
+        confirmations = int(nodeList.enabledWithMinProtocol() / 5)
         timeString = util.secondsToText(confirmations * 55)
 
         return (
@@ -143,7 +145,7 @@ def initial(bot):
         " uptime does not match the minimum uptime requirement. At this time the"
         " node must have a minimum uptime of <b>{}<b>."
         " Your uptime will be set to zero when your node was down for more than"
-        " <b>1 hour<b> or when you issue a <b>new start<b> of the node with your desktop wallet"
+        " <b>4 hours<b> or when you issue a <b>new start<b> of the node with your desktop wallet"
         " by running <c>Start alias<c>.\n\n"
         "You can check your node's uptime when you send me <cb>detail<ca> or by"
         " running the <cb>lookup<ca> command.\n\n"
@@ -163,17 +165,19 @@ def rewards(bot):
 
         # Fallback if for whatever reason the top node could not filtered which
         # should actually not happen.
-        top10Seconds = int((qualified * 55) * (1 + bot.aberration))
+        top10Seconds = (int((qualified * 55) / 5) * (1 + bot.aberration))
 
         topNode = list(filter(lambda x: x.position == minPosition, nodeList.nodes.values()))
 
         if len(topNode) and topNode[0].lastPaidTime:
-            top10Seconds = time.time() - topNode[0].lastPaidTime
+            top10FromList = time.time() - topNode[0].lastPaidTime
+            if top10top10FromList < 1.2 * top10Seconds:
+                top10top10Seconds = top10top10FromList
 
-        payoutSeconds = top10Seconds + (3 * 24 * 60 * 60)
+        payoutSeconds = top10Seconds + (10 * 60 * 60)
         payoutDays = payoutSeconds / 86400.0
         interval = util.secondsToText(int(payoutSeconds))
-        currentReward = round(5000.0 * 143500.0 / lastBlock * 0.1,1)
+        currentReward = round(5000.0 * 143500.0 / lastBlock * 0.1,1) / 5
         perMonth = round((30.5 / payoutDays) * currentReward,1)
 
         return (
@@ -181,7 +185,7 @@ def rewards(bot):
         "```reward = 5000 x 143500 / blockHeight * 0.1```\n\n"
         "At this moment our blockchain is at the height <b>{}<b> that means"
         "\n\n```5000 x 143500 / {} * 0.1 => {} SMART per block```\n\n"
-        "Each block one of the the nodes receives this reward. With the current "
+        "Each block with an <b>even<b> blockheight 10 of the the nodes receive this reward for 2 blocks. With the current "
         "estimated payout interval of <b>{}<b> you can expect roughly"
         " <b>{:,} SMART<b> per month per SmartNode. This can vary a bit upwards and downwards though.\n\n"
         "Due to the constant increase of the <c>blockHeight<c> of the SmartCash blockchain"
@@ -231,8 +235,8 @@ faqs = {
               collateral ),
     'initial' : FAQ("What does <b>Initial wait time<b> mean?",
              initial ),
-    'rewards' : FAQ("What payouts can i expect from my nodes?",
-             rewards ),
+    # 'rewards' : FAQ("What payouts can i expect from my nodes?",
+    #          rewards ),
     'status' : FAQ(("What should be done when a SmartNode is <b>not<b> successfully started?"),
              status )
 }
