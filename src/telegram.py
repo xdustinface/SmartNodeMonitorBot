@@ -332,6 +332,8 @@ class SmartNodeBotTelegram(object):
         self.messageQueue = MessagingMachine(self.bot, db)
         # Semphore to lock the balance check list.
         self.balanceSem = threading.Lock()
+        # Reward aberration
+        self.aberration = 0
 
         # Get the dispather to add the needed handlers
         dp = self.updater.dispatcher
