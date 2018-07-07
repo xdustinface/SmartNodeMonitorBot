@@ -24,6 +24,7 @@
 
 import logging
 import time
+import json
 from src import util
 from src import messages
 
@@ -664,36 +665,31 @@ def lookup(bot, userId, args):
 
 def handleNodeUpdate(bot, update, node):
 
-    # If there is a new block available form the nodelist
-    if update['lastPaid']:
+    ## Disabled for the meantime.
+    # # If there is a new block available form the nodelist
+    # if update['lastPaid']:
 
-        # Update the source of the reward in the rewardlist to be able to track the
-        # number of missing blocks in the nodelist
-        # If the reward was not available yet it gets added
-        reward = SNReward(block=node.lastPaidBlock,
-                          txtime=node.lastPaidTime,
-                          payee=node.payee,
-                          source=1,
-                          meta=2)
-
-        dbReward = bot.rewardList.getReward(node.lastPaidBlock)
-
-        if not dbReward:
-
-            reward = SNReward(block=node.lastPaidBlock,
-                              payee = node.payee,
-                              txtime=node.lastPaidTime,
-                              source=1)
-
-            bot.rewardList.addReward(reward)
-        else:
-            bot.rewardList.updateSource(reward)
-
-    # Workaround until the smartnode rewardlist is adjusted.
-    if node.lastPaidBlock >= HF_1_2_MULTINODE_PAYMENTS:
-
-        reward.amount = getBlockReward(node.lastPaidBlock) / getPayeesPerBlock(node.lastPaidBlock)
-        handleReward(bot, reward, 0)
+        # # Update the source of the reward in the rewardlist to be able to track the
+        # # number of missing blocks in the nodelist
+        # # If the reward was not available yet it gets added
+        # reward = SNReward(block=node.lastPaidBlock,
+        #                   txtime=node.lastPaidTime,
+        #                   payee=node.payee,
+        #                   source=1,
+        #                   meta=2)
+        #
+        # dbReward = bot.rewardList.getReward(node.lastPaidBlock)
+        #
+        # if not dbReward:
+        #
+        #     reward = SNReward(block=node.lastPaidBlock,
+        #                       payee = node.payee,
+        #                       txtime=node.lastPaidTime,
+        #                       source=1)
+        #
+        #     bot.rewardList.addReward(reward)
+        # else:
+        #     bot.rewardList.updateSource(reward)
 
     # Create notification response messages
 
@@ -734,43 +730,51 @@ def handleReward(bot, reward, distance):
 
     responses = {}
     nodes = None
+    payees = []
 
-    with bot.nodeList as nodeList:
-        nodes = nodeList.getNodesByPayee(reward.payee)
+    try:
+        payees = json.loads(reward.payee)
+    except:
+        payees.append(reward.payee)
 
-    if not nodes or not len(nodes):
-        # Payee not found for whatever reason?!
-        logger.error("Could not find payee in list. Reward: {}".format(str(reward)))
+    for payee in payees:
 
-        # Mark it in the database!
-        reward.meta = 1
-        updated = bot.rewardList.updateMeta(reward)
-        logger.info("Updated meta {}".format(updated))
+        with bot.nodeList as nodeList:
+            nodes = nodeList.getNodesByPayee(payee)
 
-    elif distance < 200:
-    # Dont notify until the list is 200 blocks behind the chain
+        if not nodes or not len(nodes):
+            # Payee not found for whatever reason?!
+            logger.error("Could not find payee in list. Reward: {}".format(str(payee)))
 
-        # When there are multiple nodes with that payee warn the user
-        count = len(nodes)
+            # Mark it in the database!
+            reward.meta = 1
+            updated = bot.rewardList.updateMeta(reward)
+            logger.info("Updated meta {}".format(updated))
 
-        logger.info("rewardCB {} - nodes: {}".format(str(reward),count))
+        elif distance < 200:
+        # Dont notify until the list is 200 blocks behind the chain
 
-        for n in nodes:
+            # When there are multiple nodes with that payee warn the user
+            count = len(nodes)
 
-            for userNode in bot.database.getNodes(n.collateral):
+            logger.info("rewardCB {} - nodes: {}".format(str(payee),count))
 
-                dbUser = bot.database.getUser(userNode['user_id'])
+            for n in nodes:
 
-                if dbUser and dbUser['reward_n']:
+                for userNode in bot.database.getNodes(n.collateral):
 
-                    if not dbUser['id'] in responses:
-                        responses[dbUser['id']] = []
+                    dbUser = bot.database.getUser(userNode['user_id'])
 
-                    response = messages.rewardNotification(bot.messenger, userNode['name'], reward.block, reward.amount)
+                    if dbUser and dbUser['reward_n']:
 
-                    if count > 1:
-                        response += messages.multiplePayeeWarning(bot.messenger, reward.payee, count)
+                        if not dbUser['id'] in responses:
+                            responses[dbUser['id']] = []
 
-                    responses[dbUser['id']].append(response)
+                        response = messages.rewardNotification(bot.messenger, userNode['name'], reward.block, reward.amount)
+
+                        if count > 1:
+                            response += messages.multiplePayeeWarning(bot.messenger, payee, count)
+
+                        responses[dbUser['id']].append(response)
 
     return responses
