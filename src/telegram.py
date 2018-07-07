@@ -352,7 +352,7 @@ class SmartNodeBotTelegram(object):
         dp.add_handler(CommandHandler('me', self.me))
         dp.add_handler(CommandHandler('status', self.status, pass_args=True))
         dp.add_handler(CommandHandler('reward', self.reward, pass_args=True))
-        dp.add_handler(CommandHandler('timeout', self.timeout, pass_args=True))
+        #dp.add_handler(CommandHandler('timeout', self.timeout, pass_args=True))
         dp.add_handler(CommandHandler('network', self.network, pass_args=True))
 
         #### Setup common handler ####
@@ -379,41 +379,41 @@ class SmartNodeBotTelegram(object):
         logger.info("Start!")
 
         with self.nodeList as nodeList:
+        #
+        #     # Update the sources where the blocks are assigned to the nodelist
+        #     for node in nodeList.nodes.values():
+        #
+        #         if node.lastPaidBlock <= 0:
+        #             continue
+        #
+        #         reward = self.rewardList.getReward(node.lastPaidBlock)
+        #
+        #         if not reward:
+        #
+        #             reward = SNReward(block=node.lastPaidBlock,
+        #                               payee = node.payee,
+        #                               txtime=node.lastPaidTime,
+        #                               source=1)
+        #
+        #             self.rewardList.addReward(reward)
+        #             continue
+        #
+        #
+        #         if reward.source == 1:
+        #             continue
+        #
+        #         reward = SNReward(block=node.lastPaidBlock,
+        #                           payee = node.payee,
+        #                           txtime=node.lastPaidTime,
+        #                           source=1)
+        #
+        #         self.rewardList.updateSource(reward)
 
-            # Update the sources where the blocks are assigned to the nodelist
-            for node in nodeList.nodes.values():
-
-                if node.lastPaidBlock <= 0:
-                    continue
-
-                reward = self.rewardList.getReward(node.lastPaidBlock)
-
-                if not reward:
-
-                    reward = SNReward(block=node.lastPaidBlock,
-                                      payee = node.payee,
-                                      txtime=node.lastPaidTime,
-                                      source=1)
-
-                    self.rewardList.addReward(reward)
-                    continue
-
-
-                if reward.source == 1:
-                    continue
-
-                reward = SNReward(block=node.lastPaidBlock,
-                                  payee = node.payee,
-                                  txtime=node.lastPaidTime,
-                                  source=1)
-
-                self.rewardList.updateSource(reward)
-
-            start = int(time.time() - 43200) # 12 hours of collecting
-            total = self.rewardList.getRewardCount(start = start)
-            nList = self.rewardList.getRewardCount(start = start, source=1)
-            if nList and total:
-                self.aberration = 1 - ( nList / total)
+            # start = int(time.time() - 43200) # 12 hours of collecting
+            # total = self.rewardList.getRewardCount(start = start)
+            # nList = self.rewardList.getRewardCount(start = start, source=1)
+            # if nList and total:
+            #     self.aberration = 1 - ( nList / total)
 
             # Start the rewardlist updates
             self.rewardList.start()
@@ -745,11 +745,11 @@ class SmartNodeBotTelegram(object):
             for message in messages:
                 self.sendMessage(userId, message)
 
-        start = int(time.time() - 43200) # 12 hours of collecting
-        total = self.rewardList.getRewardCount(start = start)
-        nList = self.rewardList.getRewardCount(start = start, source=1)
-        if nList and total:
-            self.aberration = 1 - ( nList / total)
+        # start = int(time.time() - 43200) # 12 hours of collecting
+        # total = self.rewardList.getRewardCount(start = start)
+        # nList = self.rewardList.getRewardCount(start = start, source=1)
+        # if nList and total:
+        #     self.aberration = 1 - ( nList / total)
 
     ######
     # Callback for SNRewardList errors

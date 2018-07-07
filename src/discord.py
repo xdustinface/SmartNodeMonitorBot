@@ -163,40 +163,40 @@ class SmartNodeBotDiscord(object):
 
                 await self.client.change_presence(game=discord.Game(name='our {} SmartNodes'.format(nodeList.count()), type=3))
 
-                # Update the sources where the blocks are assigned to the nodelist
-                for node in nodeList.nodes.values():
+                # # Update the sources where the blocks are assigned to the nodelist
+                # for node in nodeList.nodes.values():
+                #
+                #     if node.lastPaidBlock <= 0:
+                #         continue
+                #
+                #     reward = self.rewardList.getReward(node.lastPaidBlock)
+                #
+                #     if not reward:
+                #
+                #         reward = SNReward(block=node.lastPaidBlock,
+                #                           payee = node.payee,
+                #                           txtime=node.lastPaidTime,
+                #                           source=1)
+                #
+                #         self.rewardList.addReward(reward)
+                #         continue
+                #
+                #
+                #     if reward.source == 1:
+                #         continue
+                #
+                #     reward = SNReward(block=node.lastPaidBlock,
+                #                       payee = node.payee,
+                #                       txtime=node.lastPaidTime,
+                #                       source=1)
+                #
+                #     self.rewardList.updateSource(reward)
 
-                    if node.lastPaidBlock <= 0:
-                        continue
-
-                    reward = self.rewardList.getReward(node.lastPaidBlock)
-
-                    if not reward:
-
-                        reward = SNReward(block=node.lastPaidBlock,
-                                          payee = node.payee,
-                                          txtime=node.lastPaidTime,
-                                          source=1)
-
-                        self.rewardList.addReward(reward)
-                        continue
-
-
-                    if reward.source == 1:
-                        continue
-
-                    reward = SNReward(block=node.lastPaidBlock,
-                                      payee = node.payee,
-                                      txtime=node.lastPaidTime,
-                                      source=1)
-
-                    self.rewardList.updateSource(reward)
-
-                start = int(time.time() - 43200) # 12 hours of collecting
-                total = self.rewardList.getRewardCount(start = start)
-                nList = self.rewardList.getRewardCount(start = start, source=1)
-                if nList and total:
-                    self.aberration = 1 - ( nList / total)
+                # start = int(time.time() - 43200) # 12 hours of collecting
+                # total = self.rewardList.getRewardCount(start = start)
+                # nList = self.rewardList.getRewardCount(start = start, source=1)
+                # if nList and total:
+                #     self.aberration = 1 - ( nList / total)
 
                 # Start the rewardlist updates
                 self.rewardList.start()
@@ -303,7 +303,7 @@ class SmartNodeBotDiscord(object):
                     # Common commands
                     'help':0, 'info':0, 'faq':0,
                     # User commmands
-                    'me':1,'status':1,'reward':1,'network':1, 'timeout':1,
+                    'me':1,'status':1,'reward':1,'network':1, #'timeout':1,
                     # Node commands
                     'add':1,'update':1,'remove':1,'nodes':1, 'detail':1,'history':1, 'balance':1, 'lookup':1, 'top':1,
                     # Admin commands
@@ -550,11 +550,11 @@ class SmartNodeBotDiscord(object):
                 for message in messages:
                         asyncio.run_coroutine_threadsafe(self.sendMessage(member, message), loop=self.client.loop)
 
-        start = int(time.time() - 43200) # 12 hours of collecting
-        total = self.rewardList.getRewardCount(start = start)
-        nList = self.rewardList.getRewardCount(start = start, source=1)
-        if nList and total:
-            self.aberration = 1 - ( nList / total)
+        # start = int(time.time() - 43200) # 12 hours of collecting
+        # total = self.rewardList.getRewardCount(start = start)
+        # nList = self.rewardList.getRewardCount(start = start, source=1)
+        # if nList and total:
+        #     self.aberration = 1 - ( nList / total)
 
 
     ######

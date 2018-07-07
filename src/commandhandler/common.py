@@ -96,12 +96,14 @@ def info(bot, update):
 
             # Fallback if for whatever reason the top node could not filtered which
             # should actually not happen.
-            top10Seconds = int((qualifiedNormal * 55) * (1 + bot.aberration))
+            top10Seconds = (int((qualifiedNormal * 55) / 5) * (1 + bot.aberration))
 
             topNode = list(filter(lambda x: x.position == minPosition, nodeList.nodes.values()))
 
             if len(topNode) and topNode[0].lastPaidTime:
-                top10Seconds = time.time() - topNode[0].lastPaidTime
+                top10FromList = time.time() - topNode[0].lastPaidTime
+                if top10top10FromList < 1.2 * top10Seconds:
+                    top10top10Seconds = top10top10FromList
 
             top10Time = util.secondsToText(top10Seconds)
 

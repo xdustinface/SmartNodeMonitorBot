@@ -55,7 +55,7 @@ def me(bot, update):
         response += "You are {}\n\n".format(messages.removeMarkdown(user['name']))
         response += "Status Notifications " + messages.notificationState(bot.messenger, user['status_n'])
         response += "\nReward Notifications " + messages.notificationState(bot.messenger, user['reward_n'])
-        response += "\nTimeout Notifications " + messages.notificationState(bot.messenger, user['timeout_n'])
+        #response += "\nTimeout Notifications " + messages.notificationState(bot.messenger, user['timeout_n'])
         response += "\nNetwork Notifications " + messages.notificationState(bot.messenger, user['network_n'])
 
     return response
