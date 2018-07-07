@@ -723,7 +723,7 @@ def handleNodeUpdate(bot, update, node):
                 else:
                     response = messages.relaxNotification(bot.messenger, nodeName)
 
-                responses[dbUser['id']].append(response)
+                #responses[dbUser['id']].append(response)
 
 
     return responses
