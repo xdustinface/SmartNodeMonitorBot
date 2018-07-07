@@ -32,6 +32,25 @@ import discord
 
 from smartcash.rewardlist import SNReward
 
+HF_1_2_MULTINODE_PAYMENTS = 545005
+
+def getPayeesPerBlock(nHeight):
+
+    if nHeight >= HF_1_2_MULTINODE_PAYMENTS:
+        return 10
+
+    return 1
+
+def getPayoutInterval(nHeight):
+
+    if nHeight >= HF_1_2_MULTINODE_PAYMENTS:
+        return 2
+
+    return 1
+
+def getBlockReward(nHeight):
+    return 5000.0  * ( 143500.0 / nHeight ) * 0.1
+
 logger = logging.getLogger("node")
 
 ######
@@ -670,7 +689,13 @@ def handleNodeUpdate(bot, update, node):
         else:
             bot.rewardList.updateSource(reward)
 
-    # Create notification response messages!
+    # Workaround until the smartnode rewardlist is adjusted.
+    if node.lastPaidBlock >= HF_1_2_MULTINODE_PAYMENTS:
+
+        reward.amount = getBlockReward(node.lastPaidBlock) / getPayeesPerBlock(node.lastPaidBlock)
+        handleReward(bot, reward, 0)
+
+    # Create notification response messages
 
     responses = {}
 
