@@ -132,7 +132,7 @@ def help(messenger):
                 "<b>User commands<b>\n\n"
                 "<cb>status<ca> <b>:enabled<b> - Set :enabled to 0 to disable or to 1 to receive a notification when one of your node's status changed.\n"
                 "<cb>reward<ca> <b>:enabled<b> - Set :enabled to 0 to disable or to 1 to receive a notification each time one of your nodes received a reward.\n"
-                "<cb>timeout<ca> <b>:enabled<b> - Set :enabled to 0 to disable or to 1 to receive a notification when the seen timestamp of your node is > 30min.\n"
+                #"<cb>timeout<ca> <b>:enabled<b> - Set :enabled to 0 to disable or to 1 to receive a notification when the seen timestamp of your node is > 30min.\n"
                 "<cb>network<ca> <b>:enabled<b> - Set :enabled to 0 to disable or to 1 to enable network notifications\n\n"
                 "<cb>me<ca> - List your user info and notification states\n"
                 "<cb>username<ca> <b>:newname<b> - Change your username to :newname\n\n"
