@@ -82,8 +82,8 @@ def position(bot):
 
         if len(topNode) and topNode[0].lastPaidTime:
             top10FromList = time.time() - topNode[0].lastPaidTime
-            if top10top10FromList < 1.2 * top10Seconds:
-                top10top10Seconds = top10top10FromList
+            if top10FromList < 1.2 * top10Seconds:
+                top10Seconds = top10FromList
 
         top10Time = util.secondsToText(top10Seconds)
 
@@ -171,8 +171,8 @@ def rewards(bot):
 
         if len(topNode) and topNode[0].lastPaidTime:
             top10FromList = time.time() - topNode[0].lastPaidTime
-            if top10top10FromList < 1.2 * top10Seconds:
-                top10top10Seconds = top10top10FromList
+            if top10FromList < 1.2 * top10Seconds:
+                top10Seconds = top10FromList
 
         payoutSeconds = top10Seconds + (10 * 60 * 60)
         payoutDays = payoutSeconds / 86400.0
