@@ -338,7 +338,7 @@ def detail(bot, update):
                 response += "\n  `Last payout (Time)` " + smartnode.payoutTimeString()
                 response += "\n  `Protocol` {}".format(smartnode.protocol)
                 #response += "\n  `Rank` {}".format(smartnode.rank)
-                response += "\n  " + messages.link(bot.messenger, 'https://explorer3.smartcash.cc/address/{}'.format(smartnode.payee),'Open the explorer!')
+                response += "\n  " + messages.link(bot.messenger, 'https://explorer.smartcash.cc/address/{}'.format(smartnode.payee),'Open the explorer!')
                 response += "\n\n"
 
     return response
@@ -389,7 +389,7 @@ def nodes(bot, update):
                 response += "\nPosition " + messages.markdown(smartnode.positionString(minimumUptime, top10),bot.messenger)
                 response += "\nLast seen " + util.secondsToText( int(time.time()) - smartnode.lastSeen)
                 response += "\nLast payout " + smartnode.payoutTimeString()
-                response += "\n" + messages.link(bot.messenger, 'https://explorer3.smartcash.cc/address/{}'.format(smartnode.payee),'Open the explorer!')
+                response += "\n" + messages.link(bot.messenger, 'https://explorer.smartcash.cc/address/{}'.format(smartnode.payee),'Open the explorer!')
                 response += "\n\n"
 
     return response
@@ -565,7 +565,7 @@ def top(bot, update, args):
 
                     response += "<b>" + userNode['name'] + "<b>"
                     response += "\nPosition " + messages.markdown(smartnode.positionString(minimumUptime),bot.messenger)
-                    response += "\n" + messages.link(bot.messenger, 'https://explorer3.smartcash.cc/address/{}'.format(smartnode.payee),'Open the explorer!')
+                    response += "\n" + messages.link(bot.messenger, 'https://explorer.smartcash.cc/address/{}'.format(smartnode.payee),'Open the explorer!')
                     response += "\n\n"
             else:
                 response += "<b>You have currently no nodes in the top {}% of the queue.<b>\n\n".format(topPercent)
@@ -594,15 +594,16 @@ def balances(bot, userId, results):
             for node in userNodes:
                 if str(result.node.collateral) == node['collateral']:
 
-                    if not util.isInt(result.data) and "error" in result.data:
-                        response += "{} - Error: {}\n".format(node['name'], result.data["error"])
+                    if not isinstance(result.data, list) or not len(result.data) or not "balance" in result.data[0]:
+                        response += "{} - Error: {}\n".format(node['name'], "Could not fetch balance.")
                         logger.warning("Balance response error: {}".format(result.data))
 
                     else:
 
                         try:
-                            total += round(result.data,1)
-                            response += "{} - {:,} SMART\n".format(node['name'], result.data)
+                            balance = float(result.data[0]["balance"])
+                            total += round(balance,1)
+                            response += "{} - {:,} SMART\n".format(node['name'], balance)
                         except:
                             logger.warning("Balance response invalid: {}".format(result.data))
                             response += "{} - Error: Could not fetch this balance.\n".format(node['name'])

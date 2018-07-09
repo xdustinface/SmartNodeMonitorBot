@@ -91,7 +91,8 @@ class WebExplorer(SmartExplorer):
         self.lastUrl = 0
         self.urls = {'https://explorer.smartcash.cc':  lockForever,\
                      'https://explorer2.smartcash.cc': lockForever,\
-                     'https://explorer3.smartcash.cc': None}
+                     'https://explorer3.smartcash.cc': lockForever,\
+                     'https://explorer-webapi.azurewebsites.net': None}
 
         self.urlLockSeconds = 3600
         self.session = FuturesSession(max_workers=20)
@@ -162,7 +163,7 @@ class WebExplorer(SmartExplorer):
     def balance(self, address):
 
         explorer = self.nextUrl()
-        requestUrl = "{}/ext/getbalance/{}".format(explorer,address)
+        requestUrl = "{}/api/smartexplorer/GetAddressBalance/{}".format(explorer,address)
         logger.info("Add {}".format(requestUrl))
         future = self.session.get(requestUrl)
         return {'explorer' : explorer, 'future' : future}
