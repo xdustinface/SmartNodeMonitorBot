@@ -27,6 +27,7 @@ import time
 import json
 from src import util
 from src import messages
+from src.validateaddress import validate as validateAddress
 
 import telegram
 import discord
@@ -99,9 +100,10 @@ def nodeAdd(bot, update, args):
                 else:
 
                     ip = util.validateIp( newNode[0] )
+                    address = validateAddress( newNode[0] )
                     name = util.validateName( newNode[1] )
 
-                    if not ip:
+                    if not ip and not address:
 
                         response += messages.invalidIpError(bot.messenger, newNode[0])
                         valid = False
@@ -113,7 +115,14 @@ def nodeAdd(bot, update, args):
 
                 if valid:
 
-                    node = nodeList.getNodeByIp(ip)
+                    if ip:
+                        node = nodeList.getNodeByIp(ip)
+
+                    if address:
+                        nodes = nodeList.getNodesByPayee(address)
+
+                        if nodes and len(nodes):
+                            node = nodes[0]
 
                     if node == None:
                         response += messages.nodeNotInListError(bot.messenger,ip)
