@@ -157,9 +157,10 @@ class MessageQueue(object):
 ####
 class MessagingMachine(object):
 
-    def __init__(self, bot, database):
+    def __init__(self, bot, messenger, database):
         self.sem = threading.Lock()
         self.bot = bot
+        self.messenger = messenger
         self.database = database
         self.queues = {}
         self.sendInterval = 0.25 # Seconds
@@ -329,7 +330,7 @@ class SmartNodeBotTelegram(object):
         # Store the admin password
         self.password = password
         # Create the message queue
-        self.messageQueue = MessagingMachine(self.bot, db)
+        self.messageQueue = MessagingMachine(self.bot, self.messenger, db)
         # Semphore to lock the balance check list.
         self.balanceSem = threading.Lock()
         # Reward aberration
