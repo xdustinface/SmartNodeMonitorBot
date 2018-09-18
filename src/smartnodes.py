@@ -887,7 +887,7 @@ class SmartNodeList(object):
             result['protocol'] = node.protocol == self.protocolRequirement()
             result['protocol_string'] = "{}".format(node.protocol)
 
-            result['collateral'] = (self.lastBlock - node.collateral.block) >= self.enabledWithMinProtocol()
+            result['collateral'] = (self.lastBlock - node.collateral.block) >= self.minimumConfirmations()
 
             result['collateral_string'] = "{}".format((self.lastBlock - node.collateral.block))
 
