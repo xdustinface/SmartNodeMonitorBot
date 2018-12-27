@@ -92,7 +92,7 @@ class WebExplorer(SmartExplorer):
         self.urls = {'https://explorer.smartcash.cc':  lockForever,\
                      'https://explorer2.smartcash.cc': lockForever,\
                      'https://explorer3.smartcash.cc': lockForever,\
-                     'https://explorer-webapi.azurewebsites.net': None}
+                     'https://api-explorer.smartcash.cc': None}
 
         self.urlLockSeconds = 3600
         self.session = FuturesSession(max_workers=20)
