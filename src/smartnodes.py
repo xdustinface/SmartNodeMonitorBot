@@ -52,6 +52,9 @@ POS_UPDATE_REQUIRED = -3
 POS_TOO_NEW = -4
 POS_COLLATERAL_AGE = -5
 
+HF_1_2_MULTINODE_PAYMENTS = 545005
+HF_1_2_8_COLLATERAL_CHANGE = 910000
+
 logger = logging.getLogger("smartnodes")
 
 transactionRawCheck = re.compile("COutPoint\([\d\a-f]{64},.[\d]{1,}\)")
@@ -302,10 +305,12 @@ class SmartNodeList(object):
         self.remainingUpgradeModeDuration = None
         self.qualifiedUpgrade = -1
         self.qualifiedNormal = 0
-        self.protocol_90025 = 0
-        self.protocol_90026 = 0
-        self.enabled_90025 = 0
-        self.enabled_90026 = 0
+        self.oldProtocol = 0
+        self.newProtocol = 0
+        self.countOldProtocol = 0
+        self.countNewProtocol = 0
+        self.enabledOldProtocol = 0
+        self.enabledNewProtocol = 0
         self.lastPaidVec = []
         self.nodes = {}
 
@@ -419,7 +424,14 @@ class SmartNodeList(object):
 
     def updateProtocolRequirement(self):
 
-        status = self.rpc.raw("spork",['active'])
+        #Example command response
+        # {
+        #   "oldProtocol": 90028,
+        #   "newProtocol": 90029,
+        #   "enableTime": 1099511627775,
+        #   "activeProtocol": 90028
+        # }
+        status = self.rpc.raw("smartnode",['protocol'])
 
         if status.error:
             msg = "updateProtocolRequirement failed: {}".format(str(status.error))
@@ -427,8 +439,12 @@ class SmartNodeList(object):
             self.pushAdmin(msg)
             return False
 
-        self.spork10Active = status.data['SPORK_10_SMARTNODE_PAY_UPDATED_NODES']
-        logger.info("SPORK_10_SMARTNODE_PAY_UPDATED_NODES {}".format(self.spork10Active))
+        self.oldProtocol = status.data['oldProtocol']
+        self.newProtocol = status.data['newProtocol']
+        self.protocolEnableTimme = status.data['enableTime']
+        self.activeProtocol = status.data['activeProtocol']
+
+        logger.info("activeProtocol {}".format(self.activeProtocol))
 
         return True
 
@@ -612,14 +628,14 @@ class SmartNodeList(object):
         #
         ####
 
-        nodes90025 = list(filter(lambda x: x.protocol == 90025, self.nodes.values()))
-        nodes90026 = list(filter(lambda x: x.protocol == 90026, self.nodes.values()))
+        nodesOld = list(filter(lambda x: x.protocol == self.oldProtocol, self.nodes.values()))
+        nodesNew = list(filter(lambda x: x.protocol == self.newProtocol, self.nodes.values()))
 
-        self.protocol_90025 = len(nodes90025)
-        self.protocol_90026 = len(nodes90026)
+        self.countOldProtocol = len(nodesOld)
+        self.countNewProtocol = len(nodesNew)
 
-        self.enabled_90025 = len(list(filter(lambda x: x.status == "ENABLED", nodes90025)))
-        self.enabled_90026 = len(list(filter(lambda x: x.status == "ENABLED", nodes90026)))
+        self.enabledOldProtocol = len(list(filter(lambda x: x.status == "ENABLED", nodesOld)))
+        self.enabledNewProtocol = len(list(filter(lambda x: x.status == "ENABLED", nodesNew)))
 
         #####
         ## Update the the position indicator of the node
@@ -719,30 +735,28 @@ class SmartNodeList(object):
 
     def count(self, protocol = -1):
 
-        if protocol == 90025:
-            return self.protocol_90025
-        elif protocol == 90026:
-            return self.protocol_90026
+        if protocol == self.oldProtocol:
+            return self.countOldProtocol
+        elif protocol == self.newProtocol:
+            return self.countNewProtocol
         else:
             return len(self.nodes)
 
     def protocolRequirement(self):
-
-        if not self.spork10Active:
-            return 90025
-        else:
-            return 90026
+        return self.activeProtocol
 
     def enabledWithMinProtocol(self):
-        if self.protocolRequirement() == 90025:
-            return self.enabled_90025 + self.enabled_90026
-        elif self.protocolRequirement() == 90026:
-            return self.enabled_90026
+        if self.protocolRequirement() == self.oldProtocol:
+            return self.enabledOldProtocol + self.enabledNewProtocol
+        elif self.protocolRequirement() == self.newProtocol:
+            return self.enabledNewProtocol
 
     def minimumRequirementsScale(self):
 
-        if self.lastBlock >= 545005:
-            return 5 # 10 nodes every other block from here
+        if self.lastBlock >= HF_1_2_MULTINODE_PAYMENTS and self.lastBlock < HF_1_2_8_COLLATERAL_CHANGE:
+            return 5 # 10/2 => 10 nodes every other block
+        if self.lastBlock >= HF_1_2_8_COLLATERAL_CHANGE:
+            return 0.5 # 1/2 => 1 node every other block
 
         return 1
 
@@ -756,12 +770,12 @@ class SmartNodeList(object):
 
     def enabled(self, protocol = -1):
 
-        if protocol == 90025:
-            return self.enabled_90025
-        elif protocol == 90026:
-            return self.enabled_90026
+        if protocol == self.oldProtocol:
+            return self.enabledOldProtocol
+        elif protocol == self.newProtocol:
+            return self.enabledNewProtocol
         else:
-            return self.enabled_90025 + self.enabled_90026
+            return self.enabledOldProtocol + self.enabledNewProtocol
 
     def calculateUpgradeModeDuration(self):
 

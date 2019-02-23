@@ -88,8 +88,8 @@ def info(bot, update):
             qualifiedUpgrade = nodeList.qualifiedUpgrade
             upgradeModeDuration = nodeList.remainingUpgradeModeDuration
             protocolRequirement = nodeList.protocolRequirement()
-            protocol90025 = nodeList.count(90025)
-            protocol90026 = nodeList.count(90026)
+            protocolOld = nodeList.count(nodeList.oldProtocol)
+            protocolNew = nodeList.count(nodeList.newProtocol)
             initialWait = nodeList.minimumUptime()
             minPosition = int(enabled * 0.1)
             aberration = bot.aberration
@@ -118,8 +118,10 @@ def info(bot, update):
                                               qualifiedUpgrade,
                                               upgradeModeDuration,
                                               protocolRequirement,
-                                              protocol90025,
-                                              protocol90026,
+                                              nodeList.oldProtocol,
+                                              nodeList.newProtocol,
+                                              protocolOld,
+                                              protocolNew,
                                               util.secondsToText(initialWait),
                                               top10Time,
                                               aberration)
