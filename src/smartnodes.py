@@ -307,10 +307,14 @@ class SmartNodeList(object):
         self.qualifiedNormal = 0
         self.oldProtocol = 0
         self.newProtocol = 0
+        self.activeProtocol = 90028 # Default to 90028
         self.countOldProtocol = 0
         self.countNewProtocol = 0
         self.enabledOldProtocol = 0
         self.enabledNewProtocol = 0
+        self.preEnabled = 0
+        self.expired = 0
+        self.newStartRequired = 0
         self.lastPaidVec = []
         self.nodes = {}
 
@@ -636,6 +640,10 @@ class SmartNodeList(object):
 
         self.enabledOldProtocol = len(list(filter(lambda x: x.status == "ENABLED", nodesOld)))
         self.enabledNewProtocol = len(list(filter(lambda x: x.status == "ENABLED", nodesNew)))
+
+        self.preEnabled = len(list(filter(lambda x: x.status == "PRE-ENABLED", self.nodes.values())))
+        self.expired = len(list(filter(lambda x: x.status == "EXPIRED", self.nodes.values())))
+        self.newStartRequired = len(list(filter(lambda x: x.status == "NEW-START-REQUIRED", self.nodes.values())))
 
         #####
         ## Update the the position indicator of the node

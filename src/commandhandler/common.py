@@ -84,6 +84,9 @@ def info(bot, update):
             lastBlock = nodeList.lastBlock
             created = nodeList.count()
             enabled = nodeList.enabled()
+            preEnabled = nodeList.preEnabled
+            expired = nodeList.expired
+            newStartRequired = nodeList.newStartRequired
             qualifiedNormal = nodeList.qualifiedNormal
             qualifiedUpgrade = nodeList.qualifiedUpgrade
             upgradeModeDuration = nodeList.remainingUpgradeModeDuration
@@ -113,7 +116,10 @@ def info(bot, update):
             response += messages.networkState(bot.messenger,
                                               lastBlock,
                                               created,
+                                              preEnabled,
                                               enabled,
+                                              expired,
+                                              newStartRequired,
                                               qualifiedNormal,
                                               qualifiedUpgrade,
                                               upgradeModeDuration,

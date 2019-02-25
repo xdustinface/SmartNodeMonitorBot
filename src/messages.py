@@ -162,16 +162,26 @@ def help(messenger):
 #                      Common messages                     #
 ############################################################
 
-def networkState(messenger, last, created, enabled, qualifiedNormal,
-                 qualifiedUpgrade, upgradeModeDuration, protocolRequirement,
-                 protocolOld, protocolNew, protocolOldCount, protocolNewCount,
-                 initialWaitString, top10Time, aberration):
+def networkState(messenger, last, created, preEnabled, enabled, expired, newStartRequired,
+                qualifiedNormal, qualifiedUpgrade, upgradeModeDuration,
+                protocolRequirement, protocolOld, protocolNew, protocolOldCount,
+                protocolNewCount, initialWaitString, top10Time, aberration):
 
-    message = ("<b>Current block<b> {}\n\n"
-                "<b>Nodes created<b> {}\n"
-                "<b>Nodes enabled<b> {}\n").format(last,
-                                                   created,
-                                                   enabled)
+    message = ("<b>Current block<b> {}\n"
+               "<b>Protocol requirement<b> {}\n\n"
+               "<u><b>SmartNode count<b><u>\n"
+               "<b>Created<b> {}\n"
+               "<b>Pre-Enabled<b> {}\n"
+               "<b>Enabled<b> {}\n"
+               "<b>Expired<b> {}\n"
+               "<b>New start required<b> {}\n").format(last, protocolRequirement,
+                                                        created, preEnabled, enabled,
+                                                        expired, newStartRequired)
+    # message += ("<b>Protocol requirement<b> {}\n\n"
+    #             "<b>Nodes with {}<b> {}\n"
+    #             "<b>Nodes with {}<b> {}\n\n").format(protocolRequirement,
+    #                                                     protocolOld, protocolOldCount,
+    #                                                     protocolNew, protocolNewCount)
 
     minPosition = enabled * 0.1
     minEligible = int(enabled / 3)
@@ -181,15 +191,6 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
         message += "<b>Nodes qualified (UpgradeMode)<b> {}\n\n".format(qualifiedNormal)
     else:
         message += "<b>Nodes qualified<b> {}\n\n".format(qualifiedNormal)
-
-    # message += ("<b>Protocol requirement<b> {}\n\n"
-    #             "<b>Nodes with {}<b> {}\n"
-    #             "<b>Nodes with {}<b> {}\n\n").format(protocolRequirement,
-    #                                                     protocolOld, protocolOldCount,
-    #                                                     protocolNew, protocolNewCount)
-    message += ("<b>Protocol requirement<b> {}\n\n"
-                "<b>Nodes with {}<b> {}\n\n").format(protocolRequirement,
-                                                        protocolOld, protocolOldCount)
 
     message += "<u><b>Initial payout/Minimum uptime<b><u>\n\n"
 
