@@ -182,11 +182,14 @@ def networkState(messenger, last, created, enabled, qualifiedNormal,
     else:
         message += "<b>Nodes qualified<b> {}\n\n".format(qualifiedNormal)
 
+    # message += ("<b>Protocol requirement<b> {}\n\n"
+    #             "<b>Nodes with {}<b> {}\n"
+    #             "<b>Nodes with {}<b> {}\n\n").format(protocolRequirement,
+    #                                                     protocolOld, protocolOldCount,
+    #                                                     protocolNew, protocolNewCount)
     message += ("<b>Protocol requirement<b> {}\n\n"
-                "<b>Nodes with {}<b> {}\n"
                 "<b>Nodes with {}<b> {}\n\n").format(protocolRequirement,
-                                                        protocolOld, protocolOldCount,
-                                                        protocolNew, protocolNewCount)
+                                                        protocolOld, protocolOldCount)
 
     message += "<u><b>Initial payout/Minimum uptime<b><u>\n\n"
 
