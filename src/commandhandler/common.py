@@ -99,7 +99,7 @@ def info(bot, update):
 
             # Fallback if for whatever reason the top node could not filtered which
             # should actually not happen.
-            top10Seconds = (int((qualifiedNormal * 55) / 5) * (1 + bot.aberration))
+            top10Seconds = (int((qualifiedNormal * 55) / 0.5) * (1 + bot.aberration))
 
             topNode = list(filter(lambda x: x.position == minPosition, nodeList.nodes.values()))
 
