@@ -438,7 +438,7 @@ def history(bot, update):
             nodes = nodeList.getNodes(collaterals)
 
             time30Days = time.time() - (2592000) # now - 30d * 24h * 60m * 60s
-            totalInvest = len(nodes) * 10000
+            totalInvest = len(nodes) * 100000
             totalProfit = 0
             totalAvgInterval = 0
             totalFirst = 0
@@ -494,7 +494,7 @@ def history(bot, update):
                 if smartPerDay:
                     response += "\n<b>SMART/day<b> {:,} SMART".format(smartPerDay)
 
-                response += "\n<b>ROI (SMART)<b> {}%".format(round((profit/10000.0)*100.0,1))
+                response += "\n<b>ROI (SMART)<b> {}%".format(round((profit/100000.0)*100.0,1))
 
                 response += "\n\n"
 
