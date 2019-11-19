@@ -603,14 +603,14 @@ def balances(bot, userId, results):
             for node in userNodes:
                 if str(result.node.collateral) == node['collateral']:
 
-                    if not isinstance(result.data, list) or not len(result.data) or not "balance" in result.data[0]:
+                    if not isinstance(result.data, dict) or not "balance" in result.data:
                         response += "{} - Error: {}\n".format(node['name'], "Could not fetch balance.")
                         logger.warning("Balance response error: {}".format(result.data))
 
                     else:
 
                         try:
-                            balance = float(result.data[0]["balance"])
+                            balance = float(result.data["balance"])
                             total += round(balance,1)
                             response += "{} - {:,} SMART\n".format(node['name'], balance)
                         except:
